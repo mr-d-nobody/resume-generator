@@ -8,15 +8,11 @@ import ResumeBuilder from './pages/ResumeBuilder';
 import Templates from './pages/Templates';
 import Download from './pages/Download';
 
-/**
- * Main App component with routing and global state management
- * Provides resume context to all child components
- */
 function App() {
   return (
     <ResumeProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
           <Navbar />
           <main className="flex-1">
             <Routes>
@@ -24,6 +20,8 @@ function App() {
               <Route path="/builder" element={<ResumeBuilder />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/download" element={<Download />} />
+              {/* Optional: redirect unknown paths to Home */}
+              <Route path="*" element={<Home />} />
             </Routes>
           </main>
           <Footer />

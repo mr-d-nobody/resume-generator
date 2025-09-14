@@ -1,82 +1,78 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Download, Layout } from 'lucide-react';
+import { FileText, Layout, Download } from 'lucide-react';
 
+/**
+ * Home page component
+ * Landing page with hero, features, and call-to-action
+ */
 function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-16">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl sm:tracking-tight lg:text-6xl mb-6">
+        <section className="text-center mb-20">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
             Create Professional Resumes in Minutes
           </h1>
-          <p className="max-w-xl mx-auto text-xl text-gray-500 dark:text-gray-300">
-            Our easy-to-use resume builder helps you create a personalized, professional resume that will impress employers.
+          <p className="mt-6 text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Use our intuitive resume builder with modern templates to land your dream job.
           </p>
-          <div className="mt-8">
-            <Link to="/builder" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Get Started
+          <div className="mt-8 flex justify-center gap-4">
+            <Link
+              to="/builder"
+              className="px-6 py-3 rounded-xl bg-blue-600 text-white text-base font-medium hover:bg-blue-700 transition"
+            >
+              Start Building
+            </Link>
+            <Link
+              to="/templates"
+              className="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white text-base font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+            >
+              View Templates
             </Link>
           </div>
-        </div>
+        </section>
 
         {/* Features Section */}
-        <div className="py-12">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Easy to Use</h3>
-              <p className="text-gray-500 dark:text-gray-300">
-                Our intuitive form-based builder makes creating a resume simple and straightforward.
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <Layout className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Multiple Templates</h3>
-              <p className="text-gray-500 dark:text-gray-300">
-                Choose from a variety of professional templates to make your resume stand out.
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <Download className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">PDF Download</h3>
-              <p className="text-gray-500 dark:text-gray-300">
-                Download your resume as a professional PDF ready to send to employers.
-              </p>
-            </div>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-20">
+          <div className="flex flex-col items-center text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-md">
+            <FileText className="h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Easy to Use</h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Build resumes effortlessly with our intuitive editor.
+            </p>
           </div>
-        </div>
 
-        {/* CTA Section */}
-        <div className="bg-blue-600 rounded-lg shadow-xl mt-16 mb-8">
-          <div className="px-6 py-12 sm:px-12 sm:py-16 lg:flex lg:items-center lg:justify-between">
-            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              <span className="block">Ready to get started?</span>
-              <span className="block text-blue-200">Create your resume today.</span>
-            </h2>
-            <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-              <div className="inline-flex rounded-md shadow">
-                <Link to="/builder" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50">
-                  Build My Resume
-                </Link>
-              </div>
-              <div className="ml-3 inline-flex rounded-md shadow">
-                <Link to="/templates" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-800 hover:bg-blue-900">
-                  View Templates
-                </Link>
-              </div>
-            </div>
+          <div className="flex flex-col items-center text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-md">
+            <Layout className="h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Modern Templates</h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Choose from a variety of ATS-friendly professional designs.
+            </p>
           </div>
-        </div>
+
+          <div className="flex flex-col items-center text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-md">
+            <Download className="h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Export Ready</h3>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Download resumes instantly in PDF format.
+            </p>
+          </div>
+        </section>
+
+        {/* Call to Action */}
+        <section className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Ready to create your standout resume?
+          </h2>
+          <Link
+            to="/builder"
+            className="inline-block px-8 py-3 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700 transition"
+          >
+            Build Your Resume Now
+          </Link>
+        </section>
       </div>
     </div>
   );
