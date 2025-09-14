@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import { useResume } from '../../contexts/ResumeContext';
+import resumeLogo from '../../assets/resume-logo.svg';
 
 /**
  * Navigation bar component
@@ -27,7 +28,7 @@ function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 text-xl font-bold text-primary-600 dark:text-primary-400">
-            <FileText className="h-6 w-6" />
+            <img src={resumeLogo} alt="Resume Builder Logo" className="h-8 w-8" />
             <span>ResumeBuilder</span>
           </Link>
 

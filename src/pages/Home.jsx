@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Layout, Download } from 'lucide-react';
+import resumeLogo from '../assets/resume-logo.svg';
 
 /**
  * Home page component
@@ -12,6 +13,9 @@ function Home() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Hero Section */}
         <section className="text-center mb-20">
+          <div className="flex justify-center mb-6">
+            <img src={resumeLogo} alt="Resume Builder Logo" className="h-24 w-24" />
+          </div>
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
             Create Professional Resumes in Minutes
           </h1>
@@ -37,7 +41,7 @@ function Home() {
         {/* Features Section */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-20">
           <div className="flex flex-col items-center text-center bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-md">
-            <FileText className="h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" />
+            <img src={resumeLogo} alt="Resume Builder Logo" className="h-10 w-10 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Easy to Use</h3>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
               Build resumes effortlessly with our intuitive editor.

@@ -4,8 +4,10 @@ import PersonalInfoForm from '../components/forms/PersonalInfoForm';
 import ExperienceForm from '../components/forms/ExperienceForm';
 import EducationForm from '../components/forms/EducationForm';
 import SkillsForm from '../components/forms/SkillsForm';
+import CertificationForm from '../components/forms/CertificationForm';
+import AchievementForm from '../components/forms/AchievementForm';
 import ResumePreview from '../components/preview/ResumePreview';
-import { User, Briefcase, GraduationCap, Code, Eye, Download } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download } from 'lucide-react';
 
 function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -15,6 +17,8 @@ function ResumeBuilder() {
     { id: 'experience', label: 'Experience', icon: Briefcase, component: ExperienceForm },
     { id: 'education', label: 'Education', icon: GraduationCap, component: EducationForm },
     { id: 'skills', label: 'Skills', icon: Code, component: SkillsForm },
+    { id: 'certifications', label: 'Certifications', icon: Award, component: CertificationForm },
+    { id: 'achievements', label: 'Achievements', icon: Trophy, component: AchievementForm },
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
@@ -37,15 +41,15 @@ function ResumeBuilder() {
           {/* Form Section */}
           <div className="space-y-6">
             {/* Tab Navigation */}
-            <div className="card p-1">
-              <nav className="flex space-x-1" aria-label="Resume sections">
+            <div className="card p-3 mb-4">
+              <nav className="flex flex-wrap gap-2" aria-label="Resume sections">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-[calc(33%-0.5rem)] sm:w-auto ${
                         activeTab === tab.id
                           ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                           : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'

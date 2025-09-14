@@ -1,6 +1,6 @@
 import React from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { MapPin, Phone, Mail, Globe, Linkedin, Calendar, Star } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, Linkedin, Calendar, Star, Award, Trophy } from 'lucide-react';
 
 /**
  * Resume preview component
@@ -8,7 +8,7 @@ import { MapPin, Phone, Mail, Globe, Linkedin, Calendar, Star } from 'lucide-rea
  */
 function ResumePreview() {
   const { resumeData } = useResume();
-  const { personalInfo, experience, education, skills } = resumeData;
+  const { personalInfo, experience, education, skills, certifications, achievements } = resumeData;
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -30,7 +30,7 @@ function ResumePreview() {
     return acc;
   }, {});
 
-  const hasContent = personalInfo.firstName || personalInfo.lastName || experience.length > 0 || education.length > 0 || skills.length > 0;
+  const hasContent = personalInfo.firstName || personalInfo.lastName || experience.length > 0 || education.length > 0 || skills.length > 0 || certifications.length > 0 || achievements.length > 0;
 
   if (!hasContent) {
     return (
@@ -220,6 +220,82 @@ function ResumePreview() {
                     );
                   })}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Certifications Section */}
+      {certifications.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
+            <Award className="h-5 w-5 inline-block mr-2" />
+            Certifications
+          </h2>
+          <div className="space-y-3">
+            {certifications.map((cert, index) => (
+              <div key={index} className="">
+                <div className="flex justify-between items-start mb-1">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{cert.name}</h3>
+                    <p className="text-blue-600 font-medium">{cert.issuer}</p>
+                  </div>
+                  <div className="text-sm text-gray-600 flex items-center">
+                    {cert.date && (
+                      <>
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {formatDate(cert.date)}
+                        {cert.expirationDate && ` - ${formatDate(cert.expirationDate)}`}
+                      </>
+                    )}
+                  </div>
+                </div>
+                {cert.credentialID && (
+                  <p className="text-sm text-gray-600">Credential ID: {cert.credentialID}</p>
+                )}
+                {cert.credentialURL && (
+                  <p className="text-sm text-blue-600">
+                    <a href={cert.credentialURL} target="_blank" rel="noopener noreferrer">
+                      Verify Credential
+                    </a>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements Section */}
+      {achievements.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
+            <Trophy className="h-5 w-5 inline-block mr-2" />
+            Achievements
+          </h2>
+          <div className="space-y-3">
+            {achievements.map((achievement, index) => (
+              <div key={index}>
+                <div className="flex justify-between items-start mb-1">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{achievement.title}</h3>
+                    {achievement.organization && (
+                      <p className="text-blue-600 font-medium">{achievement.organization}</p>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600 flex items-center">
+                    {achievement.date && (
+                      <>
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {formatDate(achievement.date)}
+                      </>
+                    )}
+                  </div>
+                </div>
+                {achievement.description && (
+                  <p className="text-gray-700 text-sm mt-1">{achievement.description}</p>
+                )}
               </div>
             ))}
           </div>

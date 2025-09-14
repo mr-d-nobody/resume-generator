@@ -18,6 +18,7 @@ const initialResumeData = {
   skills: [],
   projects: [],
   certifications: [],
+  achievements: [],
   languages: []
 };
 
@@ -29,7 +30,7 @@ const initialState = {
   customization: {
     fontFamily: 'Inter',
     colorTheme: 'blue',
-    sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects']
+    sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements']
   },
   isDarkMode: true
 };
@@ -47,6 +48,12 @@ const ACTIONS = {
   ADD_PROJECT: 'ADD_PROJECT',
   UPDATE_PROJECT: 'UPDATE_PROJECT',
   DELETE_PROJECT: 'DELETE_PROJECT',
+  ADD_CERTIFICATION: 'ADD_CERTIFICATION',
+  UPDATE_CERTIFICATION: 'UPDATE_CERTIFICATION',
+  DELETE_CERTIFICATION: 'DELETE_CERTIFICATION',
+  ADD_ACHIEVEMENT: 'ADD_ACHIEVEMENT',
+  UPDATE_ACHIEVEMENT: 'UPDATE_ACHIEVEMENT',
+  DELETE_ACHIEVEMENT: 'DELETE_ACHIEVEMENT',
   SET_TEMPLATE: 'SET_TEMPLATE',
   SET_TEMPLATE_CATEGORY: 'SET_TEMPLATE_CATEGORY',
   UPDATE_CUSTOMIZATION: 'UPDATE_CUSTOMIZATION',
@@ -163,6 +170,64 @@ function resumeReducer(state, action) {
           projects: state.resumeData.projects.filter((_, index) => index !== action.payload)
         }
       };
+      
+    case ACTIONS.ADD_CERTIFICATION:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          certifications: [...state.resumeData.certifications, action.payload]
+        }
+      };
+
+    case ACTIONS.UPDATE_CERTIFICATION:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          certifications: state.resumeData.certifications.map((cert, index) =>
+            index === action.payload.index ? { ...cert, ...action.payload.data } : cert
+          )
+        }
+      };
+
+    case ACTIONS.DELETE_CERTIFICATION:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          certifications: state.resumeData.certifications.filter((_, index) => index !== action.payload)
+        }
+      };
+      
+    case ACTIONS.ADD_ACHIEVEMENT:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          achievements: [...state.resumeData.achievements, action.payload]
+        }
+      };
+
+    case ACTIONS.UPDATE_ACHIEVEMENT:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          achievements: state.resumeData.achievements.map((achievement, index) =>
+            index === action.payload.index ? { ...achievement, ...action.payload.data } : achievement
+          )
+        }
+      };
+
+    case ACTIONS.DELETE_ACHIEVEMENT:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          achievements: state.resumeData.achievements.filter((_, index) => index !== action.payload)
+        }
+      };
 
     case ACTIONS.SET_TEMPLATE:
       return {
@@ -252,6 +317,12 @@ export function ResumeProvider({ children }) {
     addProject: (data) => dispatch({ type: ACTIONS.ADD_PROJECT, payload: data }),
     updateProject: (index, data) => dispatch({ type: ACTIONS.UPDATE_PROJECT, payload: { index, data } }),
     deleteProject: (index) => dispatch({ type: ACTIONS.DELETE_PROJECT, payload: index }),
+    addCertification: (data) => dispatch({ type: ACTIONS.ADD_CERTIFICATION, payload: data }),
+    updateCertification: (index, data) => dispatch({ type: ACTIONS.UPDATE_CERTIFICATION, payload: { index, data } }),
+    deleteCertification: (index) => dispatch({ type: ACTIONS.DELETE_CERTIFICATION, payload: index }),
+    addAchievement: (data) => dispatch({ type: ACTIONS.ADD_ACHIEVEMENT, payload: data }),
+    updateAchievement: (index, data) => dispatch({ type: ACTIONS.UPDATE_ACHIEVEMENT, payload: { index, data } }),
+    deleteAchievement: (index) => dispatch({ type: ACTIONS.DELETE_ACHIEVEMENT, payload: index }),
     setTemplate: (template) => dispatch({ type: ACTIONS.SET_TEMPLATE, payload: template }),
     setTemplateCategory: (category) => dispatch({ type: ACTIONS.SET_TEMPLATE_CATEGORY, payload: category }),
     updateCustomization: (customization) => dispatch({ type: ACTIONS.UPDATE_CUSTOMIZATION, payload: customization }),
