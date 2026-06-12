@@ -159,16 +159,21 @@ function PersonalInfoForm() {
           />
         </div>
 
-        {/* Summary */}
+        {/* GitHub */}
         <div className="md:col-span-2">
-          <label className="form-label">Professional Summary</label>
-          <textarea
-            value={personalInfo.summary}
-            onChange={(e) => handleInputChange('summary', e.target.value)}
-            className="form-input h-32 resize-none"
-            placeholder="Write a brief professional summary highlighting your key skills and experience..."
+          <label className="form-label">
+            <Globe className="h-4 w-4 inline mr-1" />
+            GitHub URL
+          </label>
+          <input
+            type="url"
+            value={personalInfo.github || ''}
+            onChange={(e) => handleInputChange('github', e.target.value)}
+            className="form-input"
+            placeholder="https://github.com/johndoe"
           />
         </div>
+
       </div>
     </div>
   );

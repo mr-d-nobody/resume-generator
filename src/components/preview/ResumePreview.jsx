@@ -1,308 +1,188 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useResume } from '../../contexts/ResumeContext';
-import { MapPin, Phone, Mail, Globe, Linkedin, Calendar, Star, Award, Trophy } from 'lucide-react';
+import templateConfig from '../../data/template-config.json';
 
-/**
- * Resume preview component
- * Displays a live preview of the resume based on current data
- */
-function ResumePreview() {
+import Template1 from '../../templates/Template1';
+import Template2 from '../../templates/Template2';
+import Template3 from '../../templates/Template3';
+import Template4 from '../../templates/Template4';
+import Template5 from '../../templates/Template5';
+import Template6 from '../../templates/Template6';
+import Template7 from '../../templates/Template7';
+import Template8 from '../../templates/Template8';
+import Template9 from '../../templates/Template9';
+import Template10 from '../../templates/Template10';
+import Template11 from '../../templates/Template11';
+import Template12 from '../../templates/Template12';
+import Template13 from '../../templates/Template13';
+import Template14 from '../../templates/Template14';
+import Template15 from '../../templates/Template15';
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
+export default function ResumePreview({ isPrintMode = false }) {
   const { resumeData } = useResume();
-  const { personalInfo, experience, education, skills, certifications, achievements } = resumeData;
+  const query = useQuery();
+  const templateId = query.get('template') || '1';
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString + '-01');
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-  };
+  // Transform form context data into our template format
+  const transformedData = useMemo(() => {
+    const { personalInfo, experience, education, skills, certifications, achievements, projects } = resumeData;
 
-  const getProficiencyStars = (level) => {
-    const levels = { 'Beginner': 1, 'Intermediate': 2, 'Advanced': 3, 'Expert': 4 };
-    return levels[level] || 2;
-  };
-
-  const groupedSkills = skills.reduce((acc, skill) => {
-    const category = skill.category || 'Technical';
-    if (!acc[category]) {
-      acc[category] = [];
+    // Group skills by category
+    const groupedSkills = skills.reduce((acc, skill) => {
+      const cat = skill.category || 'Skills';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(skill.name);
+      return acc;
+    }, {});
+    
+    // Add fallback for empty skills so templates don't crash
+    if (Object.keys(groupedSkills).length === 0) {
+      groupedSkills['Languages'] = [];
+      groupedSkills['Frameworks'] = [];
+      groupedSkills['Tools'] = [];
     }
-    acc[category].push(skill);
-    return acc;
-  }, {});
 
-  const hasContent = personalInfo.firstName || personalInfo.lastName || experience.length > 0 || education.length > 0 || skills.length > 0 || certifications.length > 0 || achievements.length > 0;
+    return {
+      personal: {
+        name: `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim() || 'Your Name',
+        title: personalInfo.title || 'Professional Title',
+        email: personalInfo.email || '',
+        phone: personalInfo.phone || '',
+        location: personalInfo.location || '',
+        website: personalInfo.website || '',
+        linkedin: personalInfo.linkedin || '',
+        github: personalInfo.github || ''
+      },
+      summary: personalInfo.summary || '',
+      experience: experience.map(exp => ({
+        id: Math.random().toString(),
+        company: exp.company || 'Company Name',
+        position: exp.position || 'Position',
+        location: exp.location || '',
+        startDate: exp.startDate || 'Start Date',
+        endDate: exp.current ? 'Present' : (exp.endDate || 'End Date'),
+        highlights: exp.description ? exp.description.split('\n').filter(Boolean) : []
+      })),
+      education: education.map(edu => ({
+        id: Math.random().toString(),
+        institution: edu.institution || 'University Name',
+        degree: edu.degree || 'Degree',
+        location: edu.location || '',
+        startDate: edu.startDate || 'Start Date',
+        endDate: edu.graduationDate || 'Grad Date',
+        gpa: edu.cgpa ? `${edu.cgpa}` : null,
+        highlights: edu.description ? [edu.description] : []
+      })),
+      skills: groupedSkills,
+      certifications: certifications.map(cert => ({
+        id: Math.random().toString(),
+        name: cert.name || 'Certification Name',
+        issuer: cert.issuer || 'Issuer',
+        date: cert.date || 'Date'
+      })),
+      achievements: achievements.map(ach => ({
+        id: Math.random().toString(),
+        title: ach.title || 'Achievement',
+        organization: ach.organization || '',
+        date: ach.date || '',
+        description: ach.description || ''
+      })),
+      projects: projects.length > 0 ? projects.map(proj => ({
+        id: Math.random().toString(),
+        name: proj.name || 'Project Name',
+        link: proj.link || '',
+        description: proj.description || '',
+        highlights: proj.highlights || []
+      })) : achievements.map(ach => ({
+        // Fallback: If no projects, map achievements to projects so old data isn't lost visually
+        id: Math.random().toString(),
+        name: ach.title || 'Project / Achievement',
+        description: ach.organization || '',
+        link: '',
+        highlights: ach.description ? [ach.description] : []
+      }))
+    };
+  }, [resumeData]);
 
-  if (!hasContent) {
-    return (
-      <div className="text-center text-gray-500 mt-20">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
-          <span className="text-2xl">ðŸ“„</span>
-        </div>
-        <p className="text-lg font-medium mb-2">Resume Preview</p>
-        <p className="text-sm">
-          Fill out the form sections to see your resume come to life
-        </p>
-      </div>
-    );
+  const containerRef = React.useRef(null);
+  const [scale, setScale] = React.useState(0.7);
+
+  React.useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        // Calculate available width with some padding (40px)
+        const availableWidth = containerRef.current.clientWidth - 40;
+        // A4 width in pixels (approx 210mm at 96 DPI)
+        const a4Width = 794; 
+        const newScale = Math.min(availableWidth / a4Width, 1);
+        setScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
+  const renderTemplate = () => {
+    const props = { data: transformedData, config: templateConfig };
+    switch (templateId) {
+      case '1': return <Template1 {...props} />;
+      case '2': return <Template2 {...props} />;
+      case '3': return <Template3 {...props} />;
+      case '4': return <Template4 {...props} />;
+      case '5': return <Template5 {...props} />;
+      case '6': return <Template6 {...props} />;
+      case '7': return <Template7 {...props} />;
+      case '8': return <Template8 {...props} />;
+      case '9': return <Template9 {...props} />;
+      case '10': return <Template10 {...props} />;
+      case '11': return <Template11 {...props} />;
+      case '12': return <Template12 {...props} />;
+      case '13': return <Template13 {...props} />;
+      case '14': return <Template14 {...props} />;
+      case '15': return <Template15 {...props} />;
+      default: return <Template1 {...props} />;
+    }
+  };
+
+  if (isPrintMode) {
+    return <div className="bg-white">{renderTemplate()}</div>;
   }
 
+  // A4 dimensions in pixels
+  const A4_WIDTH = 794;
+  const A4_HEIGHT = 1123;
+
   return (
-    <div className="resume-template p-8 max-w-[8.5in] mx-auto bg-white text-gray-900 shadow-lg dark:bg-white dark:text-gray-900">
-      {/* Header Section */}
-      <div className="border-b-2 border-blue-600 pb-6 mb-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {personalInfo.firstName} {personalInfo.lastName}
-            </h1>
-            
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-              {personalInfo.email && (
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-1" />
-                  {personalInfo.email}
-                </div>
-              )}
-              {personalInfo.phone && (
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-1" />
-                  {personalInfo.phone}
-                </div>
-              )}
-              {personalInfo.location && (
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {personalInfo.location}
-                </div>
-              )}
-            </div>
-            
-            <div className="flex flex-wrap gap-4 text-sm text-blue-600">
-              {personalInfo.linkedin && (
-                <div className="flex items-center">
-                  <Linkedin className="h-4 w-4 mr-1" />
-                  {personalInfo.linkedin}
-                </div>
-              )}
-              {personalInfo.website && (
-                <div className="flex items-center">
-                  <Globe className="h-4 w-4 mr-1" />
-                  {personalInfo.website}
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {personalInfo.photo && (
-            <div className="ml-6">
-              <img
-                src={personalInfo.photo}
-                alt="Profile"
-                className="w-24 h-24 rounded-lg object-cover border-2 border-gray-200"
-              />
-            </div>
-          )}
+    <div 
+      ref={containerRef} 
+      className="w-full h-[calc(100vh-180px)] overflow-auto bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-center py-8 custom-scrollbar"
+    >
+      <div 
+        className="relative transition-all duration-300"
+        style={{ 
+          width: A4_WIDTH * scale, 
+          height: A4_HEIGHT * scale 
+        }}
+      >
+        <div 
+          className="absolute top-0 left-0 bg-white shadow-2xl overflow-hidden"
+          style={{ 
+            width: A4_WIDTH, 
+            minHeight: A4_HEIGHT,
+            transform: `scale(${scale})`, 
+            transformOrigin: 'top left' 
+          }}
+        >
+          {renderTemplate()}
         </div>
-        
-        {personalInfo.summary && (
-          <div className="mt-4">
-            <p className="text-gray-700 leading-relaxed">
-              {personalInfo.summary}
-            </p>
-          </div>
-        )}
       </div>
-
-      {/* Experience Section */}
-      {experience.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
-            Professional Experience
-          </h2>
-          <div className="space-y-4">
-            {experience.map((exp, index) => (
-              <div key={index} className="">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{exp.position}</h3>
-                    <p className="text-blue-600 font-medium">{exp.company}</p>
-                    {exp.location && (
-                      <p className="text-sm text-gray-600">{exp.location}</p>
-                    )}
-                  </div>
-                  <div className="text-sm text-gray-600 flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {formatDate(exp.startDate)} - {exp.current ? 'Present' : formatDate(exp.endDate)}
-                  </div>
-                </div>
-                {exp.description && (
-                  <div className="text-gray-700 text-sm leading-relaxed">
-                    {exp.description.split('\n').map((line, i) => (
-                      <p key={i} className="mb-1">{line}</p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Education Section */}
-      {education.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
-            Education
-          </h2>
-          <div className="space-y-3">
-            {education.map((edu, index) => (
-              <div key={index} className="">
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{edu.degree}</h3>
-                    <p className="text-blue-600 font-medium">{edu.institution}</p>
-                    {edu.location && (
-                      <p className="text-sm text-gray-600">{edu.location}</p>
-                    )}
-                  </div>
-                  <div className="text-sm text-gray-600 flex items-center">
-                    {edu.graduationDate && (
-                      <>
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {formatDate(edu.graduationDate)}
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  {edu.cgpa && <span>CGPA: {edu.cgpa}</span>}
-                </div>
-                {edu.description && (
-                  <p className="text-gray-700 text-sm mt-1">{edu.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Skills Section */}
-      {skills.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
-            Skills
-          </h2>
-          <div className="space-y-4">
-            {Object.entries(groupedSkills).map(([category, categorySkills]) => (
-              <div key={category}>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                  {category}
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {categorySkills.map((skill, index) => {
-                    const stars = getProficiencyStars(skill.level);
-                    return (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">{skill.name}</span>
-                        <div className="flex space-x-1">
-                          {[1, 2, 3, 4].map(star => (
-                            <Star
-                              key={star}
-                              className={`h-3 w-3 ${
-                                star <= stars
-                                  ? 'text-blue-500 fill-current'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Certifications Section */}
-      {certifications.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
-            <Award className="h-5 w-5 inline-block mr-2" />
-            Certifications
-          </h2>
-          <div className="space-y-3">
-            {certifications.map((cert, index) => (
-              <div key={index} className="">
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{cert.name}</h3>
-                    <p className="text-blue-600 font-medium">{cert.issuer}</p>
-                  </div>
-                  <div className="text-sm text-gray-600 flex items-center">
-                    {cert.date && (
-                      <>
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {formatDate(cert.date)}
-                        {cert.expirationDate && ` - ${formatDate(cert.expirationDate)}`}
-                      </>
-                    )}
-                  </div>
-                </div>
-                {cert.credentialID && (
-                  <p className="text-sm text-gray-600">Credential ID: {cert.credentialID}</p>
-                )}
-                {cert.credentialURL && (
-                  <p className="text-sm text-blue-600">
-                    <a href={cert.credentialURL} target="_blank" rel="noopener noreferrer">
-                      Verify Credential
-                    </a>
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Achievements Section */}
-      {achievements.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 border-b border-gray-300 pb-1">
-            <Trophy className="h-5 w-5 inline-block mr-2" />
-            Achievements
-          </h2>
-          <div className="space-y-3">
-            {achievements.map((achievement, index) => (
-              <div key={index}>
-                <div className="flex justify-between items-start mb-1">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{achievement.title}</h3>
-                    {achievement.organization && (
-                      <p className="text-blue-600 font-medium">{achievement.organization}</p>
-                    )}
-                  </div>
-                  <div className="text-sm text-gray-600 flex items-center">
-                    {achievement.date && (
-                      <>
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {formatDate(achievement.date)}
-                      </>
-                    )}
-                  </div>
-                </div>
-                {achievement.description && (
-                  <p className="text-gray-700 text-sm mt-1">{achievement.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
-export default ResumePreview;

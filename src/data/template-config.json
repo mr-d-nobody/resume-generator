@@ -1,0 +1,21 @@
+{
+  "theme": {
+    "primaryColor": "#2563eb",
+    "secondaryColor": "#475569",
+    "textColor": "#1e293b",
+    "backgroundColor": "#ffffff",
+    "fontFamily": "Inter, sans-serif"
+  },
+  "spacing": {
+    "sectionGap": "1.5rem",
+    "itemGap": "1rem"
+  },
+  "sections": [
+    "summary",
+    "experience",
+    "education",
+    "skills",
+    "projects",
+    "certifications"
+  ]
+}

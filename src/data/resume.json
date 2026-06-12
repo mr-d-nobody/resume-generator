@@ -1,0 +1,92 @@
+{
+  "personal": {
+    "name": "Alex Mercer",
+    "title": "Senior Software Engineer",
+    "email": "alex.mercer@example.com",
+    "phone": "+1 (555) 123-4567",
+    "location": "San Francisco, CA",
+    "website": "alexmercer.dev",
+    "linkedin": "linkedin.com/in/alexmercer",
+    "github": "github.com/alexmercer"
+  },
+  "summary": "Innovative and solutions-oriented Senior Software Engineer with over 8 years of experience in designing, developing, and deploying scalable web applications. Proven track record in leading cross-functional teams to deliver complex technical projects on time. Passionate about cloud architecture, performance optimization, and mentoring junior engineers.",
+  "experience": [
+    {
+      "id": "exp-1",
+      "company": "TechNova Solutions",
+      "position": "Senior Software Engineer",
+      "location": "San Francisco, CA",
+      "startDate": "2020-05-01",
+      "endDate": "Present",
+      "highlights": [
+        "Architected a scalable microservices ecosystem using Node.js and Docker, handling over 2M daily requests.",
+        "Mentored a team of 5 junior engineers, fostering a culture of continuous learning and code quality.",
+        "Reduced page load time by 40% through aggressive code splitting and implementation of an edge-caching strategy.",
+        "Spearheaded the migration from a monolithic application to AWS serverless architecture, reducing hosting costs by 30%."
+      ]
+    },
+    {
+      "id": "exp-2",
+      "company": "DataSphere Inc.",
+      "position": "Software Engineer",
+      "location": "Austin, TX",
+      "startDate": "2017-08-01",
+      "endDate": "2020-04-30",
+      "highlights": [
+        "Developed high-performance RESTful APIs to support a data-intensive dashboard used by Fortune 500 clients.",
+        "Integrated third-party payment gateways, processing over $10M in transactions securely.",
+        "Collaborated with UX/UI designers to implement accessible and responsive React components."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "edu-1",
+      "institution": "University of Texas at Austin",
+      "degree": "Bachelor of Science in Computer Science",
+      "location": "Austin, TX",
+      "startDate": "2013-08-01",
+      "endDate": "2017-05-30",
+      "gpa": "3.8/4.0",
+      "highlights": [
+        "Graduated with Honors",
+        "President of the Computer Science Society"
+      ]
+    }
+  ],
+  "skills": {
+    "languages": ["JavaScript (ES6+)", "TypeScript", "Python", "SQL", "HTML5", "CSS3/SASS"],
+    "frameworks": ["React.js", "Node.js", "Express", "Next.js", "Tailwind CSS"],
+    "tools": ["Git", "Docker", "AWS", "Kubernetes", "CI/CD (GitHub Actions)", "Jest"]
+  },
+  "projects": [
+    {
+      "id": "proj-1",
+      "name": "E-Commerce Platform Redesign",
+      "description": "Led the frontend migration of a legacy e-commerce site to Next.js.",
+      "link": "github.com/alexmercer/ecommerce-next",
+      "highlights": [
+        "Improved Lighthouse score from 55 to 98.",
+        "Implemented server-side rendering for better SEO."
+      ]
+    },
+    {
+      "id": "proj-2",
+      "name": "Open Source Analytics Library",
+      "description": "A lightweight analytics tracker for single-page applications.",
+      "link": "npmjs.com/package/light-analytics",
+      "highlights": [
+        "Over 10,000 weekly downloads on npm.",
+        "Maintained 100% test coverage using Jest."
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "id": "cert-1",
+      "name": "AWS Certified Solutions Architect",
+      "issuer": "Amazon Web Services",
+      "date": "2022-10-15"
+    }
+  ]
+}

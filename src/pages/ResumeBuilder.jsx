@@ -6,17 +6,21 @@ import EducationForm from '../components/forms/EducationForm';
 import SkillsForm from '../components/forms/SkillsForm';
 import CertificationForm from '../components/forms/CertificationForm';
 import AchievementForm from '../components/forms/AchievementForm';
+import ProjectForm from '../components/forms/ProjectForm';
+import SummaryForm from '../components/forms/SummaryForm';
 import ResumePreview from '../components/preview/ResumePreview';
-import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download, FileText, FolderGit2 } from 'lucide-react';
 
 function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
 
   const tabs = [
     { id: 'personal', label: 'Personal Info', icon: User, component: PersonalInfoForm },
+    { id: 'summary', label: 'Summary', icon: FileText, component: SummaryForm },
     { id: 'experience', label: 'Experience', icon: Briefcase, component: ExperienceForm },
     { id: 'education', label: 'Education', icon: GraduationCap, component: EducationForm },
     { id: 'skills', label: 'Skills', icon: Code, component: SkillsForm },
+    { id: 'projects', label: 'Projects', icon: FolderGit2, component: ProjectForm },
     { id: 'certifications', label: 'Certifications', icon: Award, component: CertificationForm },
     { id: 'achievements', label: 'Achievements', icon: Trophy, component: AchievementForm },
   ];

@@ -21,7 +21,7 @@ function Download() {
   // Get the appropriate template component based on selection
   const getTemplateComponent = () => {
     // For now, use ResumePreview until templates are implemented
-    return <ResumePreview />;
+    return <ResumePreview isPrintMode={true} />;
     /* Original implementation to be restored when templates are available
     switch (selectedTemplate) {
       case 'minimal':
