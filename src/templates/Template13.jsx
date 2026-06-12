@@ -1,5 +1,5 @@
 import React from 'react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template13({ data, config }) {
   const { personal, summary, experience, education, skills, projects } = data;
   const { theme, spacing } = config;
@@ -19,13 +19,14 @@ export default function Template13({ data, config }) {
         <h2 className="text-xl font-medium tracking-wide text-gray-700 mb-4 uppercase">
           {personal.title}
         </h2>
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-medium text-gray-600">
-          {personal.email && <span>{personal.email}</span>}
-          {personal.phone && <span>• {personal.phone}</span>}
-          {personal.location && <span>• {personal.location}</span>}
-          {personal.linkedin && <span>• {personal.linkedin}</span>}
-          {personal.github && <span>• {personal.github}</span>}
-        </div>
+        <ContactLinks 
+          personal={personal} 
+          containerClass="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-medium text-gray-600"
+          itemClass="inline"
+          linkClass="hover:underline"
+          showIcons={false}
+          separator="•"
+        />
       </header>
 
       <div className="px-12 py-4 flex-1 flex flex-col" style={{ gap: spacing.sectionGap }}>
@@ -70,7 +71,10 @@ export default function Template13({ data, config }) {
             <div className="grid grid-cols-2 gap-6">
               {projects.map((project) => (
                 <div key={project.id} className="border-l-4 pl-4" style={{ borderColor: theme.primaryColor }}>
-                  <h4 className="font-bold text-base text-gray-900 mb-1">{project.name}</h4>
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h4 className="font-bold text-base text-gray-900">{project.name}</h4>
+                    {project.link && <a href={project.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">{project.link}</a>}
+                  </div>
                   {project.description && (
                     <p className="text-xs font-semibold text-gray-500 mb-2">{project.description}</p>
                   )}

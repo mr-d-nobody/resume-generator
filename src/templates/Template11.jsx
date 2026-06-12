@@ -1,6 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template11({ data, config }) {
   const { personal, summary, experience, education, skills, projects, certifications } = data;
   const { theme, spacing } = config;
@@ -18,23 +17,13 @@ export default function Template11({ data, config }) {
         <h2 className="text-xl font-medium mb-4" style={{ color: theme.secondaryColor }}>
           {personal.title}
         </h2>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
-          {personal.email && (
-            <span className="flex items-center gap-1"><Mail size={14} /> {personal.email}</span>
-          )}
-          {personal.phone && (
-            <span className="flex items-center gap-1"><Phone size={14} /> {personal.phone}</span>
-          )}
-          {personal.location && (
-            <span className="flex items-center gap-1"><MapPin size={14} /> {personal.location}</span>
-          )}
-          {personal.linkedin && (
-            <span className="flex items-center gap-1"><Linkedin size={14} /> {personal.linkedin}</span>
-          )}
-          {personal.github && (
-            <span className="flex items-center gap-1"><Github size={14} /> {personal.github}</span>
-          )}
-        </div>
+        <ContactLinks 
+          personal={personal} 
+          containerClass="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600"
+          itemClass="flex items-center gap-1"
+          linkClass="hover:underline"
+          iconSize={14}
+        />
       </header>
 
       <div className="px-10 py-6 flex-1 flex flex-col" style={{ gap: spacing.sectionGap }}>
@@ -88,7 +77,7 @@ export default function Template11({ data, config }) {
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-semibold text-base">{project.name}</h4>
                     {project.link && (
-                      <span className="text-xs font-medium text-blue-600">{project.link}</span>
+                      <a href={project.link} target="_blank" rel="noreferrer" className="text-xs font-medium text-blue-600 hover:underline">{project.link}</a>
                     )}
                   </div>
                   {project.description && (

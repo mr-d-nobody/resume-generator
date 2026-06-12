@@ -8,6 +8,8 @@ import ResumeBuilder from './pages/ResumeBuilder';
 import Templates from './pages/Templates';
 import Download from './pages/Download';
 import TemplateViewer from './pages/TemplateViewer';
+import MagicUpload from './pages/MagicUpload';
+import Profile from './pages/Profile';
 
 function App() {
   const basename = import.meta.env.BASE_URL;
@@ -26,9 +28,11 @@ function App() {
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Home />} />
+                  <Route path="/magic" element={<MagicUpload />} />
                   <Route path="/builder" element={<ResumeBuilder />} />
                   <Route path="/templates" element={<Templates />} />
                   <Route path="/download" element={<Download />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<Home />} />
                 </Routes>
               </main>

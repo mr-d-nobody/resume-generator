@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 
 function ProjectForm() {
-  const { resumeData, addProject, deleteProject } = useResume();
+  const { resumeData, addProject, updateProject, deleteProject } = useResume();
+  const [editingIndex, setEditingIndex] = useState(null);
   const [newProject, setNewProject] = useState({
     name: '',
     link: '',
@@ -18,18 +19,24 @@ function ProjectForm() {
     }));
   };
 
-  const handleAddProject = () => {
+  const handleAddOrUpdateProject = () => {
     if (!newProject.name) {
       alert('Please fill in project name');
       return;
     }
 
-    // Projects array is used by templates
-    addProject({
+    const data = {
       ...newProject,
-      id: Date.now().toString(),
-      highlights: newProject.description.split('\n').filter(h => h.trim() !== '') // If they type multiple lines
-    });
+      id: editingIndex !== null ? resumeData.projects[editingIndex].id : Date.now().toString(),
+      highlights: newProject.description ? newProject.description.split('\n').filter(h => h.trim() !== '') : []
+    };
+
+    if (editingIndex !== null) {
+      updateProject(editingIndex, data);
+      setEditingIndex(null);
+    } else {
+      addProject(data);
+    }
 
     setNewProject({
       name: '',
@@ -38,8 +45,22 @@ function ProjectForm() {
     });
   };
 
+  const handleEditProject = (index) => {
+    const project = resumeData.projects[index];
+    setNewProject({
+      name: project.name || '',
+      link: project.link || '',
+      description: project.description || (project.highlights ? project.highlights.join('\n') : '')
+    });
+    setEditingIndex(index);
+  };
+
   const handleRemoveProject = (index) => {
     deleteProject(index);
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setNewProject({ name: '', link: '', description: '' });
+    }
   };
 
   return (
@@ -54,14 +75,23 @@ function ProjectForm() {
             Added Projects
           </h3>
           {resumeData.projects.map((project, index) => (
-            <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md relative pr-10">
-              <button
-                onClick={() => handleRemoveProject(index)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
-                aria-label="Remove project"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+            <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md relative pr-16 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
+              <div className="absolute top-2 right-2 flex gap-2">
+                <button
+                  onClick={() => handleEditProject(index)}
+                  className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+                  aria-label="Edit project"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleRemoveProject(index)}
+                  className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                  aria-label="Remove project"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
               <div className="font-medium text-gray-900 dark:text-white">{project.name}</div>
               {project.link && (
                 <div className="text-blue-600 dark:text-blue-400 text-sm">{project.link}</div>
@@ -117,14 +147,26 @@ function ProjectForm() {
           ></textarea>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
           <button
-            onClick={handleAddProject}
-            className="btn-primary flex items-center justify-center w-full sm:w-auto"
+            onClick={handleAddOrUpdateProject}
+            className="btn-primary flex items-center justify-center flex-1"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Project
+            {editingIndex !== null ? <Edit2 className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+            {editingIndex !== null ? 'Update Project' : 'Add Project'}
           </button>
+          
+          {editingIndex !== null && (
+            <button
+              onClick={() => {
+                setEditingIndex(null);
+                setNewProject({ name: '', link: '', description: '' });
+              }}
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition flex-1"
+            >
+              Cancel
+            </button>
+          )}
         </div>
       </div>
     </div>

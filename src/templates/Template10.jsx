@@ -1,6 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe } from 'lucide-react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template10({ data, config }) {
   const { personal, summary, experience, education, skills, projects } = data;
   const { theme } = config;
@@ -18,12 +17,13 @@ export default function Template10({ data, config }) {
           <p className="text-md font-medium text-gray-500 mt-1" style={{ color: theme.primaryColor }}>{personal.title}</p>
         </div>
 
-        <div className="space-y-4 text-sm text-gray-600 mb-10">
-          {personal.email && <div className="flex items-center gap-3"><Mail size={16}/> <span className="break-all">{personal.email}</span></div>}
-          {personal.phone && <div className="flex items-center gap-3"><Phone size={16}/> {personal.phone}</div>}
-          {personal.location && <div className="flex items-center gap-3"><MapPin size={16}/> {personal.location}</div>}
-          {personal.website && <div className="flex items-center gap-3"><Globe size={16}/> {personal.website}</div>}
-        </div>
+        <ContactLinks 
+          personal={personal} 
+          containerClass="space-y-4 text-sm text-gray-600 mb-10"
+          itemClass="flex items-center gap-3"
+          linkClass="break-all hover:underline"
+          iconSize={16}
+        />
 
         <div className="mb-10">
           <h2 className="text-lg font-bold uppercase tracking-widest text-gray-900 mb-4 border-b-2 border-gray-300 pb-1">Education</h2>
@@ -97,7 +97,10 @@ export default function Template10({ data, config }) {
             <div className="space-y-5">
               {projects.map(proj => (
                 <div key={proj.id}>
-                  <h3 className="font-bold text-md text-gray-800">{proj.name}</h3>
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h3 className="font-bold text-md text-gray-800">{proj.name}</h3>
+                    {proj.link && <a href={proj.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">{proj.link}</a>}
+                  </div>
                   <p className="text-[14px] text-gray-500 italic mb-2">{proj.description}</p>
                   <ul className="list-disc list-outside ml-4 space-y-1">
                     {proj.highlights.map((item, i) => (

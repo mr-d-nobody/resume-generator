@@ -79,7 +79,7 @@ function ResumeBuilder() {
                   <Eye className="h-4 w-4 mr-2" />
                   Preview Resume
                 </button>
-                <Link to="/download" className="btn-primary flex items-center justify-center">
+                <Link to={`/download${window.location.search}`} className="btn-primary flex items-center justify-center">
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
                 </Link>

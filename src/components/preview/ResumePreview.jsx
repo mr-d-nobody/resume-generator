@@ -24,9 +24,9 @@ function useQuery() {
 }
 
 export default function ResumePreview({ isPrintMode = false }) {
-  const { resumeData } = useResume();
+  const { resumeData, selectedTemplate } = useResume();
   const query = useQuery();
-  const templateId = query.get('template') || '1';
+  const templateId = query.get('template') || selectedTemplate || '1';
 
   // Transform form context data into our template format
   const transformedData = useMemo(() => {

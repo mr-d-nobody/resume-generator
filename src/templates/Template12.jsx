@@ -1,6 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Linkedin, Github } from 'lucide-react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template12({ data, config }) {
   const { personal, summary, experience, education, skills, projects, certifications } = data;
   const { theme, spacing } = config;
@@ -22,23 +21,13 @@ export default function Template12({ data, config }) {
         {/* Contact Info */}
         <div>
           <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">Contact</h3>
-          <div className="flex flex-col gap-3 text-sm opacity-90">
-            {personal.email && (
-              <span className="flex items-center gap-3"><Mail size={16} /> {personal.email}</span>
-            )}
-            {personal.phone && (
-              <span className="flex items-center gap-3"><Phone size={16} /> {personal.phone}</span>
-            )}
-            {personal.location && (
-              <span className="flex items-center gap-3"><MapPin size={16} /> {personal.location}</span>
-            )}
-            {personal.linkedin && (
-              <span className="flex items-center gap-3"><Linkedin size={16} /> {personal.linkedin}</span>
-            )}
-            {personal.github && (
-              <span className="flex items-center gap-3"><Github size={16} /> {personal.github}</span>
-            )}
-          </div>
+          <ContactLinks 
+            personal={personal} 
+            containerClass="flex flex-col gap-3 text-sm opacity-90"
+            itemClass="flex items-center gap-3"
+            linkClass="hover:underline"
+            iconSize={16}
+          />
         </div>
 
         {/* Education (Prominent for Fresher) */}
@@ -102,7 +91,7 @@ export default function Template12({ data, config }) {
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-900">{project.name}</h4>
                     {project.link && (
-                      <span className="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-gray-700">{project.link}</span>
+                      <a href={project.link} target="_blank" rel="noreferrer" className="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-blue-600 hover:underline">{project.link}</a>
                     )}
                   </div>
                   {project.description && (

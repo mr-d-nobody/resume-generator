@@ -1,6 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template1({ data, config }) {
   const { personal, summary, experience, education, skills, projects } = data;
   const { theme } = config;
@@ -14,12 +13,10 @@ export default function Template1({ data, config }) {
         </h1>
         <p className="text-xl text-center mt-2 text-gray-600">{personal.title}</p>
         
-        <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm">
-          {personal.email && <div className="flex items-center gap-1"><Mail size={14}/> {personal.email}</div>}
-          {personal.phone && <div className="flex items-center gap-1"><Phone size={14}/> {personal.phone}</div>}
-          {personal.location && <div className="flex items-center gap-1"><MapPin size={14}/> {personal.location}</div>}
-          {personal.website && <div className="flex items-center gap-1"><Globe size={14}/> {personal.website}</div>}
-        </div>
+        <ContactLinks 
+          personal={personal} 
+          containerClass="flex flex-wrap justify-center gap-4 mt-4 text-sm"
+        />
       </header>
 
       {/* Summary */}

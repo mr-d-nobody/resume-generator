@@ -1,5 +1,5 @@
 import React from 'react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template15({ data, config }) {
   const { personal, summary, experience, education, skills, projects } = data;
   const { theme, spacing } = config;
@@ -17,13 +17,13 @@ export default function Template15({ data, config }) {
         <div className="text-sm font-bold text-gray-700 mb-2">
           {personal.title}
         </div>
-        <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-          {personal.email && <span>{personal.email}</span>}
-          {personal.phone && <span>{personal.phone}</span>}
-          {personal.github && <span className="font-bold text-gray-900">github.com/{personal.github}</span>}
-          {personal.linkedin && <span>{personal.linkedin}</span>}
-          {personal.website && <span>{personal.website}</span>}
-        </div>
+        <ContactLinks 
+          personal={personal} 
+          containerClass="flex flex-wrap gap-4 text-xs text-gray-600"
+          itemClass="inline"
+          linkClass="hover:underline"
+          showIcons={false}
+        />
       </header>
 
       <div className="flex-1 flex flex-col" style={{ gap: spacing.sectionGap }}>
@@ -61,7 +61,7 @@ export default function Template15({ data, config }) {
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-sm text-gray-900">{project.name}</h4>
                     {project.link && (
-                      <span className="text-xs font-bold text-blue-600">[{project.link}]</span>
+                      <a href={project.link} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:underline">[{project.link}]</a>
                     )}
                   </div>
                   {project.description && (

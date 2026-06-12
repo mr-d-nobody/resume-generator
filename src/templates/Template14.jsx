@@ -1,5 +1,5 @@
 import React from 'react';
-
+import ContactLinks from '../components/common/ContactLinks';
 export default function Template14({ data, config }) {
   const { personal, summary, experience, education, skills, projects } = data;
   const { theme, spacing } = config;
@@ -13,13 +13,15 @@ export default function Template14({ data, config }) {
         <h1 className="text-4xl font-semibold mb-1" style={{ color: theme.primaryColor }}>
           {personal.name}
         </h1>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mb-3 border-b-2 pb-4" style={{ borderColor: theme.primaryColor }}>
-          {personal.email && <span>{personal.email}</span>}
-          {personal.phone && <span>| {personal.phone}</span>}
-          {personal.location && <span>| {personal.location}</span>}
-          {personal.linkedin && <span>| {personal.linkedin}</span>}
-          {personal.github && <span>| {personal.github}</span>}
-        </div>
+        <ContactLinks 
+          personal={personal} 
+          containerClass="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mb-3 border-b-2 pb-4"
+          itemClass="inline"
+          linkClass="hover:underline"
+          showIcons={false}
+          separator="|"
+          style={{ borderColor: theme.primaryColor }}
+        />
       </header>
 
       <div className="flex-1 flex flex-col" style={{ gap: spacing.sectionGap }}>
@@ -76,9 +78,10 @@ export default function Template14({ data, config }) {
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-800">{project.name}</h4>
+                    {project.link && <a href={project.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">{project.link}</a>}
                   </div>
                   {project.description && (
-                    <p className="text-sm italic text-gray-600 mb-1">{project.description} {project.link && `- ${project.link}`}</p>
+                    <p className="text-sm italic text-gray-600 mb-1">{project.description}</p>
                   )}
                   {project.highlights && project.highlights.length > 0 && (
                     <ul className="list-disc list-outside ml-4 text-sm text-gray-600 space-y-1">

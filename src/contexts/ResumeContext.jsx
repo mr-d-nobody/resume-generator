@@ -9,6 +9,7 @@ const initialResumeData = {
     phone: '',
     location: '',
     linkedin: '',
+    github: '',
     website: '',
     summary: '',
     photo: null
@@ -286,15 +287,25 @@ const ResumeContext = createContext();
 export function ResumeProvider({ children }) {
   const [state, dispatch] = useReducer(resumeReducer, initialState);
 
-  // Load dark mode preference from localStorage
+  // Load dark mode preference and saved resume data from localStorage
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode) {
+    if (savedDarkMode === 'true') {
       dispatch({ type: ACTIONS.TOGGLE_DARK_MODE });
+    }
+
+    const savedResume = localStorage.getItem('savedResume');
+    if (savedResume) {
+      try {
+        const parsed = JSON.parse(savedResume);
+        dispatch({ type: ACTIONS.LOAD_RESUME, payload: parsed });
+      } catch (err) {
+        console.error('Failed to parse saved resume from local storage', err);
+      }
     }
   }, []);
 
-  // Save dark mode preference to localStorage
+  // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('darkMode', state.isDarkMode);
     if (state.isDarkMode) {
@@ -302,7 +313,10 @@ export function ResumeProvider({ children }) {
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [state.isDarkMode]);
+
+    // Cache the entire state so the user doesn't lose it on refresh
+    localStorage.setItem('savedResume', JSON.stringify(state));
+  }, [state]);
 
   // Action creators
   const actions = {
