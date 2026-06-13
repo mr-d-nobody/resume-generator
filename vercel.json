@@ -1,28 +1,8 @@
 {
-  "builds": [
+  "rewrites": [
     {
-      "src": "backend/resume_backend/wsgi.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/_/backend/(.*)",
-      "dest": "backend/resume_backend/wsgi.py"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
