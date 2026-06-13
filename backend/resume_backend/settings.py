@@ -131,6 +131,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True # For development, allows React on 5173
 
+# Disable APPEND_SLASH to prevent Django from redirecting POST requests.
+# On Vercel, a 301 redirect turns POST into GET, which causes a 405 error.
+APPEND_SLASH = False
+
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
