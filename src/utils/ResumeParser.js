@@ -34,7 +34,9 @@ export async function extractTextFromPDF(file) {
  */
 export async function parseResumeWithAI(rawText, resumeType = 'experienced') {
   try {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    // In production (Vercel), use relative URL (same domain).
+    // In local dev, set VITE_API_URL=http://localhost:8000 in a .env file.
+    const baseUrl = import.meta.env.VITE_API_URL || '';
     // Remove trailing slash if it exists to prevent double slashes
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     
