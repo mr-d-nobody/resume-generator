@@ -8,9 +8,15 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
 """
 
 import os
+import sys
+from pathlib import Path
+
+# Add the backend directory to sys.path so Vercel can find the Django modules
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'resume_backend.settings')
 
 application = get_wsgi_application()
+app = application
