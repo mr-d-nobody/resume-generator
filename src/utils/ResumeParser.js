@@ -1,9 +1,9 @@
-// GoogleGenerativeAI dependency moved to Django backend
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 // Resolves the worker correctly in both Vite dev and production builds
+// Using the legacy worker for maximum compatibility with older mobile browsers (like iOS < 16.4)
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
+  'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
   import.meta.url
 ).toString();
 
@@ -40,7 +40,7 @@ export async function parseResumeWithAI(rawText, resumeType = 'experienced') {
     // Remove trailing slash if it exists to prevent double slashes
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     
-    const response = await fetch(`${cleanBaseUrl}/api/parse-resume/`, {
+    const response = await fetch(`${cleanBaseUrl}/api/parse-resume`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
