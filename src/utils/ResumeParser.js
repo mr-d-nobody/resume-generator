@@ -1,8 +1,9 @@
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url';
 
-// Disable the Web Worker entirely to fix iOS/Mobile WebKit compatibility issues.
-// This forces PDF.js to parse the PDF on the main thread, which is completely fine for 1-2 page resumes.
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+// Use the Web Worker again, as version 3.x ships standard JS workers
+// that are fully compatible with older mobile devices and iOS WebKit
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 /**
  * Extracts raw text from a PDF file
