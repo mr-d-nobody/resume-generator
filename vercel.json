@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/resume_backend/wsgi.py"
+      "dest": "/backend/resume_backend/wsgi.py"
     },
     {
       "handle": "filesystem"

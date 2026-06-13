@@ -1,11 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-// Resolves the worker correctly in both Vite dev and production builds
-// Using the legacy worker for maximum compatibility with older mobile browsers (like iOS < 16.4)
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Disable the Web Worker entirely to fix iOS/Mobile WebKit compatibility issues.
+// This forces PDF.js to parse the PDF on the main thread, which is completely fine for 1-2 page resumes.
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
 /**
  * Extracts raw text from a PDF file
