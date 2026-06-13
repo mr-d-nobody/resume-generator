@@ -88,8 +88,10 @@ function Download() {
             <p className="text-sm text-gray-600">Preview (This is how your resume will appear in the PDF)</p>
           </div>
           
-          <div ref={resumeRef} className="resume-container bg-white">
-            {getTemplateComponent()}
+          <div className="overflow-x-auto pb-4">
+            <div ref={resumeRef} className="resume-container bg-white w-fit mx-auto border border-gray-200 shadow-sm">
+              {getTemplateComponent()}
+            </div>
           </div>
         </div>
       </div>

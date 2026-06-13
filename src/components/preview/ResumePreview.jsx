@@ -151,13 +151,17 @@ export default function ResumePreview({ isPrintMode = false }) {
     }
   };
 
-  if (isPrintMode) {
-    return <div className="bg-white">{renderTemplate()}</div>;
-  }
-
   // A4 dimensions in pixels
   const A4_WIDTH = 794;
   const A4_HEIGHT = 1123;
+
+  if (isPrintMode) {
+    return (
+      <div className="bg-white mx-auto" style={{ width: `${A4_WIDTH}px`, minHeight: `${A4_HEIGHT}px` }}>
+        {renderTemplate()}
+      </div>
+    );
+  }
 
   return (
     <div 

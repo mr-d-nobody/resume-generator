@@ -13,6 +13,7 @@ import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download, Fil
 
 function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
+  const [mobileView, setMobileView] = useState('edit'); // 'edit' or 'preview'
 
   const tabs = [
     { id: 'personal', label: 'Personal Info', icon: User, component: PersonalInfoForm },
@@ -40,20 +41,44 @@ function ResumeBuilder() {
           </p>
         </div>
 
+        {/* Mobile View Toggle */}
+        <div className="lg:hidden flex bg-gray-200 dark:bg-gray-800 rounded-lg p-1 mb-6">
+          <button
+            onClick={() => setMobileView('edit')}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+              mobileView === 'edit' 
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow' 
+                : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            Edit Resume
+          </button>
+          <button
+            onClick={() => setMobileView('preview')}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+              mobileView === 'preview' 
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow' 
+                : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            Live Preview
+          </button>
+        </div>
+
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Form Section */}
-          <div className="space-y-6">
+          <div className={`space-y-6 ${mobileView !== 'edit' ? 'hidden lg:block' : ''}`}>
             {/* Tab Navigation */}
             <div className="card p-3 mb-4">
-              <nav className="flex flex-wrap gap-2" aria-label="Resume sections">
+              <nav className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide whitespace-nowrap" aria-label="Resume sections" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-colors w-[calc(33%-0.5rem)] sm:w-auto ${
+                      className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors shrink-0 ${
                         activeTab === tab.id
                           ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                           : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -88,7 +113,7 @@ function ResumeBuilder() {
           </div>
 
           {/* Preview Section */}
-          <div className="lg:sticky lg:top-8">
+          <div className={`lg:sticky lg:top-8 ${mobileView !== 'preview' ? 'hidden lg:block' : ''}`}>
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
