@@ -1,4 +1,4 @@
-﻿annotated-types==0.7.0
+annotated-types==0.7.0
 asgiref==3.11.1
 certifi==2026.5.20
 cffi==2.0.0
