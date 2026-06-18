@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 export default function Template2({ data, config }) {
-  const { personal, summary, experience, education, skills } = data;
+  const { personal, summary, experience, education, skills, customSections } = data;
   const { theme } = config;
 
   return (
@@ -49,7 +50,7 @@ export default function Template2({ data, config }) {
                   </div>
                   <ul className="list-none space-y-2 mt-3">
                     {exp.highlights.map((item, i) => (
-                      <li key={i} className="text-[14.5px] text-gray-700 relative pl-4 before:content-['•'] before:absolute before:left-0" style={{ beforeColor: theme.primaryColor }}>{item}</li>
+                      <li key={i} className="text-[14.5px] text-gray-700 relative pl-4 before:content-['*'] before:absolute before:left-0" style={{ beforeColor: theme.primaryColor }}>{item}</li>
                     ))}
                   </ul>
                 </div>
@@ -90,7 +91,15 @@ export default function Template2({ data, config }) {
           )}
         </div>
 
+        <CustomSections
+          sections={customSections}
+          className="mb-0"
+          headingClassName="text-2xl font-bold uppercase tracking-wider mb-4 text-gray-800"
+        />
+
       </div>
     </div>
   );
 }
+
+

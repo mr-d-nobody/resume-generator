@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 export default function Template1({ data, config }) {
-  const { personal, summary, experience, education, skills, projects } = data;
+  const { personal, summary, experience, education, skills, projects, customSections } = data;
   const { theme } = config;
 
   return (
@@ -34,7 +35,7 @@ export default function Template1({ data, config }) {
             <div key={exp.id}>
               <div className="flex justify-between items-baseline mb-1">
                 <h3 className="font-bold text-md">{exp.position}</h3>
-                <span className="text-sm font-semibold">{exp.startDate} – {exp.endDate}</span>
+                <span className="text-sm font-semibold">{exp.startDate} - {exp.endDate}</span>
               </div>
               <div className="flex justify-between items-baseline mb-2">
                 <span className="text-sm italic">{exp.company}</span>
@@ -81,7 +82,7 @@ export default function Template1({ data, config }) {
             <div key={edu.id}>
               <div className="flex justify-between items-baseline mb-1">
                 <h3 className="font-bold text-md">{edu.degree}</h3>
-                <span className="text-sm font-semibold">{edu.startDate} – {edu.endDate}</span>
+                <span className="text-sm font-semibold">{edu.startDate} - {edu.endDate}</span>
               </div>
               <div className="flex justify-between items-baseline mb-1">
                 <span className="text-sm italic">{edu.institution}</span>
@@ -112,6 +113,13 @@ export default function Template1({ data, config }) {
           ))}
         </div>
       </section>
+
+      <CustomSections
+        sections={customSections}
+        headingStyle={{ color: theme.primaryColor, borderColor: theme.primaryColor }}
+      />
     </div>
   );
 }
+
+

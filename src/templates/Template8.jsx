@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 export default function Template8({ data, config }) {
-  const { personal, experience, education, skills, projects } = data;
+  const { personal, experience, education, skills, projects, customSections } = data;
   const { theme } = config;
 
   return (
@@ -29,7 +30,7 @@ export default function Template8({ data, config }) {
                 {Object.entries(skills).map(([cat, items]) => (
                   <div key={cat} className="mb-3">
                     <h3 className="font-semibold text-gray-700 capitalize">{cat}</h3>
-                    <div className="text-gray-500">{items.join(' • ')}</div>
+                    <div className="text-gray-500">{items.join(' * ')}</div>
                   </div>
                 ))}
               </div>
@@ -63,7 +64,7 @@ export default function Template8({ data, config }) {
                       <h3 className="font-bold text-[15px] text-gray-800">{exp.position}</h3>
                       <span className="text-gray-400 font-medium text-xs">{exp.startDate} - {exp.endDate}</span>
                     </div>
-                    <div className="font-medium text-gray-600 mb-2">{exp.company} • {exp.location}</div>
+                    <div className="font-medium text-gray-600 mb-2">{exp.company} * {exp.location}</div>
                     <ul className="list-disc list-outside ml-4 space-y-1 text-gray-600">
                       {exp.highlights.map((item, i) => <li key={i}>{item}</li>)}
                     </ul>
@@ -92,8 +93,18 @@ export default function Template8({ data, config }) {
               </div>
             </>
           )}
+
+          <CustomSections
+            sections={customSections}
+            className="mb-0"
+            headingClassName="font-bold uppercase tracking-widest text-gray-400 mb-4"
+            itemClassName="text-xs text-gray-600"
+            paragraphClassName="text-xs text-gray-600 leading-relaxed"
+          />
         </div>
       </div>
     </div>
   );
 }
+
+

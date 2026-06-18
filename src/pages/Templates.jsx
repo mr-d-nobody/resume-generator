@@ -32,7 +32,7 @@ function Templates() {
   const transformedData = useMemo(() => {
     if (!hasData) return null;
     
-    const { personalInfo, experience, education, skills, certifications, achievements, projects } = resumeData;
+    const { personalInfo, experience, education, skills, certifications, achievements, projects, customSections } = resumeData;
 
     const safeArray = (arr) => Array.isArray(arr) ? arr : [];
 
@@ -134,6 +134,14 @@ function Templates() {
         description: safeString(ach?.organization),
         link: '',
         highlights: ach?.description ? [safeString(ach.description)] : []
+      })),
+      customSections: safeArray(customSections).map(section => ({
+        id: section?.id || Math.random().toString(),
+        title: safeString(section?.title) || 'Custom Section',
+        description: safeString(section?.description),
+        items: Array.isArray(section?.items)
+          ? section.items.filter(item => typeof item === 'string')
+          : safeString(section?.description).split('\n').filter(Boolean)
       }))
     };
   }, [resumeData, hasData]);

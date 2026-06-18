@@ -7,9 +7,10 @@ import SkillsForm from '../components/forms/SkillsForm';
 import CertificationForm from '../components/forms/CertificationForm';
 import AchievementForm from '../components/forms/AchievementForm';
 import ProjectForm from '../components/forms/ProjectForm';
+import CustomSectionForm from '../components/forms/CustomSectionForm';
 import SummaryForm from '../components/forms/SummaryForm';
 import ResumePreview from '../components/preview/ResumePreview';
-import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download, FileText, FolderGit2 } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download, FileText, FolderGit2, Rows3 } from 'lucide-react';
 
 function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -24,6 +25,7 @@ function ResumeBuilder() {
     { id: 'projects', label: 'Projects', icon: FolderGit2, component: ProjectForm },
     { id: 'certifications', label: 'Certifications', icon: Award, component: CertificationForm },
     { id: 'achievements', label: 'Achievements', icon: Trophy, component: AchievementForm },
+    { id: 'custom', label: 'Custom', icon: Rows3, component: CustomSectionForm },
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
@@ -71,21 +73,21 @@ function ResumeBuilder() {
           <div className={`space-y-6 ${mobileView !== 'edit' ? 'hidden lg:block' : ''}`}>
             {/* Tab Navigation */}
             <div className="card p-3 mb-4">
-              <nav className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide whitespace-nowrap" aria-label="Resume sections" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+              <nav className="flex flex-wrap gap-2" aria-label="Resume sections">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors shrink-0 ${
+                      className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                         activeTab === tab.id
                           ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                           : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                     >
-                      <Icon className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">{tab.label}</span>
+                      <Icon className="h-4 w-4 mr-2 shrink-0" />
+                      <span>{tab.label}</span>
                     </button>
                   );
                 })}

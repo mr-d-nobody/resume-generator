@@ -40,7 +40,9 @@ def parse_resume(request):
         2. For "experience.description", combine bullet points into a single string separated by newlines (\\n).
         3. For "skills", try to categorize them logically (e.g., "Languages", "Tools", "Frameworks"). If uncertain, use "Technical Skills".
         4. Make sure dates are formatted cleanly (e.g., "Jan 2020", "2021", "Present").
-        5. RETURN ONLY VALID JSON. No markdown backticks, no explanatory text.
+        5. If the resume contains useful sections that do not fit the standard fields, preserve them in "customSections" with the original or best heading. Examples: "Competitive Programming", "Competitive & Analytical", "Leadership", "Volunteer Work", "Publications", "Open Source", "Interests".
+        6. For "customSections.description", combine bullet points into a single string separated by newlines (\\n). The user can rename the heading later.
+        7. RETURN ONLY VALID JSON. No markdown backticks, no explanatory text.
         {fresher_rules}
         
         
@@ -100,6 +102,20 @@ def parse_resume(request):
                     "name": "",
                     "issuer": "",
                     "date": ""
+                }}
+            ],
+            "achievements": [
+                {{
+                    "title": "",
+                    "organization": "",
+                    "date": "",
+                    "description": ""
+                }}
+            ],
+            "customSections": [
+                {{
+                    "title": "",
+                    "description": ""
                 }}
             ]
         }}

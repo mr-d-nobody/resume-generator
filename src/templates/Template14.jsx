@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 export default function Template14({ data, config }) {
-  const { personal, summary, experience, education, skills, projects } = data;
+  const { personal, summary, experience, education, skills, projects, customSections } = data;
   const { theme, spacing } = config;
 
   return (
@@ -121,7 +122,14 @@ export default function Template14({ data, config }) {
           </section>
         )}
 
+        <CustomSections
+          sections={customSections}
+          headingClassName="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900"
+        />
+
       </div>
     </div>
   );
 }
+
+

@@ -1,8 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 
 export default function Template9({ data, config }) {
-  const { personal, summary, experience, education, skills, certifications } = data;
+  const { personal, summary, experience, education, skills, certifications, customSections } = data;
   const { theme } = config;
 
   return (
@@ -16,7 +17,7 @@ export default function Template9({ data, config }) {
           itemClass="inline"
           linkClass="hover:underline"
           showIcons={false}
-          separator="•"
+          separator="*"
         />
       </header>
 
@@ -42,7 +43,7 @@ export default function Template9({ data, config }) {
                   </div>
                   <div className="flex justify-between items-end mb-3">
                     <span className="text-sm italic">{exp.position}</span>
-                    <span className="text-xs italic text-gray-500">{exp.startDate} – {exp.endDate}</span>
+                    <span className="text-xs italic text-gray-500">{exp.startDate} - {exp.endDate}</span>
                   </div>
                   <ul className="list-[square] list-outside ml-4 space-y-1 text-sm text-gray-800">
                     {exp.highlights.map((item, i) => <li key={i}>{item}</li>)}
@@ -65,7 +66,7 @@ export default function Template9({ data, config }) {
                   <div key={edu.id} className="mb-4">
                     <h3 className="font-bold text-sm uppercase tracking-wider mb-1">{edu.institution}</h3>
                     <p className="text-sm italic mb-1">{edu.degree}</p>
-                    <p className="text-xs text-gray-500">{edu.startDate} – {edu.endDate}</p>
+                    <p className="text-xs text-gray-500">{edu.startDate} - {edu.endDate}</p>
                   </div>
                 ))}
               </div>
@@ -89,11 +90,19 @@ export default function Template9({ data, config }) {
               <div className="h-px bg-black w-full"></div>
             </div>
             <div className="text-sm leading-relaxed text-center px-8">
-              {Object.values(skills).flat().join(' • ')}
+              {Object.values(skills).flat().join(' * ')}
             </div>
           </section>
         )}
+
+        <CustomSections
+          sections={customSections}
+          headingClassName="text-lg font-bold uppercase tracking-[0.15em] mb-4 border-b pb-1"
+          headingStyle={{ color: theme.primaryColor, borderColor: theme.primaryColor }}
+        />
       </div>
     </div>
   );
 }
+
+

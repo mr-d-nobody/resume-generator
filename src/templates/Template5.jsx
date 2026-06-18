@@ -1,8 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 
 export default function Template5({ data, config }) {
-  const { personal, summary, experience, education, skills, projects } = data;
+  const { personal, summary, experience, education, skills, projects, customSections } = data;
   const { theme } = config;
 
   return (
@@ -85,8 +86,17 @@ export default function Template5({ data, config }) {
               ))}
             </section>
           )}
+
+          <CustomSections
+            sections={customSections}
+            headingClassName="text-lg font-bold uppercase border-b-2 border-gray-800 mb-2"
+            itemClassName="text-xs"
+            paragraphClassName="text-xs leading-relaxed"
+          />
         </div>
       </div>
     </div>
   );
 }
+
+

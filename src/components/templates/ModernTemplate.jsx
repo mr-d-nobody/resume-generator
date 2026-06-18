@@ -4,7 +4,7 @@ import React from 'react';
  * Modern resume template
  */
 const ModernTemplate = ({ resumeData }) => {
-  const { personalInfo, experience, education, skills } = resumeData;
+  const { personalInfo, experience, education, skills, customSections } = resumeData;
 
   return (
     <div className="resume-template p-8 max-w-[800px] mx-auto bg-white text-gray-800 print:bg-white print:text-gray-800">
@@ -93,6 +93,27 @@ const ModernTemplate = ({ resumeData }) => {
           </div>
         </section>
       )}
+
+      {customSections && customSections.length > 0 && customSections.map((section, index) => {
+        const items = (section.description || '').split('\n').filter(Boolean);
+
+        return (
+          <section key={section.id || index} className="mb-6">
+            <h2 className="text-lg font-semibold border-b border-gray-300 pb-1 mb-2">
+              {section.title || 'Custom Section'}
+            </h2>
+            {items.length > 1 ? (
+              <ul className="list-disc list-outside ml-5 space-y-1 text-sm">
+                {items.map((item, itemIndex) => (
+                  <li key={itemIndex}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm whitespace-pre-line">{section.description}</p>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 };

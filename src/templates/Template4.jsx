@@ -1,8 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 
 export default function Template4({ data, config }) {
-  const { personal, summary, experience, education, skills, projects } = data;
+  const { personal, summary, experience, education, skills, projects, customSections } = data;
   const { theme } = config;
 
   return (
@@ -84,7 +85,18 @@ export default function Template4({ data, config }) {
             </section>
           )}
         </div>
+
+        <div className="col-span-12">
+          <CustomSections
+            sections={customSections}
+            headingClassName="text-xl font-bold bg-gray-200 p-2 mb-4"
+            headingPrefix="<"
+            headingSuffix=">"
+          />
+        </div>
       </main>
     </div>
   );
 }
+
+

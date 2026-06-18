@@ -20,6 +20,7 @@ const initialResumeData = {
   projects: [],
   certifications: [],
   achievements: [],
+  customSections: [],
   languages: []
 };
 
@@ -31,7 +32,7 @@ const initialState = {
   customization: {
     fontFamily: 'Inter',
     colorTheme: 'blue',
-    sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements']
+    sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements', 'customSections']
   },
   isDarkMode: true
 };
@@ -55,6 +56,9 @@ const ACTIONS = {
   ADD_ACHIEVEMENT: 'ADD_ACHIEVEMENT',
   UPDATE_ACHIEVEMENT: 'UPDATE_ACHIEVEMENT',
   DELETE_ACHIEVEMENT: 'DELETE_ACHIEVEMENT',
+  ADD_CUSTOM_SECTION: 'ADD_CUSTOM_SECTION',
+  UPDATE_CUSTOM_SECTION: 'UPDATE_CUSTOM_SECTION',
+  DELETE_CUSTOM_SECTION: 'DELETE_CUSTOM_SECTION',
   SET_TEMPLATE: 'SET_TEMPLATE',
   SET_TEMPLATE_CATEGORY: 'SET_TEMPLATE_CATEGORY',
   UPDATE_CUSTOMIZATION: 'UPDATE_CUSTOMIZATION',
@@ -230,6 +234,35 @@ function resumeReducer(state, action) {
         }
       };
 
+    case ACTIONS.ADD_CUSTOM_SECTION:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          customSections: [...(state.resumeData.customSections || []), action.payload]
+        }
+      };
+
+    case ACTIONS.UPDATE_CUSTOM_SECTION:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          customSections: (state.resumeData.customSections || []).map((section, index) =>
+            index === action.payload.index ? { ...section, ...action.payload.data } : section
+          )
+        }
+      };
+
+    case ACTIONS.DELETE_CUSTOM_SECTION:
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          customSections: (state.resumeData.customSections || []).filter((_, index) => index !== action.payload)
+        }
+      };
+
     case ACTIONS.SET_TEMPLATE:
       return {
         ...state,
@@ -337,6 +370,9 @@ export function ResumeProvider({ children }) {
     addAchievement: (data) => dispatch({ type: ACTIONS.ADD_ACHIEVEMENT, payload: data }),
     updateAchievement: (index, data) => dispatch({ type: ACTIONS.UPDATE_ACHIEVEMENT, payload: { index, data } }),
     deleteAchievement: (index) => dispatch({ type: ACTIONS.DELETE_ACHIEVEMENT, payload: index }),
+    addCustomSection: (data) => dispatch({ type: ACTIONS.ADD_CUSTOM_SECTION, payload: data }),
+    updateCustomSection: (index, data) => dispatch({ type: ACTIONS.UPDATE_CUSTOM_SECTION, payload: { index, data } }),
+    deleteCustomSection: (index) => dispatch({ type: ACTIONS.DELETE_CUSTOM_SECTION, payload: index }),
     setTemplate: (template) => dispatch({ type: ACTIONS.SET_TEMPLATE, payload: template }),
     setTemplateCategory: (category) => dispatch({ type: ACTIONS.SET_TEMPLATE_CATEGORY, payload: category }),
     updateCustomization: (customization) => dispatch({ type: ACTIONS.UPDATE_CUSTOMIZATION, payload: customization }),

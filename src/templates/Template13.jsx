@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
+import CustomSections from '../components/common/CustomSections';
 export default function Template13({ data, config }) {
-  const { personal, summary, experience, education, skills, projects } = data;
+  const { personal, summary, experience, education, skills, projects, customSections } = data;
   const { theme, spacing } = config;
 
   return (
@@ -25,7 +26,7 @@ export default function Template13({ data, config }) {
           itemClass="inline"
           linkClass="hover:underline"
           showIcons={false}
-          separator="•"
+          separator="*"
         />
       </header>
 
@@ -110,7 +111,15 @@ export default function Template13({ data, config }) {
           </section>
         )}
 
+        <CustomSections
+          sections={customSections}
+          headingClassName="text-xl font-bold uppercase tracking-widest mb-4"
+          headingStyle={{ color: theme.primaryColor }}
+        />
+
       </div>
     </div>
   );
 }
+
+

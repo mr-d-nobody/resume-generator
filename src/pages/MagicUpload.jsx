@@ -50,7 +50,8 @@ export default function MagicUpload() {
           skills: parsedData.skills || [],
           projects: parsedData.projects || [],
           certifications: parsedData.certifications || [],
-          achievements: [], // Optional
+          achievements: parsedData.achievements || [],
+          customSections: parsedData.customSections || [],
           languages: []
         }
       };

@@ -30,7 +30,7 @@ export default function ResumePreview({ isPrintMode = false }) {
 
   // Transform form context data into our template format
   const transformedData = useMemo(() => {
-    const { personalInfo, experience, education, skills, certifications, achievements, projects } = resumeData;
+    const { personalInfo, experience, education, skills, certifications, achievements, projects, customSections } = resumeData;
 
     // Group skills by category
     const groupedSkills = skills.reduce((acc, skill) => {
@@ -105,6 +105,14 @@ export default function ResumePreview({ isPrintMode = false }) {
         description: ach.organization || '',
         link: '',
         highlights: ach.description ? [ach.description] : []
+      })),
+      customSections: (customSections || []).map(section => ({
+        id: section.id || Math.random().toString(),
+        title: section.title || 'Custom Section',
+        description: section.description || '',
+        items: Array.isArray(section.items)
+          ? section.items
+          : (section.description || '').split('\n').filter(Boolean)
       }))
     };
   }, [resumeData]);
