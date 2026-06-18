@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
 import { extractTextFromPDF, parseResumeWithAI } from '../utils/ResumeParser';
 import { UploadCloud, Sparkles, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { DEFAULT_TEMPLATE_CATEGORY, TEMPLATE_CATEGORIES, getTemplateCategory } from '../data/templateCategories';
 
 export default function MagicUpload() {
-  const [file, setFile] = useState(null);
   const [status, setStatus] = useState('idle'); // idle, reading, parsing, success, error
   const [errorMessage, setErrorMessage] = useState('');
-  const [resumeType, setResumeType] = useState('experienced'); // 'fresher' or 'experienced'
+  const [selectedCategory, setSelectedCategory] = useState(DEFAULT_TEMPLATE_CATEGORY);
   
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
-  const { loadResume } = useResume();
+  const { loadResume, setTemplateCategory } = useResume();
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -22,7 +22,6 @@ export default function MagicUpload() {
         setStatus('error');
         return;
       }
-      setFile(selectedFile);
       processFile(selectedFile);
     }
   };
@@ -36,7 +35,8 @@ export default function MagicUpload() {
       const rawText = await extractTextFromPDF(selectedFile);
       
       setStatus('parsing');
-      const parsedData = await parseResumeWithAI(rawText, resumeType);
+      const category = getTemplateCategory(selectedCategory);
+      const parsedData = await parseResumeWithAI(rawText, category.parserType);
       
       // We have the structured data! Now load it into our context.
       setStatus('success');
@@ -56,7 +56,11 @@ export default function MagicUpload() {
         }
       };
       
-      loadResume(payload);
+      loadResume({
+        ...payload,
+        templateCategory: category.id
+      });
+      setTemplateCategory(category.id);
       
       // Redirect to templates page to see the magic
       setTimeout(() => {
@@ -85,24 +89,30 @@ export default function MagicUpload() {
           </p>
         </div>
 
-        {/* Experience Level Toggle */}
-        <div className="mb-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-md mx-auto">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-center">What is your experience level?</p>
-          <div className="flex rounded-lg overflow-hidden border border-blue-500">
-            <button 
-              onClick={() => setResumeType('fresher')}
-              className={`flex-1 py-2 text-sm font-medium transition ${resumeType === 'fresher' ? 'bg-blue-500 text-white' : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'}`}
-            >
-              Fresher / Entry Level
-            </button>
-            <button 
-              onClick={() => setResumeType('experienced')}
-              className={`flex-1 py-2 text-sm font-medium transition ${resumeType === 'experienced' ? 'bg-blue-500 text-white' : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'}`}
-            >
-              Experienced
-            </button>
+        {/* Template Category Selection */}
+        <div className="mb-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-center">Choose your fresher / intern template category</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {TEMPLATE_CATEGORIES.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedCategory(category.id)}
+                disabled={status !== 'idle' && status !== 'error'}
+                className={`text-left rounded-lg border p-4 transition ${
+                  selectedCategory === category.id
+                    ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-sm dark:bg-blue-900/30 dark:text-blue-100'
+                    : 'border-gray-200 bg-transparent text-gray-700 hover:border-blue-300 hover:bg-blue-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
+                } ${status !== 'idle' && status !== 'error' ? 'cursor-not-allowed opacity-70' : ''}`}
+              >
+                <span className="block text-sm font-semibold">{category.label}</span>
+                <span className="mt-1 block text-xs opacity-80">{category.description}</span>
+              </button>
+            ))}
           </div>
-          {resumeType === 'fresher' && <p className="text-xs text-blue-600 mt-2 text-center">AI will aggressively condense your data to fit 1 page.</p>}
+          <p className="text-xs text-blue-600 dark:text-blue-300 mt-3 text-center">
+            Templates will be filtered to this category after upload. Empty categories are fine while we add more designs.
+          </p>
         </div>
 
         {/* Upload Zone */}
@@ -162,7 +172,6 @@ export default function MagicUpload() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setStatus('idle');
-                  setFile(null);
                 }}
                 className="px-4 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 transition"
               >

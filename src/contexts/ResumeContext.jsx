@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { DEFAULT_TEMPLATE_CATEGORY } from '../data/templateCategories';
 
 // Initial resume data structure
 const initialResumeData = {
@@ -28,7 +29,7 @@ const initialResumeData = {
 const initialState = {
   resumeData: initialResumeData,
   selectedTemplate: 'modern',
-  templateCategory: 'without-photo',
+  templateCategory: DEFAULT_TEMPLATE_CATEGORY,
   customization: {
     fontFamily: 'Inter',
     colorTheme: 'blue',

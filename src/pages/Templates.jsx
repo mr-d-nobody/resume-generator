@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Check, UploadCloud } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
+import { TEMPLATE_CATEGORIES } from '../data/templateCategories';
 
 import Template1 from '../templates/Template1';
 import Template2 from '../templates/Template2';
@@ -22,9 +23,10 @@ import templateConfig from '../data/template-config.json';
   
 function Templates() {
   const base = import.meta.env.BASE_URL;
-  const navigate = useNavigate();
-  const { resumeData, setTemplate } = useResume();
-  const [filter, setFilter] = useState('All');
+  const { resumeData, setTemplate, templateCategory, setTemplateCategory } = useResume();
+  const categoryIds = TEMPLATE_CATEGORIES.map((category) => category.id);
+  const initialFilter = categoryIds.includes(templateCategory) ? templateCategory : 'All';
+  const [filter, setFilter] = useState(initialFilter);
 
   const hasData = resumeData?.personalInfo?.firstName || resumeData?.experience?.length > 0;
 
@@ -67,7 +69,8 @@ function Templates() {
         location: safeString(personalInfo?.location),
         website: safeString(personalInfo?.website),
         linkedin: safeString(personalInfo?.linkedin),
-        github: safeString(personalInfo?.github)
+        github: safeString(personalInfo?.github),
+        photo: personalInfo?.photo || null
       },
       summary: safeString(personalInfo?.summary),
       experience: safeArray(experience).map(exp => {
@@ -174,7 +177,7 @@ function Templates() {
       super(props);
       this.state = { hasError: false };
     }
-    static getDerivedStateFromError(error) {
+    static getDerivedStateFromError() {
       return { hasError: true };
     }
     render() {
@@ -187,122 +190,50 @@ function Templates() {
 
   const templates = [
     {
-      id: '1',
-      name: 'The Classic',
-      description: 'A highly readable, corporate-standard layout.',
-      image: `${base}template-1-preview.jpg`,
-      features: ['Single-column', 'Traditional serif font', 'ATS favorite']
-    },
-    {
-      id: '2',
-      name: 'Modern Minimalist',
-      description: 'Sans-serif, single-column with a subtle accent color.',
-      image: `${base}template-2-preview.jpg`,
-      features: ['Sans-serif', 'Subtle accent color', 'Ample whitespace']
-    },
-    {
-      id: '3',
-      name: 'The Executive',
-      description: 'Two-tone typography focused on impact.',
-      image: `${base}template-3-preview.jpg`,
-      features: ['Two-column', 'Elegant typography', 'Strong horizontal dividers']
-    },
-    {
-      id: '4',
-      name: 'Tech Pro',
-      description: 'Clean headers with a distinct primary color for engineers.',
-      image: `${base}template-4-preview.jpg`,
-      features: ['Monospace style', 'Clean section headers', 'Bullet-point focused']
-    },
-    {
-      id: '5',
-      name: 'Academic',
-      description: 'High information density, tailored for research/academic.',
-      image: `${base}template-5-preview.jpg`,
-      features: ['High density', 'Two-column', 'Academic styling']
-    },
-    {
-      id: '6',
-      name: 'Creative',
-      description: 'Modern right-aligned sidebar layout.',
-      image: `${base}template-6-preview.jpg`,
-      features: ['Right sidebar', 'Modern typography', 'Visual appeal']
-    },
-    {
-      id: '7',
-      name: 'Startup',
-      description: 'Bold headers, tight spacing, highly scannable.',
-      image: `${base}template-7-preview.jpg`,
-      features: ['Bold inverted headers', 'Tight spacing', 'Highly scannable']
-    },
-    {
-      id: '8',
-      name: 'Analyst',
-      description: 'Data-focused layout, distinct project separation.',
-      image: `${base}template-8-preview.jpg`,
-      features: ['Data-focused', 'Distinct separation', 'Left-side metrics']
-    },
-    {
-      id: '9',
-      name: 'Consultant',
-      description: 'Very structured, traditional with modern font pairings.',
-      image: `${base}template-9-preview.jpg`,
-      features: ['Centered headers', 'Structured layout', 'Traditional pairing']
-    },
-    {
-      id: '10',
-      name: 'Hybrid',
-      description: 'Professional side-column variant.',
-      image: `${base}template-10-preview.jpg`,
-      features: ['Left side-column', 'Standard colors', 'Professional']
-    },
-    {
       id: '11',
-      name: 'Graduate Standard',
-      description: 'Classic format prioritizing education and academic projects.',
+      name: 'Campus Standard',
+      description: 'Classic fresher format prioritizing education, academic projects, and skills.',
       image: `${base}template-11-preview.jpg`,
-      features: ['Fresher focused', 'Education first', 'Academic projects']
+      features: ['No photo', 'Education first', 'Academic projects'],
+      category: 'starter-no-photo-no-experience'
     },
     {
       id: '12',
-      name: 'Entry Level Modern',
-      description: 'Two-column design emphasizing skills and early experience.',
+      name: 'Internship Modern',
+      description: 'Two-column fresher layout emphasizing skills, projects, and early experience.',
       image: `${base}template-12-preview.jpg`,
-      features: ['Two-column', 'Skills emphasis', 'Modern look']
+      features: ['No photo', 'Skills emphasis', 'Internship ready'],
+      category: 'starter-no-photo-experience'
     },
     {
       id: '13',
       name: 'Campus Creative',
-      description: 'Dynamic header and grid layout for standout portfolios.',
+      description: 'Dynamic project-led layout for freshers building a standout portfolio.',
       image: `${base}template-13-preview.jpg`,
-      features: ['Grid layout', 'Creative header', 'Distinctive']
+      features: ['No photo', 'Project grid', 'Creative header'],
+      category: 'starter-no-photo-no-experience'
     },
     {
       id: '14',
-      name: 'The Intern',
-      description: 'Compact and structured format to fit entry-level details.',
+      name: 'Clean Intern',
+      description: 'Compact and structured format for education, skills, and starter projects.',
       image: `${base}template-14-preview.jpg`,
-      features: ['Compact design', 'Structured', 'High density']
+      features: ['No photo', 'Compact design', 'Structured'],
+      category: 'starter-no-photo-no-experience'
     },
     {
       id: '15',
       name: 'Junior Developer',
-      description: 'Terminal-inspired monospace format for tech graduates.',
+      description: 'Terminal-inspired monospace format for tech graduates with internships or early experience.',
       image: `${base}template-15-preview.jpg`,
-      features: ['Monospace font', 'Tech-focused', 'GitHub emphasis'],
-      category: 'Fresher'
+      features: ['No photo', 'Tech-focused', 'Experience section'],
+      category: 'starter-no-photo-experience'
     }
-  ].map(t => {
-    // Dynamically assign categories if not hardcoded
-    if (!t.category) {
-      if (['1', '3', '8', '9', '10'].includes(t.id)) t.category = 'Professional';
-      else if (['2', '6', '7', '13'].includes(t.id)) t.category = 'Creative';
-      else t.category = 'Fresher';
-    }
-    return t;
-  });
+  ];
 
   const filteredTemplates = filter === 'All' ? templates : templates.filter(t => t.category === filter);
+  const selectedFilterLabel = TEMPLATE_CATEGORIES.find((category) => category.id === filter)?.label;
+  const filters = [{ id: 'All', label: 'All Freshers' }, ...TEMPLATE_CATEGORIES];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
@@ -334,32 +265,45 @@ function Templates() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            {hasData ? "✨ Your Resume on 15 Templates" : "Resume Templates"}
+            {hasData ? "Your Resume on Fresher Templates" : "Fresher & Intern Templates"}
           </h1>
           <p className="max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-300">
-            {hasData ? "Browse how your extracted data looks across all our professional templates." : "Choose from our professionally designed templates to create your perfect resume."}
+            {hasData ? "Browse how your extracted data looks across fresher and intern templates." : "Choose from fresher and intern templates designed for early-career resumes."}
           </p>
         </div>
 
         {/* Filter Bar */}
         <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {['All', 'Professional', 'Creative', 'Fresher'].map(cat => (
+          {filters.map(cat => (
             <button
-              key={cat}
-              onClick={() => setFilter(cat)}
+              key={cat.id}
+              onClick={() => {
+                setFilter(cat.id);
+                if (cat.id !== 'All') setTemplateCategory(cat.id);
+              }}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                filter === cat 
+                filter === cat.id 
                   ? 'bg-blue-600 text-white shadow-md' 
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              {cat === 'Fresher' ? 'Fresher & Academic' : cat}
+              {cat.label}
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 mb-12">
-          {filteredTemplates.map((template) => (
+        {filteredTemplates.length === 0 ? (
+          <div className="mb-12 rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              No templates in {selectedFilterLabel || 'this category'} yet
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+              This category is ready in the flow, but we have not added matching templates yet. Pick another fresher category for now.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 mb-12">
+            {filteredTemplates.map((template) => (
             <div key={template.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow flex flex-col">
               
               {/* Template Preview Area */}
@@ -422,8 +366,9 @@ function Templates() {
                 </Link>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
       </div>
     </div>
