@@ -2,8 +2,9 @@ from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework import status
-import google.generativeai as genai
-from google.api_core.exceptions import InvalidArgument, PermissionDenied, ResourceExhausted
+from google import genai
+from google.genai import errors as genai_errors
+from google.genai import types as genai_types
 import os
 import json
 
@@ -76,7 +77,7 @@ def parse_resume(request):
         return Response({"error": "Gemini API key is not configured on the server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     try:
-        genai.configure(api_key=api_key)
+        client = genai.Client(api_key=api_key)
         
         fresher_rules = ""
         if resume_type == 'fresher':
@@ -133,21 +134,26 @@ def parse_resume(request):
 
         for model_name in model_names:
             try:
-                model = genai.GenerativeModel(model_name)
-                response = model.generate_content(
-                    prompt,
-                    generation_config=genai.GenerationConfig(
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=genai_types.GenerateContentConfig(
                         response_mime_type="application/json",
                         temperature=0.1,
-                    )
+                    ),
                 )
                 break
-            except ResourceExhausted as exc:
-                quota_error = exc
+            except genai_errors.ClientError as exc:
+                if exc.code == 429:
+                    quota_error = exc
+                else:
+                    raise
 
         if response is None:
-            raise quota_error or ResourceExhausted(
-                "No Gemini model with available quota is configured."
+            if quota_error:
+                raise quota_error
+            raise genai_errors.ClientError(
+                429, "No Gemini model with available quota is configured."
             )
         
         text_response = response.text
@@ -156,33 +162,39 @@ def parse_resume(request):
         
         return Response(parsed_data, status=status.HTTP_200_OK)
 
-    except ResourceExhausted:
-        return Response(
-            {
-                "error": (
-                    "Gemini API quota has been reached. Wait for the quota to reset "
-                    "or configure a Gemini API key with available quota, then try again."
-                ),
-                "code": "ai_quota_exceeded",
-            },
-            status=status.HTTP_429_TOO_MANY_REQUESTS,
-        )
-    except PermissionDenied:
-        return Response(
-            {
-                "error": "The configured Gemini API key is invalid or does not have permission to use this model.",
-                "code": "ai_permission_denied",
-            },
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-    except InvalidArgument as exc:
-        return Response(
-            {
-                "error": f"Gemini could not process this resume: {exc}",
-                "code": "ai_invalid_request",
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    except genai_errors.ClientError as exc:
+        if exc.code == 429:
+            return Response(
+                {
+                    "error": (
+                        "Gemini API quota has been reached. Wait for the quota to reset "
+                        "or configure a Gemini API key with available quota, then try again."
+                    ),
+                    "code": "ai_quota_exceeded",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        elif exc.code == 403:
+            return Response(
+                {
+                    "error": "The configured Gemini API key is invalid or does not have permission to use this model.",
+                    "code": "ai_permission_denied",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        elif exc.code == 400:
+            return Response(
+                {
+                    "error": f"Gemini could not process this resume: {exc}",
+                    "code": "ai_invalid_request",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return Response(
+                {"error": f"Gemini API error: {exc}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
     except json.JSONDecodeError:
         return Response({"error": "Failed to parse AI response into valid JSON."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
