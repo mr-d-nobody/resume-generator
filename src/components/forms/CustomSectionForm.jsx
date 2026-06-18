@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { Edit2, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Edit2, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
 
 function CustomSectionForm() {
-  const { resumeData, addCustomSection, updateCustomSection, deleteCustomSection } = useResume();
+  const {
+    resumeData,
+    addCustomSection,
+    updateCustomSection,
+    deleteCustomSection,
+    duplicateCustomSection,
+    moveCustomSection
+  } = useResume();
   const [editingIndex, setEditingIndex] = useState(null);
   const [section, setSection] = useState({
     title: '',
@@ -30,7 +37,11 @@ function CustomSectionForm() {
 
     const data = {
       ...section,
-      id: editingIndex !== null ? customSections[editingIndex].id : Date.now().toString()
+      id: editingIndex !== null ? customSections[editingIndex].id : Date.now().toString(),
+      type: editingIndex !== null ? customSections[editingIndex].type || 'custom' : 'custom',
+      content: section.description.split('\n').map(item => item.trim()).filter(Boolean),
+      order: editingIndex !== null ? customSections[editingIndex].order ?? editingIndex : customSections.length,
+      visible: editingIndex !== null ? customSections[editingIndex].visible !== false : true
     };
 
     if (editingIndex !== null) {
@@ -70,8 +81,38 @@ function CustomSectionForm() {
             Added Custom Sections
           </h3>
           {customSections.map((item, index) => (
-            <div key={item.id || index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md relative pr-16 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
-              <div className="absolute top-2 right-2 flex gap-2">
+            <div key={item.id || index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md relative pr-36 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition">
+              <div className="absolute top-2 right-2 flex flex-wrap justify-end gap-2 max-w-32">
+                <button
+                  onClick={() => moveCustomSection(index, -1)}
+                  disabled={index === 0}
+                  className="text-gray-400 hover:text-blue-500 disabled:opacity-30"
+                  aria-label="Move custom section up"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => moveCustomSection(index, 1)}
+                  disabled={index === customSections.length - 1}
+                  className="text-gray-400 hover:text-blue-500 disabled:opacity-30"
+                  aria-label="Move custom section down"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => updateCustomSection(index, { visible: item.visible === false })}
+                  className="text-gray-400 hover:text-blue-500"
+                  aria-label={`${item.visible === false ? 'Show' : 'Hide'} custom section`}
+                >
+                  {item.visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+                <button
+                  onClick={() => duplicateCustomSection(index)}
+                  className="text-gray-400 hover:text-blue-500"
+                  aria-label="Duplicate custom section"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
                 <button
                   onClick={() => handleEdit(index)}
                   className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
@@ -87,7 +128,9 @@ function CustomSectionForm() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <div className="font-medium text-gray-900 dark:text-white">{item.title}</div>
+              <div className={`font-medium text-gray-900 dark:text-white ${item.visible === false ? 'opacity-50' : ''}`}>
+                {item.title}
+              </div>
               {item.description && (
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                   {item.description}

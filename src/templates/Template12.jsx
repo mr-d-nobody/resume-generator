@@ -2,7 +2,7 @@
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 export default function Template12({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, certifications, customSections } = data;
+  const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -34,7 +34,7 @@ export default function Template12({ data, config }) {
         {/* Education (Prominent for Fresher) */}
         {education && education.length > 0 && (
           <div>
-            <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">Education</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">{sectionTitles.education || 'Education'}</h3>
             <div className="flex flex-col gap-4">
               {education.map((edu) => (
                 <div key={edu.id}>
@@ -53,7 +53,7 @@ export default function Template12({ data, config }) {
         {/* Skills */}
         {skills && Object.keys(skills).length > 0 && (
           <div>
-            <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">Skills</h3>
+            <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">{sectionTitles.skills || 'Skills'}</h3>
             <div className="flex flex-col gap-3">
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category}>
@@ -77,7 +77,7 @@ export default function Template12({ data, config }) {
         {/* Summary */}
         {summary && (
           <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-3" style={{ color: theme.primaryColor }}>Profile</h3>
+            <h3 className="text-xl font-bold uppercase tracking-widest mb-3" style={{ color: theme.primaryColor }}>{sectionTitles.summary || 'Profile'}</h3>
             <p className="text-sm leading-relaxed text-gray-700">{summary}</p>
           </section>
         )}
@@ -85,7 +85,7 @@ export default function Template12({ data, config }) {
         {/* Projects (Highest priority for right col) */}
         {projects && projects.length > 0 && (
           <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>Key Projects</h3>
+            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.projects || 'Key Projects'}</h3>
             <div className="flex flex-col gap-5">
               {projects.map((project) => (
                 <div key={project.id}>
@@ -114,7 +114,7 @@ export default function Template12({ data, config }) {
         {/* Experience (Internships) */}
         {experience && experience.length > 0 && (
           <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>Experience</h3>
+            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.experience || 'Experience'}</h3>
             <div className="flex flex-col gap-5">
               {experience.map((exp) => (
                 <div key={exp.id}>
@@ -139,7 +139,7 @@ export default function Template12({ data, config }) {
         {/* Certifications */}
         {certifications && certifications.length > 0 && (
           <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>Certifications</h3>
+            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.certifications || 'Certifications'}</h3>
             <div className="grid grid-cols-1 gap-3">
               {certifications.map((cert) => (
                 <div key={cert.id} className="bg-gray-50 p-3 rounded border border-gray-100">
@@ -156,6 +156,7 @@ export default function Template12({ data, config }) {
 
         <CustomSections
           sections={customSections}
+          className=""
           headingClassName="text-xl font-bold uppercase tracking-widest mb-4"
           headingStyle={{ color: theme.primaryColor }}
         />

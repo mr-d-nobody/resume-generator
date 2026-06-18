@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { DEFAULT_TEMPLATE_CATEGORY } from '../data/templateCategories';
+import { DEFAULT_SECTION_TITLES, buildUnifiedSections, normalizeCustomSection } from '../utils/resumeSections';
 
 // Initial resume data structure
 const initialResumeData = {
@@ -28,12 +29,14 @@ const initialResumeData = {
 // Initial state
 const initialState = {
   resumeData: initialResumeData,
-  selectedTemplate: 'modern',
+  selectedTemplate: '12',
   templateCategory: DEFAULT_TEMPLATE_CATEGORY,
   customization: {
     fontFamily: 'Inter',
     colorTheme: 'blue',
-    sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements', 'customSections']
+    sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements', 'customSections'],
+    sectionTitles: {},
+    sectionVisibility: {}
   },
   isDarkMode: true
 };
@@ -60,6 +63,10 @@ const ACTIONS = {
   ADD_CUSTOM_SECTION: 'ADD_CUSTOM_SECTION',
   UPDATE_CUSTOM_SECTION: 'UPDATE_CUSTOM_SECTION',
   DELETE_CUSTOM_SECTION: 'DELETE_CUSTOM_SECTION',
+  DUPLICATE_CUSTOM_SECTION: 'DUPLICATE_CUSTOM_SECTION',
+  MOVE_CUSTOM_SECTION: 'MOVE_CUSTOM_SECTION',
+  RENAME_SECTION: 'RENAME_SECTION',
+  TOGGLE_SECTION_VISIBILITY: 'TOGGLE_SECTION_VISIBILITY',
   SET_TEMPLATE: 'SET_TEMPLATE',
   SET_TEMPLATE_CATEGORY: 'SET_TEMPLATE_CATEGORY',
   UPDATE_CUSTOMIZATION: 'UPDATE_CUSTOMIZATION',
@@ -240,7 +247,10 @@ function resumeReducer(state, action) {
         ...state,
         resumeData: {
           ...state.resumeData,
-          customSections: [...(state.resumeData.customSections || []), action.payload]
+          customSections: [
+            ...(state.resumeData.customSections || []),
+            normalizeCustomSection(action.payload, (state.resumeData.customSections || []).length)
+          ]
         }
       };
 
@@ -263,6 +273,68 @@ function resumeReducer(state, action) {
           customSections: (state.resumeData.customSections || []).filter((_, index) => index !== action.payload)
         }
       };
+
+    case ACTIONS.DUPLICATE_CUSTOM_SECTION: {
+      const sections = state.resumeData.customSections || [];
+      const source = sections[action.payload];
+      if (!source) return state;
+      const duplicate = normalizeCustomSection({
+        ...source,
+        id: `${source.id || 'custom'}-copy-${Date.now()}`,
+        title: `${source.title || 'Custom Section'} Copy`,
+        order: action.payload + 1
+      });
+      const nextSections = [...sections];
+      nextSections.splice(action.payload + 1, 0, duplicate);
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          customSections: nextSections.map((section, index) => ({ ...section, order: index }))
+        }
+      };
+    }
+
+    case ACTIONS.MOVE_CUSTOM_SECTION: {
+      const sections = [...(state.resumeData.customSections || [])];
+      const { index, direction } = action.payload;
+      const target = index + direction;
+      if (index < 0 || target < 0 || index >= sections.length || target >= sections.length) return state;
+      [sections[index], sections[target]] = [sections[target], sections[index]];
+      return {
+        ...state,
+        resumeData: {
+          ...state.resumeData,
+          customSections: sections.map((section, order) => ({ ...section, order }))
+        }
+      };
+    }
+
+    case ACTIONS.RENAME_SECTION:
+      return {
+        ...state,
+        customization: {
+          ...state.customization,
+          sectionTitles: {
+            ...(state.customization.sectionTitles || {}),
+            [action.payload.type]: action.payload.title
+          }
+        }
+      };
+
+    case ACTIONS.TOGGLE_SECTION_VISIBILITY: {
+      const isVisible = state.customization.sectionVisibility?.[action.payload] !== false;
+      return {
+        ...state,
+        customization: {
+          ...state.customization,
+          sectionVisibility: {
+            ...(state.customization.sectionVisibility || {}),
+            [action.payload]: !isVisible
+          }
+        }
+      };
+    }
 
     case ACTIONS.SET_TEMPLATE:
       return {
@@ -306,7 +378,17 @@ function resumeReducer(state, action) {
     case ACTIONS.LOAD_RESUME:
       return {
         ...state,
-        ...action.payload
+        ...action.payload,
+        resumeData: {
+          ...initialResumeData,
+          ...(action.payload.resumeData || {}),
+          customSections: (action.payload.resumeData?.customSections || []).map(normalizeCustomSection)
+        },
+        customization: {
+          ...initialState.customization,
+          ...(action.payload.customization || {}),
+          sectionTitles: action.payload.customization?.sectionTitles || {}
+        }
       };
 
     default:
@@ -374,6 +456,10 @@ export function ResumeProvider({ children }) {
     addCustomSection: (data) => dispatch({ type: ACTIONS.ADD_CUSTOM_SECTION, payload: data }),
     updateCustomSection: (index, data) => dispatch({ type: ACTIONS.UPDATE_CUSTOM_SECTION, payload: { index, data } }),
     deleteCustomSection: (index) => dispatch({ type: ACTIONS.DELETE_CUSTOM_SECTION, payload: index }),
+    duplicateCustomSection: (index) => dispatch({ type: ACTIONS.DUPLICATE_CUSTOM_SECTION, payload: index }),
+    moveCustomSection: (index, direction) => dispatch({ type: ACTIONS.MOVE_CUSTOM_SECTION, payload: { index, direction } }),
+    renameSection: (type, title) => dispatch({ type: ACTIONS.RENAME_SECTION, payload: { type, title } }),
+    toggleSectionVisibility: (type) => dispatch({ type: ACTIONS.TOGGLE_SECTION_VISIBILITY, payload: type }),
     setTemplate: (template) => dispatch({ type: ACTIONS.SET_TEMPLATE, payload: template }),
     setTemplateCategory: (category) => dispatch({ type: ACTIONS.SET_TEMPLATE_CATEGORY, payload: category }),
     updateCustomization: (customization) => dispatch({ type: ACTIONS.UPDATE_CUSTOMIZATION, payload: customization }),
@@ -384,7 +470,11 @@ export function ResumeProvider({ children }) {
   };
 
   return (
-    <ResumeContext.Provider value={{ ...state, ...actions }}>
+    <ResumeContext.Provider value={{
+      ...state,
+      sections: buildUnifiedSections(state.resumeData, state.customization),
+      ...actions
+    }}>
       {children}
     </ResumeContext.Provider>
   );
@@ -398,5 +488,3 @@ export function useResume() {
   }
   return context;
 }
-
-export { ACTIONS };

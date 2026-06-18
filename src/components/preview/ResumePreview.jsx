@@ -2,17 +2,8 @@ import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useResume } from '../../contexts/ResumeContext';
 import templateConfig from '../../data/template-config.json';
+import { customSectionFromStandard, normalizeCustomSection } from '../../utils/resumeSections';
 
-import Template1 from '../../templates/Template1';
-import Template2 from '../../templates/Template2';
-import Template3 from '../../templates/Template3';
-import Template4 from '../../templates/Template4';
-import Template5 from '../../templates/Template5';
-import Template6 from '../../templates/Template6';
-import Template7 from '../../templates/Template7';
-import Template8 from '../../templates/Template8';
-import Template9 from '../../templates/Template9';
-import Template10 from '../../templates/Template10';
 import Template11 from '../../templates/Template11';
 import Template12 from '../../templates/Template12';
 import Template13 from '../../templates/Template13';
@@ -25,9 +16,12 @@ function useQuery() {
 }
 
 export default function ResumePreview({ isPrintMode = false }) {
-  const { resumeData, selectedTemplate } = useResume();
+  const { resumeData, selectedTemplate, customization } = useResume();
   const query = useQuery();
-  const templateId = query.get('template') || selectedTemplate || '1';
+  const requestedTemplate = query.get('template') || selectedTemplate || '12';
+  const templateId = ['11', '12', '13', '14', '15', '16'].includes(requestedTemplate)
+    ? requestedTemplate
+    : '12';
 
   // Transform form context data into our template format
   const transformedData = useMemo(() => {
@@ -48,6 +42,9 @@ export default function ResumePreview({ isPrintMode = false }) {
       groupedSkills['Tools'] = [];
     }
 
+    const sectionTitles = customization.sectionTitles || {};
+    const sectionVisibility = customization.sectionVisibility || {};
+
     return {
       personal: {
         name: `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim() || 'Your Name',
@@ -60,8 +57,8 @@ export default function ResumePreview({ isPrintMode = false }) {
         github: personalInfo.github || '',
         photo: personalInfo.photo || null
       },
-      summary: personalInfo.summary || '',
-      experience: experience.map(exp => ({
+      summary: sectionVisibility.summary === false ? '' : (personalInfo.summary || ''),
+      experience: sectionVisibility.experience === false ? [] : experience.map(exp => ({
         id: Math.random().toString(),
         company: exp.company || 'Company Name',
         position: exp.position || 'Position',
@@ -70,7 +67,7 @@ export default function ResumePreview({ isPrintMode = false }) {
         endDate: exp.current ? 'Present' : (exp.endDate || 'End Date'),
         highlights: exp.description ? exp.description.split('\n').filter(Boolean) : []
       })),
-      education: education.map(edu => ({
+      education: sectionVisibility.education === false ? [] : education.map(edu => ({
         id: Math.random().toString(),
         institution: edu.institution || 'University Name',
         degree: edu.degree || 'Degree',
@@ -80,44 +77,31 @@ export default function ResumePreview({ isPrintMode = false }) {
         gpa: edu.cgpa ? `${edu.cgpa}` : null,
         highlights: edu.description ? [edu.description] : []
       })),
-      skills: groupedSkills,
-      certifications: certifications.map(cert => ({
+      skills: sectionVisibility.skills === false ? {} : groupedSkills,
+      certifications: sectionVisibility.certifications === false ? [] : certifications.map(cert => ({
         id: Math.random().toString(),
         name: cert.name || 'Certification Name',
         issuer: cert.issuer || 'Issuer',
         date: cert.date || 'Date'
       })),
-      achievements: achievements.map(ach => ({
+      achievements: sectionVisibility.achievements === false ? [] : achievements.map(ach => ({
         id: Math.random().toString(),
         title: ach.title || 'Achievement',
         organization: ach.organization || '',
         date: ach.date || '',
         description: ach.description || ''
       })),
-      projects: projects.length > 0 ? projects.map(proj => ({
+      projects: sectionVisibility.projects === false ? [] : projects.map(proj => ({
         id: Math.random().toString(),
         name: proj.name || 'Project Name',
         link: proj.link || '',
         description: proj.description || '',
         highlights: proj.highlights || []
-      })) : achievements.map(ach => ({
-        // Fallback: If no projects, map achievements to projects so old data isn't lost visually
-        id: Math.random().toString(),
-        name: ach.title || 'Project / Achievement',
-        description: ach.organization || '',
-        link: '',
-        highlights: ach.description ? [ach.description] : []
       })),
-      customSections: (customSections || []).map(section => ({
-        id: section.id || Math.random().toString(),
-        title: section.title || 'Custom Section',
-        description: section.description || '',
-        items: Array.isArray(section.items)
-          ? section.items
-          : (section.description || '').split('\n').filter(Boolean)
-      }))
+      sectionTitles,
+      customSections: (customSections || []).map(normalizeCustomSection)
     };
-  }, [resumeData]);
+  }, [resumeData, customization]);
 
   const containerRef = React.useRef(null);
   const [scale, setScale] = React.useState(0.7);
@@ -140,25 +124,36 @@ export default function ResumePreview({ isPrintMode = false }) {
   }, []);
 
   const renderTemplate = () => {
-    const props = { data: transformedData, config: templateConfig };
+    const templateCapabilities = {
+      '11': ['summary', 'experience', 'education', 'skills', 'projects'],
+      '12': ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'],
+      '13': ['summary', 'education', 'skills', 'projects'],
+      '14': ['experience', 'education', 'skills', 'projects'],
+      '15': ['summary', 'experience', 'education', 'skills', 'projects'],
+      '16': ['summary', 'education', 'skills', 'projects', 'certifications']
+    };
+    const supported = templateCapabilities[templateId] || templateCapabilities['12'];
+    const fallbackTypes = ['summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements']
+      .filter(type => !supported.includes(type));
+    const fallbackSections = fallbackTypes
+      .map(type => customSectionFromStandard(type, transformedData, transformedData.sectionTitles))
+      .filter(section => section.items.length > 0);
+    const data = {
+      ...transformedData,
+      customSections: [
+        ...fallbackSections,
+        ...transformedData.customSections
+      ].filter(section => section.visible !== false)
+    };
+    const props = { data, config: templateConfig };
     switch (templateId) {
-      case '1': return <Template1 {...props} />;
-      case '2': return <Template2 {...props} />;
-      case '3': return <Template3 {...props} />;
-      case '4': return <Template4 {...props} />;
-      case '5': return <Template5 {...props} />;
-      case '6': return <Template6 {...props} />;
-      case '7': return <Template7 {...props} />;
-      case '8': return <Template8 {...props} />;
-      case '9': return <Template9 {...props} />;
-      case '10': return <Template10 {...props} />;
       case '11': return <Template11 {...props} />;
       case '12': return <Template12 {...props} />;
       case '13': return <Template13 {...props} />;
       case '14': return <Template14 {...props} />;
       case '15': return <Template15 {...props} />;
       case '16': return <Template16 {...props} />;
-      default: return <Template1 {...props} />;
+      default: return <Template12 {...props} />;
     }
   };
 

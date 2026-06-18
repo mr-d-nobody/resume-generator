@@ -9,8 +9,9 @@ import AchievementForm from '../components/forms/AchievementForm';
 import ProjectForm from '../components/forms/ProjectForm';
 import CustomSectionForm from '../components/forms/CustomSectionForm';
 import SummaryForm from '../components/forms/SummaryForm';
+import SectionSettingsForm from '../components/forms/SectionSettingsForm';
 import ResumePreview from '../components/preview/ResumePreview';
-import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download, FileText, FolderGit2, Rows3 } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Code, Award, Trophy, Eye, Download, FileText, FolderGit2, Rows3, Settings2 } from 'lucide-react';
 
 function ResumeBuilder() {
   const [activeTab, setActiveTab] = useState('personal');
@@ -26,6 +27,7 @@ function ResumeBuilder() {
     { id: 'certifications', label: 'Certifications', icon: Award, component: CertificationForm },
     { id: 'achievements', label: 'Achievements', icon: Trophy, component: AchievementForm },
     { id: 'custom', label: 'Custom', icon: Rows3, component: CustomSectionForm },
+    { id: 'sections', label: 'Titles', icon: Settings2, component: SectionSettingsForm },
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;

@@ -53,7 +53,7 @@ function BulletList({ items, maxItems = 2 }) {
 }
 
 export default function Template16({ data }) {
-  const { personal, summary, education, skills, projects, certifications, customSections } = data;
+  const { personal, summary, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
 
   return (
     <div className="mx-auto flex min-h-[297mm] w-[210mm] flex-col overflow-hidden bg-white shadow-lg" style={{ fontFamily: 'Inter, Arial, sans-serif', color: navyDark }}>
@@ -83,7 +83,7 @@ export default function Template16({ data }) {
 
       <main className="flex flex-1 flex-col gap-4 px-11 py-5">
         {summary && (
-          <Section title="Summary">
+          <Section title={sectionTitles.summary || 'Summary'}>
             <p className="text-[12px] leading-relaxed" style={{ color: textMuted }}>
               {summary}
             </p>
@@ -91,7 +91,7 @@ export default function Template16({ data }) {
         )}
 
         {education && education.length > 0 && (
-          <Section title="Education">
+          <Section title={sectionTitles.education || 'Education'}>
             <div className="space-y-3">
               {education.map((edu) => (
                 <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-4">
@@ -111,7 +111,7 @@ export default function Template16({ data }) {
         )}
 
         {skills && Object.keys(skills).length > 0 && (
-          <Section title="Technical Skills">
+          <Section title={sectionTitles.skills || 'Technical Skills'}>
             <div className="space-y-2">
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="grid grid-cols-[92px_1fr] gap-2">
@@ -128,7 +128,7 @@ export default function Template16({ data }) {
         )}
 
         {projects && projects.length > 0 && (
-          <Section title="Projects">
+          <Section title={sectionTitles.projects || 'Projects'}>
             <div className="space-y-2">
               {projects.slice(0, 4).map((project) => (
                 <div key={project.id} className="border-l-[3px] px-3 py-2" style={{ borderColor: navyDark, backgroundColor: '#F8FBFF' }}>
@@ -151,7 +151,7 @@ export default function Template16({ data }) {
         )}
 
         {certifications && certifications.length > 0 && (
-          <Section title="Certifications">
+          <Section title={sectionTitles.certifications || 'Certifications'}>
             <div className="space-y-1">
               {certifications.map((cert) => (
                 <p key={cert.id} className="text-[11px]" style={{ color: textMuted }}>
@@ -166,10 +166,15 @@ export default function Template16({ data }) {
 
         <CustomSections
           sections={customSections}
-          headingClassName="mb-2 flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wide"
-          headingStyle={{ color: navyDark }}
-          paragraphClassName="text-[11px] leading-relaxed"
-          itemClassName="text-[11px]"
+          renderSection={({ title, items }) => (
+            <Section title={title}>
+              {items.length > 1 ? (
+                <BulletList items={items} maxItems={items.length} />
+              ) : (
+                <p className="text-[12px] leading-relaxed" style={{ color: textMuted }}>{items[0]}</p>
+              )}
+            </Section>
+          )}
         />
       </main>
     </div>

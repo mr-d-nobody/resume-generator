@@ -2,7 +2,7 @@
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 export default function Template11({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, certifications, customSections } = data;
+  const { personal, summary, experience, education, skills, projects, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -32,6 +32,9 @@ export default function Template11({ data, config }) {
         {/* Summary */}
         {summary && (
           <section>
+            {sectionTitles.summary && (
+              <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>{sectionTitles.summary}</h3>
+            )}
             <p className="text-sm leading-relaxed text-gray-700">{summary}</p>
           </section>
         )}
@@ -40,7 +43,7 @@ export default function Template11({ data, config }) {
         {education && education.length > 0 && (
           <section>
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
-              Education
+              {sectionTitles.education || 'Education'}
             </h3>
             <div className="flex flex-col gap-4">
               {education.map((edu) => (
@@ -70,7 +73,7 @@ export default function Template11({ data, config }) {
         {projects && projects.length > 0 && (
           <section>
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
-              Academic & Personal Projects
+              {sectionTitles.projects || 'Academic & Personal Projects'}
             </h3>
             <div className="flex flex-col gap-4">
               {projects.map((project) => (
@@ -101,7 +104,7 @@ export default function Template11({ data, config }) {
         {skills && Object.keys(skills).length > 0 && (
           <section>
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
-              Technical Skills
+              {sectionTitles.skills || 'Technical Skills'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               {Object.entries(skills).map(([category, skillList]) => (
@@ -118,7 +121,7 @@ export default function Template11({ data, config }) {
         {experience && experience.length > 0 && (
           <section>
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
-              Internships & Experience
+              {sectionTitles.experience || 'Internships & Experience'}
             </h3>
             <div className="flex flex-col gap-4">
               {experience.map((exp) => (
@@ -145,6 +148,7 @@ export default function Template11({ data, config }) {
 
         <CustomSections
           sections={customSections}
+          className=""
           headingClassName="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1"
           headingStyle={{ borderColor: theme.primaryColor, color: theme.primaryColor }}
         />

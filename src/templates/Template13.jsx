@@ -2,7 +2,7 @@
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 export default function Template13({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, customSections } = data;
+  const { personal, summary, education, skills, projects, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -35,6 +35,9 @@ export default function Template13({ data, config }) {
         {/* Profile */}
         {summary && (
           <section className="text-center px-8">
+            {sectionTitles.summary && (
+              <h3 className="text-xl font-bold uppercase tracking-widest mb-3" style={{ color: theme.primaryColor }}>{sectionTitles.summary}</h3>
+            )}
             <p className="text-sm leading-relaxed text-gray-700 italic">"{summary}"</p>
           </section>
         )}
@@ -44,7 +47,7 @@ export default function Template13({ data, config }) {
           <section>
             <div className="flex items-center gap-4 mb-4">
               <div className="h-px bg-gray-300 flex-1"></div>
-              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>Education</h3>
+              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>{sectionTitles.education || 'Education'}</h3>
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
             
@@ -65,7 +68,7 @@ export default function Template13({ data, config }) {
           <section>
             <div className="flex items-center gap-4 mb-4">
               <div className="h-px bg-gray-300 flex-1"></div>
-              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>Featured Projects</h3>
+              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>{sectionTitles.projects || 'Featured Projects'}</h3>
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
             
@@ -97,7 +100,7 @@ export default function Template13({ data, config }) {
           <section>
             <div className="flex items-center gap-4 mb-4">
               <div className="h-px bg-gray-300 flex-1"></div>
-              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>Skills Arsenal</h3>
+              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>{sectionTitles.skills || 'Skills Arsenal'}</h3>
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
             
@@ -113,8 +116,24 @@ export default function Template13({ data, config }) {
 
         <CustomSections
           sections={customSections}
-          headingClassName="text-xl font-bold uppercase tracking-widest mb-4"
-          headingStyle={{ color: theme.primaryColor }}
+          renderSection={({ title, items }) => (
+            <section>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-px bg-gray-300 flex-1"></div>
+                <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>{title}</h3>
+                <div className="h-px bg-gray-300 flex-1"></div>
+              </div>
+              <div className="border-l-4 pl-4" style={{ borderColor: theme.primaryColor }}>
+                {items.length > 1 ? (
+                  <ul className="list-disc list-outside ml-3 text-sm text-gray-600 space-y-1">
+                    {items.map((item, index) => <li key={index}>{item}</li>)}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-600 leading-relaxed">{items[0]}</p>
+                )}
+              </div>
+            </section>
+          )}
         />
 
       </div>

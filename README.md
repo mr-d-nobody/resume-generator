@@ -164,13 +164,13 @@ resume-generator/
 │   │   ├── Home.jsx            # Landing page
 │   │   ├── MagicUpload.jsx     # AI-powered PDF upload
 │   │   ├── ResumeBuilder.jsx   # Manual entry / edit
-│   │   ├── Templates.jsx       # Template gallery (15 templates)
+│   │   ├── Templates.jsx       # Template gallery (6 templates)
 │   │   ├── Download.jsx        # PDF export page
 │   │   └── Profile.jsx         # User profile
-│   ├── templates/              # 15 resume template components
-│   │   ├── Template1.jsx       # Modern Professional
-│   │   ├── Template2.jsx       # Clean Minimal
-│   │   └── ...                 # 13 more unique designs
+│   ├── templates/              # 6 resume template components
+│   │   ├── Template11.jsx      # Campus Standard
+│   │   ├── Template12.jsx      # Internship Modern
+│   │   └── Template13-16.jsx   # Remaining active designs
 │   ├── contexts/               # React Context (global state)
 │   ├── utils/                  # PDF parsing & AI utilities
 │   └── App.jsx                 # Root app with routing

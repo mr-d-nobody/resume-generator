@@ -2,7 +2,7 @@
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 export default function Template15({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, customSections } = data;
+  const { personal, summary, experience, education, skills, projects, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -32,7 +32,7 @@ export default function Template15({ data, config }) {
         {/* Profile */}
         {summary && (
           <section>
-            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// Profile</h3>
+            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// {sectionTitles.summary || 'Profile'}</h3>
             <p className="text-xs leading-relaxed text-gray-800">{summary}</p>
           </section>
         )}
@@ -40,7 +40,7 @@ export default function Template15({ data, config }) {
         {/* Skills */}
         {skills && Object.keys(skills).length > 0 && (
           <section>
-            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// Technical_Skills</h3>
+            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// {sectionTitles.skills || 'Technical_Skills'}</h3>
             <div className="flex flex-col gap-1 text-xs">
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="flex">
@@ -55,7 +55,7 @@ export default function Template15({ data, config }) {
         {/* Projects (Crucial for Junior Devs) */}
         {projects && projects.length > 0 && (
           <section>
-            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// Projects</h3>
+            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// {sectionTitles.projects || 'Projects'}</h3>
             <div className="flex flex-col gap-4">
               {projects.map((project) => (
                 <div key={project.id}>
@@ -84,7 +84,7 @@ export default function Template15({ data, config }) {
         {/* Education */}
         {education && education.length > 0 && (
           <section>
-            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// Education</h3>
+            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// {sectionTitles.education || 'Education'}</h3>
             <div className="flex flex-col gap-3">
               {education.map((edu) => (
                 <div key={edu.id}>
@@ -104,7 +104,7 @@ export default function Template15({ data, config }) {
         {/* Experience */}
         {experience && experience.length > 0 && (
           <section>
-            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// Experience</h3>
+            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// {sectionTitles.experience || 'Experience'}</h3>
             <div className="flex flex-col gap-4">
               {experience.map((exp) => (
                 <div key={exp.id}>
@@ -127,6 +127,7 @@ export default function Template15({ data, config }) {
 
         <CustomSections
           sections={customSections}
+          className=""
           headingPrefix="// "
           headingClassName="text-sm font-bold mb-2 uppercase"
           headingStyle={{ color: theme.primaryColor }}

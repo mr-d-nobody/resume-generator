@@ -2,7 +2,7 @@
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 export default function Template14({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, customSections } = data;
+  const { personal, experience, education, skills, projects, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -30,7 +30,7 @@ export default function Template14({ data, config }) {
         {/* Education First */}
         {education && education.length > 0 && (
           <section>
-            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">Education</h3>
+            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.education || 'Education'}</h3>
             <div className="flex flex-col gap-4">
               {education.map((edu) => (
                 <div key={edu.id}>
@@ -58,7 +58,7 @@ export default function Template14({ data, config }) {
         {/* Skills */}
         {skills && Object.keys(skills).length > 0 && (
           <section>
-            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">Technical Skills</h3>
+            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.skills || 'Technical Skills'}</h3>
             <div className="flex flex-col gap-2 text-sm">
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="flex">
@@ -73,7 +73,7 @@ export default function Template14({ data, config }) {
         {/* Projects */}
         {projects && projects.length > 0 && (
           <section>
-            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">Academic Projects</h3>
+            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.projects || 'Academic Projects'}</h3>
             <div className="flex flex-col gap-4">
               {projects.map((project) => (
                 <div key={project.id}>
@@ -100,7 +100,7 @@ export default function Template14({ data, config }) {
         {/* Experience */}
         {experience && experience.length > 0 && (
           <section>
-            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">Experience</h3>
+            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.experience || 'Experience'}</h3>
             <div className="flex flex-col gap-4">
               {experience.map((exp) => (
                 <div key={exp.id}>
@@ -124,6 +124,7 @@ export default function Template14({ data, config }) {
 
         <CustomSections
           sections={customSections}
+          className=""
           headingClassName="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900"
         />
 

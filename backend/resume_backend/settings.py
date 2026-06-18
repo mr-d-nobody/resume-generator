@@ -135,11 +135,19 @@ CORS_ALLOW_ALL_ORIGINS = True # For development, allows React on 5173
 # On Vercel, a 301 redirect turns POST into GET, which causes a 405 error.
 APPEND_SLASH = False
 
-REST_FRAMEWORK = {
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '5/day', # Adjust this as needed
+REST_FRAMEWORK = {}
+
+# Keep local development unrestricted. Vercel sets VERCEL=1 automatically;
+# other production hosts should set DEBUG=False. Production defaults to five
+# anonymous API requests per day unless the host overrides API_ANON_RATE.
+IS_PRODUCTION = os.environ.get('VERCEL') == '1' or not DEBUG
+
+if IS_PRODUCTION:
+    REST_FRAMEWORK = {
+        'DEFAULT_THROTTLE_CLASSES': [
+            'rest_framework.throttling.AnonRateThrottle',
+        ],
+        'DEFAULT_THROTTLE_RATES': {
+            'anon': os.environ.get('API_ANON_RATE', '5/day'),
+        },
     }
-}

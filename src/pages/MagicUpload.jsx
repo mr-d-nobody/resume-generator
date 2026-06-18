@@ -37,6 +37,25 @@ export default function MagicUpload() {
       setStatus('parsing');
       const category = getTemplateCategory(selectedCategory);
       const parsedData = await parseResumeWithAI(rawText, category.parserType);
+      const customSections = Array.isArray(parsedData.customSections)
+        ? parsedData.customSections
+            .map((section, index) => ({
+              id: section?.id || `upload-custom-${Date.now()}-${index}`,
+              type: 'custom',
+              title: typeof section?.title === 'string' && section.title.trim()
+                ? section.title.trim()
+                : 'Custom Section',
+              description: Array.isArray(section?.description)
+                ? section.description.filter(Boolean).join('\n')
+                : String(section?.description || section?.content || '').trim(),
+              content: Array.isArray(section?.content)
+                ? section.content.filter(Boolean)
+                : String(section?.description || section?.content || '').split('\n').filter(Boolean),
+              order: Number.isFinite(section?.order) ? section.order : index,
+              visible: section?.visible !== false
+            }))
+            .filter(section => section.description)
+        : [];
       
       // We have the structured data! Now load it into our context.
       setStatus('success');
@@ -51,7 +70,7 @@ export default function MagicUpload() {
           projects: parsedData.projects || [],
           certifications: parsedData.certifications || [],
           achievements: parsedData.achievements || [],
-          customSections: parsedData.customSections || [],
+          customSections,
           languages: []
         }
       };
@@ -71,6 +90,9 @@ export default function MagicUpload() {
       console.error(error);
       setErrorMessage(error.message || 'Something went wrong during parsing.');
       setStatus('error');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -85,7 +107,7 @@ export default function MagicUpload() {
             Magic Upload
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Drop your existing PDF resume here. Our secure AI will automatically extract your details and instantly format them into 15 stunning templates.
+            Drop your existing PDF resume here. Our secure AI will automatically extract your details and instantly format them into six fresher and intern templates.
           </p>
         </div>
 
@@ -171,6 +193,7 @@ export default function MagicUpload() {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
+                  setErrorMessage('');
                   setStatus('idle');
                 }}
                 className="px-4 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 transition"

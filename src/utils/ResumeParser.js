@@ -48,10 +48,22 @@ export async function parseResumeWithAI(rawText, resumeType = 'experienced') {
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error('Too many requests. Please try again later.');
+      let errorMessage = '';
+
+      try {
+        const errorData = await response.json();
+        errorMessage = typeof errorData?.error === 'string'
+          ? errorData.error
+          : (typeof errorData?.detail === 'string' ? errorData.detail : '');
+      } catch {
+        // The server may return a non-JSON response for infrastructure errors.
       }
-      throw new Error(`Server responded with status ${response.status}`);
+
+      if (!errorMessage && response.status === 429) {
+        errorMessage = 'Too many resume parsing requests. Please wait and try again.';
+      }
+
+      throw new Error(errorMessage || `Resume parsing failed (HTTP ${response.status}).`);
     }
 
     const data = await response.json();

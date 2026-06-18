@@ -4,16 +4,6 @@ import { Check, UploadCloud } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { TEMPLATE_CATEGORIES } from '../data/templateCategories';
 
-import Template1 from '../templates/Template1';
-import Template2 from '../templates/Template2';
-import Template3 from '../templates/Template3';
-import Template4 from '../templates/Template4';
-import Template5 from '../templates/Template5';
-import Template6 from '../templates/Template6';
-import Template7 from '../templates/Template7';
-import Template8 from '../templates/Template8';
-import Template9 from '../templates/Template9';
-import Template10 from '../templates/Template10';
 import Template11 from '../templates/Template11';
 import Template12 from '../templates/Template12';
 import Template13 from '../templates/Template13';
@@ -154,23 +144,13 @@ function Templates() {
     if (!hasData) return null;
     const props = { data: transformedData, config: templateConfig };
     switch (templateId) {
-      case '1': return <Template1 {...props} />;
-      case '2': return <Template2 {...props} />;
-      case '3': return <Template3 {...props} />;
-      case '4': return <Template4 {...props} />;
-      case '5': return <Template5 {...props} />;
-      case '6': return <Template6 {...props} />;
-      case '7': return <Template7 {...props} />;
-      case '8': return <Template8 {...props} />;
-      case '9': return <Template9 {...props} />;
-      case '10': return <Template10 {...props} />;
       case '11': return <Template11 {...props} />;
       case '12': return <Template12 {...props} />;
       case '13': return <Template13 {...props} />;
       case '14': return <Template14 {...props} />;
       case '15': return <Template15 {...props} />;
       case '16': return <Template16 {...props} />;
-      default: return <Template1 {...props} />;
+      default: return <Template12 {...props} />;
     }
   };
 
