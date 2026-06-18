@@ -19,6 +19,7 @@ import Template12 from '../templates/Template12';
 import Template13 from '../templates/Template13';
 import Template14 from '../templates/Template14';
 import Template15 from '../templates/Template15';
+import Template16 from '../templates/Template16';
 import templateConfig from '../data/template-config.json';
   
 function Templates() {
@@ -168,6 +169,7 @@ function Templates() {
       case '13': return <Template13 {...props} />;
       case '14': return <Template14 {...props} />;
       case '15': return <Template15 {...props} />;
+      case '16': return <Template16 {...props} />;
       default: return <Template1 {...props} />;
     }
   };
@@ -219,6 +221,14 @@ function Templates() {
       description: 'Compact and structured format for education, skills, and starter projects.',
       image: `${base}template-14-preview.jpg`,
       features: ['No photo', 'Compact design', 'Structured'],
+      category: 'starter-no-photo-no-experience'
+    },
+    {
+      id: '16',
+      name: 'Navy Banner Starter',
+      description: 'Full-width navy header with clean academic, skills, and project sections.',
+      image: `${base}template-16-preview.jpg`,
+      features: ['No photo', 'No experience', 'Project focused'],
       category: 'starter-no-photo-no-experience'
     },
     {

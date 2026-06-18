@@ -18,6 +18,7 @@ import Template12 from '../../templates/Template12';
 import Template13 from '../../templates/Template13';
 import Template14 from '../../templates/Template14';
 import Template15 from '../../templates/Template15';
+import Template16 from '../../templates/Template16';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -56,7 +57,8 @@ export default function ResumePreview({ isPrintMode = false }) {
         location: personalInfo.location || '',
         website: personalInfo.website || '',
         linkedin: personalInfo.linkedin || '',
-        github: personalInfo.github || ''
+        github: personalInfo.github || '',
+        photo: personalInfo.photo || null
       },
       summary: personalInfo.summary || '',
       experience: experience.map(exp => ({
@@ -155,6 +157,7 @@ export default function ResumePreview({ isPrintMode = false }) {
       case '13': return <Template13 {...props} />;
       case '14': return <Template14 {...props} />;
       case '15': return <Template15 {...props} />;
+      case '16': return <Template16 {...props} />;
       default: return <Template1 {...props} />;
     }
   };

@@ -19,8 +19,8 @@ async function exportTemplates() {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   
-  // We'll export templates 1 to 15
-  const templatesToExport = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  // We'll export templates 1 to 16
+  const templatesToExport = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
   for (const id of templatesToExport) {
     try {

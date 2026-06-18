@@ -19,6 +19,7 @@ import Template12 from '../templates/Template12';
 import Template13 from '../templates/Template13';
 import Template14 from '../templates/Template14';
 import Template15 from '../templates/Template15';
+import Template16 from '../templates/Template16';
 
 export default function TemplateViewer() {
   const { id } = useParams();
@@ -40,6 +41,7 @@ export default function TemplateViewer() {
       case '13': return <Template13 data={resumeData} config={templateConfig} />;
       case '14': return <Template14 data={resumeData} config={templateConfig} />;
       case '15': return <Template15 data={resumeData} config={templateConfig} />;
+      case '16': return <Template16 data={resumeData} config={templateConfig} />;
       default: return <div>Template Not Found</div>;
     }
   };
