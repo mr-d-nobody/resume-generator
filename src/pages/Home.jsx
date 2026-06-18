@@ -2,12 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Layout, Download } from 'lucide-react';
 import resumeLogo from '../assets/resume-logo.svg';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Home page component
  * Landing page with hero, features, and call-to-action
  */
 function Home() {
+  const { isAuthenticated } = useAuth();
+  const destination = (path) => isAuthenticated
+    ? path
+    : `/signup?next=${encodeURIComponent(path)}`;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-16">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -24,13 +30,13 @@ function Home() {
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
-              to="/builder"
+              to={destination('/builder')}
               className="px-6 py-3 rounded-xl bg-blue-600 text-white text-base font-medium hover:bg-blue-700 transition"
             >
               Start Building
             </Link>
             <Link
-              to="/templates"
+              to={destination('/templates')}
               className="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white text-base font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition"
             >
               View Templates
@@ -71,7 +77,7 @@ function Home() {
             Ready to create your standout resume?
           </h2>
           <Link
-            to="/builder"
+            to={destination('/builder')}
             className="inline-block px-8 py-3 rounded-xl bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700 transition"
           >
             Build Your Resume Now

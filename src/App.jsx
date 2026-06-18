@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ResumeProvider } from './contexts/ResumeContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
@@ -10,6 +11,10 @@ import Download from './pages/Download';
 import TemplateViewer from './pages/TemplateViewer';
 import MagicUpload from './pages/MagicUpload';
 import Profile from './pages/Profile';
+import SignUp from './pages/SignUp';
+import Login from './pages/Login';
+import Account from './pages/Account';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   const basename = import.meta.env.BASE_URL;
@@ -17,7 +22,8 @@ function App() {
   return (
     <ResumeProvider>
       <Router basename={basename === '/' ? '' : basename}>
-        <Routes>
+        <AuthProvider>
+          <Routes>
           {/* Print/Export Route (No Navbar/Footer) */}
           <Route path="/view-template/:id" element={<TemplateViewer />} />
           
@@ -28,18 +34,22 @@ function App() {
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/magic" element={<MagicUpload />} />
-                  <Route path="/builder" element={<ResumeBuilder />} />
-                  <Route path="/templates" element={<Templates />} />
-                  <Route path="/download" element={<Download />} />
-                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/magic" element={<ProtectedRoute><MagicUpload /></ProtectedRoute>} />
+                  <Route path="/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+                  <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+                  <Route path="/download" element={<ProtectedRoute><Download /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
                   <Route path="*" element={<Home />} />
                 </Routes>
               </main>
               <Footer />
             </div>
           } />
-        </Routes>
+          </Routes>
+        </AuthProvider>
       </Router>
     </ResumeProvider>
   );

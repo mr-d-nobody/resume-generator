@@ -117,7 +117,20 @@ Create a `.env` file inside the `backend/` directory:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
+DATABASE_URL=your_direct_neon_postgresql_connection_string
+DJANGO_SECRET_KEY=replace_with_a_long_random_secret
 ```
+
+Use a direct (non-pooled) Neon connection while running migrations:
+
+```bash
+cd backend
+python manage.py migrate
+```
+
+Django stores users in PostgreSQL's `auth_user` table and sessions in
+`django_session`. Passwords are salted, one-way hashes and are never stored as
+readable text.
 
 ### 4. Run the Development Servers
 
@@ -193,7 +206,11 @@ This project is deployed on [Vercel](https://vercel.com) with a hybrid architect
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `GEMINI_API_KEY` | `your_key` | Google Gemini API key |
-| `ALLOWED_HOSTS` | `*` | Django allowed hosts |
+| `DATABASE_URL` | Neon PostgreSQL URL | Persistent users and sessions |
+| `DJANGO_SECRET_KEY` | Long random value | Session and signing security |
+| `DJANGO_DEBUG` | `False` | Production security mode |
+| `CORS_ALLOWED_ORIGINS` | Deployment URL | Allowed browser origin |
+| `CSRF_TRUSTED_ORIGINS` | Deployment URL | Trusted form origin |
 
 ### Deploy Your Own
 

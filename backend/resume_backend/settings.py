@@ -10,23 +10,32 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+from urllib.parse import parse_qsl, unquote, urlparse
+
 from dotenv import load_dotenv
 
-load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h$-fa(t6jk57m1rn+8h*^_+h1=_!)nb%=fqigg7(#77=co&x+p'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-local-development-key-change-in-production',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get(
+    'DJANGO_DEBUG',
+    'False' if os.environ.get('VERCEL') == '1' else 'True',
+).lower() in {'1', 'true', 'yes'}
+IS_PRODUCTION = os.environ.get('VERCEL') == '1' or not DEBUG
 
 ALLOWED_HOSTS = ['*']
 
@@ -80,8 +89,28 @@ WSGI_APPLICATION = 'resume_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+def postgres_config(database_url):
+    parsed = urlparse(database_url)
+    options = dict(parse_qsl(parsed.query))
+    options.setdefault('sslmode', 'require')
+
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': unquote(parsed.path.lstrip('/')),
+        'USER': unquote(parsed.username or ''),
+        'PASSWORD': unquote(parsed.password or ''),
+        'HOST': parsed.hostname or '',
+        'PORT': parsed.port or 5432,
+        'OPTIONS': options,
+        'CONN_MAX_AGE': 0,
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+    }
+
+
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+USE_SQLITE = os.environ.get('USE_SQLITE', '').lower() in {'1', 'true', 'yes'}
 DATABASES = {
-    'default': {
+    'default': postgres_config(DATABASE_URL) if DATABASE_URL and not USE_SQLITE else {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
@@ -129,7 +158,35 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True # For development, allows React on 5173
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'CORS_ALLOWED_ORIGINS',
+        'http://localhost:5173,http://127.0.0.1:5173',
+    ).split(',')
+    if origin.strip()
+]
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'http://localhost:5173,http://127.0.0.1:5173',
+    ).split(',')
+    if origin.strip()
+]
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = IS_PRODUCTION
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = IS_PRODUCTION
+SECURE_HSTS_SECONDS = 31536000 if IS_PRODUCTION else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = IS_PRODUCTION
+SECURE_HSTS_PRELOAD = IS_PRODUCTION
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
 # Disable APPEND_SLASH to prevent Django from redirecting POST requests.
 # On Vercel, a 301 redirect turns POST into GET, which causes a 405 error.
@@ -140,8 +197,6 @@ REST_FRAMEWORK = {}
 # Keep local development unrestricted. Vercel sets VERCEL=1 automatically;
 # other production hosts should set DEBUG=False. Production defaults to five
 # anonymous API requests per day unless the host overrides API_ANON_RATE.
-IS_PRODUCTION = os.environ.get('VERCEL') == '1' or not DEBUG
-
 if IS_PRODUCTION:
     REST_FRAMEWORK = {
         'DEFAULT_THROTTLE_CLASSES': [
