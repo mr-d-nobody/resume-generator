@@ -1,9 +1,19 @@
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url';
+import { ensureCsrfCookie } from './authApi';
 
 // Use the Web Worker again, as version 3.x ships standard JS workers
 // that are fully compatible with older mobile devices and iOS WebKit
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+
+function getCookie(name) {
+  const prefix = `${name}=`;
+  const cookie = document.cookie
+    .split(';')
+    .map(value => value.trim())
+    .find(value => value.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : '';
+}
 
 /**
  * Extracts raw text from a PDF file
@@ -34,13 +44,20 @@ export async function extractTextFromPDF(file) {
  */
 export async function parseResumeWithAI(rawText, resumeType = 'experienced') {
   try {
+    // Ensure we have a CSRF cookie before making the POST request.
+    if (!getCookie('csrftoken')) {
+      await ensureCsrfCookie();
+    }
+
     // Always use relative URL — the Django API lives on the same Vercel domain.
     // For local dev, run Django on port 8000 and use Vite's proxy feature instead.
     const response = await fetch('/api/parse-resume', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
       },
+      credentials: 'include',
       body: JSON.stringify({ 
         raw_text: rawText,
         resume_type: resumeType
