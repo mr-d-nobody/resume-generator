@@ -93,6 +93,9 @@ def postgres_config(database_url):
     parsed = urlparse(database_url)
     options = dict(parse_qsl(parsed.query))
     options.setdefault('sslmode', 'require')
+    # channel_binding is a libpq-specific parameter unsupported by the
+    # pure-Python psycopg driver; drop it to avoid connection errors.
+    options.pop('channel_binding', None)
 
     return {
         'ENGINE': 'django.db.backends.postgresql',
