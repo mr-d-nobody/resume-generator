@@ -1,4 +1,6 @@
 import React from 'react';
+import ContactLinks from '../common/ContactLinks';
+import DateRange from '../common/DateRange';
 
 /**
  * Modern resume template
@@ -13,23 +15,12 @@ const ModernTemplate = ({ resumeData }) => {
         <h1 className="text-2xl font-bold mb-1">
           {personalInfo.firstName} {personalInfo.lastName}
         </h1>
-        <div className="text-gray-600 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          {personalInfo.email && (
-            <span>{personalInfo.email}</span>
-          )}
-          {personalInfo.phone && (
-            <span>{personalInfo.phone}</span>
-          )}
-          {personalInfo.location && (
-            <span>{personalInfo.location}</span>
-          )}
-          {personalInfo.linkedin && (
-            <span>{personalInfo.linkedin}</span>
-          )}
-          {personalInfo.website && (
-            <span>{personalInfo.website}</span>
-          )}
-        </div>
+        {personalInfo.title && (
+          <div className="mb-2 break-words text-sm font-semibold text-gray-700">
+            {personalInfo.title}
+          </div>
+        )}
+        <ContactLinks personal={personalInfo} containerClass="text-gray-600 flex flex-wrap gap-x-4 gap-y-1 text-sm" showIcons={false} />
       </header>
 
       {/* Summary */}
@@ -48,9 +39,7 @@ const ModernTemplate = ({ resumeData }) => {
             <div key={index} className="mb-4">
               <div className="flex justify-between items-start">
                 <h3 className="font-medium">{job.title}</h3>
-                <span className="text-sm text-gray-600">
-                  {job.startDate} - {job.endDate || 'Present'}
-                </span>
+                <DateRange startDate={job.startDate} endDate={job.current ? 'Present' : job.endDate} className="text-sm text-gray-600" />
               </div>
               <div className="text-gray-700">{job.company}, {job.location}</div>
               <p className="mt-1 text-sm whitespace-pre-line">{job.description}</p>
@@ -67,9 +56,7 @@ const ModernTemplate = ({ resumeData }) => {
             <div key={index} className="mb-4">
               <div className="flex justify-between items-start">
                 <h3 className="font-medium">{edu.degree}</h3>
-                <span className="text-sm text-gray-600">
-                  {edu.startDate} - {edu.endDate || 'Present'}
-                </span>
+                <DateRange startDate={edu.startDate} endDate={edu.endDate} className="text-sm text-gray-600" />
               </div>
               <div className="text-gray-700">{edu.school}, {edu.location}</div>
               {edu.description && (

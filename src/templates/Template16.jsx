@@ -1,10 +1,12 @@
 import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
+import DateRange from '../components/common/DateRange';
+import CertificateDetails from '../components/common/CertificateDetails';
+import ProjectLinks from '../components/common/ProjectLinks';
 
 const navyDark = '#0B2038';
 const navyMid = '#163354';
-const navyLight = '#2563A8';
 const navyPale = '#EAF0F8';
 const accentBlue = '#4A8FC1';
 const textMuted = '#4E6278';
@@ -62,12 +64,12 @@ export default function Template16({ data }) {
           <h1 className="text-[40px] font-extrabold leading-none tracking-tight">
             {personal.name}
           </h1>
-          <div className="mt-3 flex items-center justify-center gap-2">
+          {personal.title && <div className="mt-3 flex items-center justify-center gap-2">
             <span className="h-[2px] w-11" style={{ backgroundColor: accentBlue }} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: '#9CBCE0' }}>
+            <p className="max-w-[580px] break-words text-[10px] font-bold uppercase leading-relaxed tracking-[0.18em]" style={{ color: '#9CBCE0' }}>
               {personal.title}
             </p>
-          </div>
+          </div>}
           <ContactLinks
             personal={personal}
             containerClass="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px]"
@@ -102,7 +104,7 @@ export default function Template16({ data }) {
                     <BulletList items={edu.highlights} />
                   </div>
                   <div className="text-right text-[10px] italic" style={{ color: textMuted }}>
-                    {edu.startDate} - {edu.endDate}
+                    <DateRange startDate={edu.startDate} endDate={edu.endDate} />
                   </div>
                 </div>
               ))}
@@ -134,11 +136,7 @@ export default function Template16({ data }) {
                 <div key={project.id} className="border-l-[3px] px-3 py-2" style={{ borderColor: navyDark, backgroundColor: '#F8FBFF' }}>
                   <div className="flex items-baseline justify-between gap-3">
                     <h4 className="text-[12px] font-extrabold" style={{ color: navyDark }}>{project.name}</h4>
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noreferrer" className="shrink-0 text-[10px] font-bold hover:underline" style={{ color: navyLight }}>
-                        Link
-                      </a>
-                    )}
+                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-2" linkClassName="shrink-0 text-[10px] font-bold text-blue-600 hover:underline" />
                   </div>
                   {project.description && (
                     <p className="mt-0.5 text-[10px] italic" style={{ color: textMuted }}>{project.description}</p>
@@ -154,11 +152,7 @@ export default function Template16({ data }) {
           <Section title={sectionTitles.certifications || 'Certifications'}>
             <div className="space-y-1">
               {certifications.map((cert) => (
-                <p key={cert.id} className="text-[11px]" style={{ color: textMuted }}>
-                  <span className="font-extrabold" style={{ color: navyMid }}>{cert.name}</span>
-                  {cert.issuer ? ` - ${cert.issuer}` : ''}
-                  {cert.date ? `, ${cert.date}` : ''}
-                </p>
+                <CertificateDetails key={cert.id} certificate={cert} className="text-[11px]" metaClassName="text-[10px]" linkClassName="text-[10px] font-bold hover:underline" />
               ))}
             </div>
           </Section>
@@ -166,13 +160,9 @@ export default function Template16({ data }) {
 
         <CustomSections
           sections={customSections}
-          renderSection={({ title, items }) => (
+          renderSection={({ title, content }) => (
             <Section title={title}>
-              {items.length > 1 ? (
-                <BulletList items={items} maxItems={items.length} />
-              ) : (
-                <p className="text-[12px] leading-relaxed" style={{ color: textMuted }}>{items[0]}</p>
-              )}
+              {content}
             </Section>
           )}
         />

@@ -29,7 +29,17 @@ export async function extractTextFromPDF(file) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items.map(item => item.str).join(' ');
+      const annotations = await page.getAnnotations();
+      const embeddedUrls = annotations
+        .filter(annotation => annotation.subtype === 'Link')
+        .map(annotation => annotation.url || annotation.unsafeUrl || '')
+        .filter(Boolean);
+      const uniqueUrls = [...new Set(embeddedUrls)];
+
       fullText += pageText + '\n';
+      if (uniqueUrls.length > 0) {
+        fullText += `Embedded hyperlinks on page ${i}:\n${uniqueUrls.join('\n')}\n`;
+      }
     }
     
     return fullText;

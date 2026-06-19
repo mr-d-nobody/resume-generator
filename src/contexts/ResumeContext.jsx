@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { DEFAULT_TEMPLATE_CATEGORY } from '../data/templateCategories';
 import { DEFAULT_SECTION_TITLES, buildUnifiedSections, normalizeCustomSection } from '../utils/resumeSections';
+import { normalizeResumeData } from '../utils/resumeData';
 
 // Initial resume data structure
 const initialResumeData = {
@@ -13,6 +14,8 @@ const initialResumeData = {
     linkedin: '',
     github: '',
     website: '',
+    links: [],
+    title: '',
     summary: '',
     photo: null
   },
@@ -57,6 +60,7 @@ const ACTIONS = {
   ADD_CERTIFICATION: 'ADD_CERTIFICATION',
   UPDATE_CERTIFICATION: 'UPDATE_CERTIFICATION',
   DELETE_CERTIFICATION: 'DELETE_CERTIFICATION',
+  MOVE_CERTIFICATION: 'MOVE_CERTIFICATION',
   ADD_ACHIEVEMENT: 'ADD_ACHIEVEMENT',
   UPDATE_ACHIEVEMENT: 'UPDATE_ACHIEVEMENT',
   DELETE_ACHIEVEMENT: 'DELETE_ACHIEVEMENT',
@@ -242,6 +246,18 @@ function resumeReducer(state, action) {
         }
       };
 
+    case ACTIONS.MOVE_CERTIFICATION: {
+      const certifications = [...state.resumeData.certifications];
+      const { index, direction } = action.payload;
+      const target = index + direction;
+      if (index < 0 || target < 0 || index >= certifications.length || target >= certifications.length) return state;
+      [certifications[index], certifications[target]] = [certifications[target], certifications[index]];
+      return {
+        ...state,
+        resumeData: { ...state.resumeData, certifications }
+      };
+    }
+
     case ACTIONS.ADD_CUSTOM_SECTION:
       return {
         ...state,
@@ -379,11 +395,11 @@ function resumeReducer(state, action) {
       return {
         ...state,
         ...action.payload,
-        resumeData: {
+        resumeData: normalizeResumeData({
           ...initialResumeData,
           ...(action.payload.resumeData || {}),
           customSections: (action.payload.resumeData?.customSections || []).map(normalizeCustomSection)
-        },
+        }),
         customization: {
           ...initialState.customization,
           ...(action.payload.customization || {}),
@@ -450,6 +466,7 @@ export function ResumeProvider({ children }) {
     addCertification: (data) => dispatch({ type: ACTIONS.ADD_CERTIFICATION, payload: data }),
     updateCertification: (index, data) => dispatch({ type: ACTIONS.UPDATE_CERTIFICATION, payload: { index, data } }),
     deleteCertification: (index) => dispatch({ type: ACTIONS.DELETE_CERTIFICATION, payload: index }),
+    moveCertification: (index, direction) => dispatch({ type: ACTIONS.MOVE_CERTIFICATION, payload: { index, direction } }),
     addAchievement: (data) => dispatch({ type: ACTIONS.ADD_ACHIEVEMENT, payload: data }),
     updateAchievement: (index, data) => dispatch({ type: ACTIONS.UPDATE_ACHIEVEMENT, payload: { index, data } }),
     deleteAchievement: (index) => dispatch({ type: ACTIONS.DELETE_ACHIEVEMENT, payload: index }),
@@ -481,6 +498,7 @@ export function ResumeProvider({ children }) {
 }
 
 // Custom hook to use the resume context
+// eslint-disable-next-line react-refresh/only-export-components
 export function useResume() {
   const context = useContext(ResumeContext);
   if (!context) {

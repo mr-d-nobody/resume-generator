@@ -18,7 +18,10 @@ from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
+# VS Code and some Windows editors may save .env files with a UTF-8 BOM.
+# utf-8-sig strips it so the first variable name (often GEMINI_API_KEY)
+# is not loaded as "\ufeffGEMINI_API_KEY".
+load_dotenv(BASE_DIR / '.env', encoding='utf-8-sig')
 
 
 # Quick-start development settings - unsuitable for production

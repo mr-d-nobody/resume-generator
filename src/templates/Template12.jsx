@@ -1,6 +1,9 @@
 ﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
+import DateRange from '../components/common/DateRange';
+import CertificateDetails from '../components/common/CertificateDetails';
+import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template12({ data, config }) {
   const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
@@ -16,7 +19,7 @@ export default function Template12({ data, config }) {
         {/* Name & Title */}
         <div className="text-center">
           <h1 className="text-3xl font-extrabold tracking-tight mb-2">{personal.name}</h1>
-          <h2 className="text-lg font-medium opacity-90">{personal.title}</h2>
+          {personal.title && <h2 className="break-words text-lg font-medium leading-snug opacity-90">{personal.title}</h2>}
         </div>
 
         {/* Contact Info */}
@@ -41,7 +44,7 @@ export default function Template12({ data, config }) {
                   <h4 className="font-bold text-sm">{edu.degree}</h4>
                   <p className="text-xs opacity-90 mb-1">{edu.institution}</p>
                   <div className="flex justify-between text-xs opacity-80">
-                    <span>{edu.startDate} - {edu.endDate}</span>
+                    <DateRange startDate={edu.startDate} endDate={edu.endDate} />
                     {edu.gpa && <span>GPA: {edu.gpa}</span>}
                   </div>
                 </div>
@@ -91,9 +94,7 @@ export default function Template12({ data, config }) {
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-900">{project.name}</h4>
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noreferrer" className="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-blue-600 hover:underline">{project.link}</a>
-                    )}
+                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-1" linkClassName="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-blue-600 hover:underline" />
                   </div>
                   {project.description && (
                     <p className="text-sm font-medium text-gray-600 mb-2">{project.description}</p>
@@ -120,7 +121,7 @@ export default function Template12({ data, config }) {
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-900">{exp.position}</h4>
-                    <span className="text-sm font-semibold" style={{ color: theme.primaryColor }}>{exp.startDate} - {exp.endDate}</span>
+                    <DateRange startDate={exp.startDate} endDate={exp.endDate} className="text-sm font-semibold" style={{ color: theme.primaryColor }} />
                   </div>
                   <div className="text-sm font-medium text-gray-700 mb-2">{exp.company}, {exp.location}</div>
                   {exp.highlights && exp.highlights.length > 0 && (
@@ -142,13 +143,7 @@ export default function Template12({ data, config }) {
             <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.certifications || 'Certifications'}</h3>
             <div className="grid grid-cols-1 gap-3">
               {certifications.map((cert) => (
-                <div key={cert.id} className="bg-gray-50 p-3 rounded border border-gray-100">
-                  <h4 className="font-bold text-sm text-gray-900">{cert.name}</h4>
-                  <div className="flex justify-between text-xs text-gray-600 mt-1">
-                    <span>{cert.issuer}</span>
-                    <span>{cert.date}</span>
-                  </div>
-                </div>
+                <CertificateDetails key={cert.id} certificate={cert} className="bg-gray-50 p-3 rounded border border-gray-100 text-sm text-gray-900" metaClassName="text-xs text-gray-600 mt-1" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}
             </div>
           </section>

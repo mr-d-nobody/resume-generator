@@ -7,6 +7,7 @@ from google.genai import errors as genai_errors
 from google.genai import types as genai_types
 import os
 import json
+import time
 
 STANDARD_SECTION_NAMES = (
     "Personal Info",
@@ -18,6 +19,12 @@ STANDARD_SECTION_NAMES = (
     "Certifications",
     "Achievements",
 )
+
+TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
+
+
+def is_transient_gemini_error(exc):
+    return getattr(exc, "code", None) in TRANSIENT_GEMINI_STATUS_CODES
 
 
 def normalize_parsed_resume(parsed_data):
@@ -36,6 +43,69 @@ def normalize_parsed_resume(parsed_data):
         "customSections": [],
     }
 
+    personal_info = normalized["personalInfo"]
+    links = personal_info.get("links")
+    if not isinstance(links, list):
+        links = []
+    personal_info["links"] = [
+        {
+            "label": str(link.get("label", "")).strip(),
+            "url": str(link.get("url", "")).strip(),
+        }
+        for link in links
+        if isinstance(link, dict) and str(link.get("url", "")).strip()
+    ]
+
+    normalized_certifications = []
+    for certification in normalized["certifications"]:
+        if not isinstance(certification, dict):
+            continue
+        normalized_certifications.append({
+            "name": str(certification.get("name", "")).strip(),
+            "issuer": str(certification.get("issuer", "")).strip(),
+            "date": str(certification.get("date", "")).strip(),
+            "expirationDate": str(certification.get("expirationDate", "")).strip(),
+            "credentialId": str(
+                certification.get("credentialId", certification.get("credentialID", ""))
+            ).strip(),
+            "url": str(
+                certification.get(
+                    "url",
+                    certification.get("credentialURL", certification.get("certificateURL", "")),
+                )
+            ).strip(),
+            "linkLabel": str(certification.get("linkLabel", "")).strip() or "Verify",
+            "description": str(certification.get("description", "")).strip(),
+        })
+    normalized["certifications"] = normalized_certifications
+
+    normalized_projects = []
+    for project in normalized["projects"]:
+        if not isinstance(project, dict):
+            continue
+        links = project.get("links")
+        if not isinstance(links, list):
+            links = []
+        normalized_links = [
+            {
+                "label": str(link.get("label", "")).strip(),
+                "url": str(link.get("url", "")).strip(),
+            }
+            for link in links
+            if isinstance(link, dict) and str(link.get("url", "")).strip()
+        ]
+        legacy_url = str(project.get("link", "")).strip()
+        if legacy_url and not any(link["url"] == legacy_url for link in normalized_links):
+            normalized_links.insert(0, {
+                "label": str(project.get("linkLabel", "")).strip() or "Live Demo",
+                "url": legacy_url,
+            })
+        normalized_projects.append({
+            **project,
+            "links": normalized_links,
+        })
+    normalized["projects"] = normalized_projects
+
     custom_sections = parsed_data.get("customSections")
     if not isinstance(custom_sections, list):
         custom_sections = []
@@ -53,12 +123,46 @@ def normalize_parsed_resume(parsed_data):
         elif not isinstance(description, str):
             description = str(description or "")
         description = description.strip()
+        links = section.get("links")
+        if not isinstance(links, list):
+            links = []
+        links = [
+            {
+                "label": str(link.get("label", "")).strip() or "Profile",
+                "url": str(link.get("url", "")).strip(),
+            }
+            for link in links
+            if isinstance(link, dict) and str(link.get("url", "")).strip()
+        ]
+        entries = section.get("entries")
+        if not isinstance(entries, list):
+            entries = []
+        entries = [
+            {
+                "title": str(entry.get("title", "")).strip(),
+                "description": str(
+                    entry.get("description", entry.get("details", ""))
+                ).strip(),
+                "url": str(entry.get("url", "")).strip(),
+                "linkLabel": str(entry.get("linkLabel", "")).strip()
+                or str(entry.get("title", "")).strip()
+                or "Profile",
+            }
+            for entry in entries
+            if isinstance(entry, dict)
+            and any(str(entry.get(key, "")).strip() for key in ("title", "description", "details", "url"))
+        ]
 
-        if description:
-            normalized["customSections"].append({
+        if description or links or entries:
+            normalized_section = {
                 "title": title or "Custom Section",
                 "description": description,
-            })
+            }
+            if links:
+                normalized_section["links"] = links
+            if entries:
+                normalized_section["entries"] = entries
+            normalized["customSections"].append(normalized_section)
 
     return normalized
 
@@ -104,18 +208,43 @@ def parse_resume(request):
         - Keep separate non-standard source sections as separate customSections.
         - Put custom content in description with bullets separated by "\\n".
         - Use empty strings/arrays for missing data and never invent facts.
+        - Preserve the candidate's professional headline/tagline exactly in
+          personalInfo.title, including multiple roles and separators such as
+          "FULL-STACK DEVELOPER • AI/ML • BACKEND DEVELOPER".
+        - Put LinkedIn, GitHub, and a primary website in their legacy
+          personalInfo fields. Put collections of other profiles (LeetCode,
+          Codeforces, HackerRank, AtCoder, CodeChef, Kaggle, Behance, etc.) in
+          an appropriate customSections entry with label/URL pairs in links.
+          Preserve the source section heading when available.
+        - For profile collections and other repeated custom content, create one
+          structured entry per source row in customSections.entries. Keep the
+          entry's title, details, URL, and visible link label together. Example:
+          LeetCode + "100+ DSA problems solved" + its LeetCode URL is one entry;
+          AtCoder and Chess.com are separate entries. Do not return these as
+          unrelated description bullets plus a detached links array.
+        - The input may include an "Embedded hyperlinks" list extracted from
+          clickable PDF annotations. Use those URLs even when the visible
+          resume text only says "LeetCode", "GitHub", "Live Demo", or "Verify".
+        - For projects, preserve every URL in projects.links and preserve the
+          author's visible hyperlink label when identifiable. If only a URL is
+          available, infer a useful label: "GitHub" for GitHub repositories,
+          otherwise "Live Demo". Never use the generic label "Link".
+        - Preserve certificate verification URLs, credential IDs, descriptions,
+          issue dates, expiration dates, and visible verify-link labels. Match
+          certificate/credential URLs from embedded hyperlinks to the relevant
+          certificate whenever the surrounding text or domain makes it clear.
         - Return only valid JSON matching the keys below.
         {fresher_rules}
 
         {{
-          "personalInfo": {{"firstName":"","lastName":"","email":"","phone":"","location":"","linkedin":"","website":"","github":"","title":"","summary":""}},
+          "personalInfo": {{"firstName":"","lastName":"","email":"","phone":"","location":"","linkedin":"","website":"","github":"","links":[{{"label":"","url":""}}],"title":"","summary":""}},
           "experience": [{{"company":"","position":"","location":"","startDate":"","endDate":"","current":false,"description":""}}],
           "education": [{{"institution":"","degree":"","location":"","startDate":"","graduationDate":"","cgpa":"","description":""}}],
           "skills": [{{"name":"","category":"","level":""}}],
-          "projects": [{{"name":"","description":"","link":"","highlights":[]}}],
-          "certifications": [{{"name":"","issuer":"","date":""}}],
+          "projects": [{{"name":"","description":"","links":[{{"label":"Live Demo","url":""}}],"highlights":[]}}],
+          "certifications": [{{"name":"","issuer":"","date":"","expirationDate":"","credentialId":"","url":"","linkLabel":"Verify","description":""}}],
           "achievements": [{{"title":"","organization":"","date":"","description":""}}],
-          "customSections": [{{"title":"","description":""}}]
+          "customSections": [{{"title":"","description":"","entries":[{{"title":"","description":"","url":"","linkLabel":""}}]}}]
         }}
 
         Resume text:
@@ -130,30 +259,40 @@ def parse_resume(request):
         )
         model_names = [name.strip() for name in configured_models.split(',') if name.strip()]
         response = None
-        quota_error = None
+        transient_error = None
+        attempts_per_model = max(1, int(os.environ.get('GEMINI_RETRY_ATTEMPTS', '2')))
 
         for model_name in model_names:
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=genai_types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.1,
-                    ),
-                )
+            for attempt in range(attempts_per_model):
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                        config=genai_types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.1,
+                        ),
+                    )
+                    break
+                except genai_errors.APIError as exc:
+                    if not is_transient_gemini_error(exc):
+                        raise
+                    transient_error = exc
+                    if attempt < attempts_per_model - 1:
+                        time.sleep(0.75 * (attempt + 1))
+
+            if response is not None:
                 break
-            except genai_errors.ClientError as exc:
-                if exc.code == 429:
-                    quota_error = exc
-                else:
-                    raise
 
         if response is None:
-            if quota_error:
-                raise quota_error
-            raise genai_errors.ClientError(
-                429, "No Gemini model with available quota is configured."
+            if transient_error:
+                raise transient_error
+            return Response(
+                {
+                    "error": "No Gemini model is configured for resume parsing.",
+                    "code": "ai_model_not_configured",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         
         text_response = response.text
@@ -162,7 +301,7 @@ def parse_resume(request):
         
         return Response(parsed_data, status=status.HTTP_200_OK)
 
-    except genai_errors.ClientError as exc:
+    except genai_errors.APIError as exc:
         if exc.code == 429:
             return Response(
                 {
@@ -173,6 +312,18 @@ def parse_resume(request):
                     "code": "ai_quota_exceeded",
                 },
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        elif exc.code in {500, 502, 503, 504}:
+            return Response(
+                {
+                    "error": (
+                        "Gemini is temporarily busy. The app tried the configured "
+                        "fallback models, but none were available. Please wait a "
+                        "moment and try again."
+                    ),
+                    "code": "ai_temporarily_unavailable",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         elif exc.code == 403:
             return Response(

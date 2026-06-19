@@ -24,14 +24,50 @@ export function normalizeCustomSection(section, index = 0) {
       ? section.items
       : String(section?.description || section?.content || '').split('\n');
   const items = content.map(item => String(item || '').trim()).filter(Boolean);
+  const links = (Array.isArray(section?.links) ? section.links : [])
+    .map((link, linkIndex) => ({
+      id: link?.id || `custom-link-${index}-${linkIndex}`,
+      label: String(link?.label || '').trim() || 'Profile',
+      url: String(link?.url || '').trim()
+    }))
+    .filter(link => link.url);
+  const explicitEntries = (Array.isArray(section?.entries) ? section.entries : [])
+    .map((entry, entryIndex) => ({
+      id: entry?.id || `custom-entry-${index}-${entryIndex}`,
+      title: String(entry?.title || entry?.label || '').trim(),
+      description: String(entry?.description || entry?.details || '').trim(),
+      url: String(entry?.url || '').trim(),
+      linkLabel: String(entry?.linkLabel || entry?.label || '').trim() || 'Profile'
+    }))
+    .filter(entry => entry.title || entry.description || entry.url);
+  const derivedProfileEntries = explicitEntries.length === 0 && links.length > 0
+    ? items.map((item, entryIndex) => {
+      const [rawTitle, ...details] = item.split(':');
+      const title = rawTitle.trim();
+      const matchingLink = links.find(link =>
+        link.label.toLowerCase() === title.toLowerCase()
+      );
+      return {
+        id: `derived-custom-entry-${index}-${entryIndex}`,
+        title,
+        description: details.join(':').trim(),
+        url: matchingLink?.url || '',
+        linkLabel: matchingLink?.label || title || 'Profile'
+      };
+    }).filter(entry => entry.title && entry.description)
+    : [];
+  const entries = explicitEntries.length > 0 ? explicitEntries : derivedProfileEntries;
+  const displayItems = derivedProfileEntries.length > 0 ? [] : items;
 
   return {
     ...section,
     id: section?.id || `custom-${Date.now()}-${index}`,
     type: section?.type || 'custom',
     title: String(section?.title || '').trim() || 'Custom Section',
-    content: items,
-    description: items.join('\n'),
+    content: displayItems,
+    description: displayItems.join('\n'),
+    links: derivedProfileEntries.length > 0 ? [] : links,
+    entries,
     order: Number.isFinite(section?.order) ? section.order : index,
     visible: section?.visible !== false
   };

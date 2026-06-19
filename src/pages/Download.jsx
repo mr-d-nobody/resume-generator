@@ -12,7 +12,7 @@ import { Download as DownloadIcon, Share2 as ShareIcon } from 'lucide-react';
  * Handles PDF export and sharing functionality
  */
 function Download() {
-  const { resumeData, selectedTemplate } = useResume();
+  const { resumeData } = useResume();
   const resumeRef = useRef(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);

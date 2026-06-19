@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useResume } from '../../contexts/ResumeContext';
 import templateConfig from '../../data/template-config.json';
 import { customSectionFromStandard, normalizeCustomSection } from '../../utils/resumeSections';
+import { transformResumeData } from '../../utils/resumeData';
 
 import Template11 from '../../templates/Template11';
 import Template12 from '../../templates/Template12';
@@ -23,83 +24,11 @@ export default function ResumePreview({ isPrintMode = false }) {
     ? requestedTemplate
     : '12';
 
-  // Transform form context data into our template format
   const transformedData = useMemo(() => {
-    const { personalInfo, experience, education, skills, certifications, achievements, projects, customSections } = resumeData;
-
-    // Group skills by category
-    const groupedSkills = skills.reduce((acc, skill) => {
-      const cat = skill.category || 'Skills';
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(skill.name);
-      return acc;
-    }, {});
-    
-    // Add fallback for empty skills so templates don't crash
-    if (Object.keys(groupedSkills).length === 0) {
-      groupedSkills['Languages'] = [];
-      groupedSkills['Frameworks'] = [];
-      groupedSkills['Tools'] = [];
-    }
-
-    const sectionTitles = customization.sectionTitles || {};
-    const sectionVisibility = customization.sectionVisibility || {};
-
+    const transformed = transformResumeData(resumeData, customization);
     return {
-      personal: {
-        name: `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim() || 'Your Name',
-        title: personalInfo.title || 'Professional Title',
-        email: personalInfo.email || '',
-        phone: personalInfo.phone || '',
-        location: personalInfo.location || '',
-        website: personalInfo.website || '',
-        linkedin: personalInfo.linkedin || '',
-        github: personalInfo.github || '',
-        photo: personalInfo.photo || null
-      },
-      summary: sectionVisibility.summary === false ? '' : (personalInfo.summary || ''),
-      experience: sectionVisibility.experience === false ? [] : experience.map(exp => ({
-        id: Math.random().toString(),
-        company: exp.company || 'Company Name',
-        position: exp.position || 'Position',
-        location: exp.location || '',
-        startDate: exp.startDate || 'Start Date',
-        endDate: exp.current ? 'Present' : (exp.endDate || 'End Date'),
-        highlights: exp.description ? exp.description.split('\n').filter(Boolean) : []
-      })),
-      education: sectionVisibility.education === false ? [] : education.map(edu => ({
-        id: Math.random().toString(),
-        institution: edu.institution || 'University Name',
-        degree: edu.degree || 'Degree',
-        location: edu.location || '',
-        startDate: edu.startDate || 'Start Date',
-        endDate: edu.graduationDate || 'Grad Date',
-        gpa: edu.cgpa ? `${edu.cgpa}` : null,
-        highlights: edu.description ? [edu.description] : []
-      })),
-      skills: sectionVisibility.skills === false ? {} : groupedSkills,
-      certifications: sectionVisibility.certifications === false ? [] : certifications.map(cert => ({
-        id: Math.random().toString(),
-        name: cert.name || 'Certification Name',
-        issuer: cert.issuer || 'Issuer',
-        date: cert.date || 'Date'
-      })),
-      achievements: sectionVisibility.achievements === false ? [] : achievements.map(ach => ({
-        id: Math.random().toString(),
-        title: ach.title || 'Achievement',
-        organization: ach.organization || '',
-        date: ach.date || '',
-        description: ach.description || ''
-      })),
-      projects: sectionVisibility.projects === false ? [] : projects.map(proj => ({
-        id: Math.random().toString(),
-        name: proj.name || 'Project Name',
-        link: proj.link || '',
-        description: proj.description || '',
-        highlights: proj.highlights || []
-      })),
-      sectionTitles,
-      customSections: (customSections || []).map(normalizeCustomSection)
+      ...transformed,
+      customSections: (transformed.customSections || []).map(normalizeCustomSection)
     };
   }, [resumeData, customization]);
 
@@ -125,11 +54,11 @@ export default function ResumePreview({ isPrintMode = false }) {
 
   const renderTemplate = () => {
     const templateCapabilities = {
-      '11': ['summary', 'experience', 'education', 'skills', 'projects'],
+      '11': ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'],
       '12': ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'],
-      '13': ['summary', 'education', 'skills', 'projects'],
-      '14': ['experience', 'education', 'skills', 'projects'],
-      '15': ['summary', 'experience', 'education', 'skills', 'projects'],
+      '13': ['summary', 'education', 'skills', 'projects', 'certifications'],
+      '14': ['experience', 'education', 'skills', 'projects', 'certifications'],
+      '15': ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'],
       '16': ['summary', 'education', 'skills', 'projects', 'certifications']
     };
     const supported = templateCapabilities[templateId] || templateCapabilities['12'];

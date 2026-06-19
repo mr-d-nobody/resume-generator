@@ -11,10 +11,11 @@ import Template14 from '../templates/Template14';
 import Template15 from '../templates/Template15';
 import Template16 from '../templates/Template16';
 import templateConfig from '../data/template-config.json';
+import { transformResumeData } from '../utils/resumeData';
   
 function Templates() {
   const base = import.meta.env.BASE_URL;
-  const { resumeData, setTemplate, templateCategory, setTemplateCategory } = useResume();
+  const { resumeData, customization, setTemplate, templateCategory, setTemplateCategory } = useResume();
   const categoryIds = TEMPLATE_CATEGORIES.map((category) => category.id);
   const initialFilter = categoryIds.includes(templateCategory) ? templateCategory : 'All';
   const [filter, setFilter] = useState(initialFilter);
@@ -25,120 +26,8 @@ function Templates() {
   const transformedData = useMemo(() => {
     if (!hasData) return null;
     
-    const { personalInfo, experience, education, skills, certifications, achievements, projects, customSections } = resumeData;
-
-    const safeArray = (arr) => Array.isArray(arr) ? arr : [];
-
-    const groupedSkills = safeArray(skills).reduce((acc, skill) => {
-      let cat = 'Skills';
-      let name = 'Unknown Skill';
-      
-      if (typeof skill === 'string') {
-        name = skill;
-      } else if (skill && typeof skill === 'object') {
-        cat = skill.category || 'Skills';
-        name = skill.name || name;
-      }
-      
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(name);
-      return acc;
-    }, {});
-    
-    if (Object.keys(groupedSkills).length === 0) {
-      groupedSkills['Languages'] = [];
-    }
-
-    const safeString = (val) => typeof val === 'string' ? val : '';
-
-    return {
-      personal: {
-        name: `${safeString(personalInfo?.firstName)} ${safeString(personalInfo?.lastName)}`.trim() || 'Your Name',
-        title: safeString(personalInfo?.title) || 'Professional Title',
-        email: safeString(personalInfo?.email),
-        phone: safeString(personalInfo?.phone),
-        location: safeString(personalInfo?.location),
-        website: safeString(personalInfo?.website),
-        linkedin: safeString(personalInfo?.linkedin),
-        github: safeString(personalInfo?.github),
-        photo: personalInfo?.photo || null
-      },
-      summary: safeString(personalInfo?.summary),
-      experience: safeArray(experience).map(exp => {
-        let highlights = [];
-        if (typeof exp?.description === 'string') {
-          highlights = exp.description.split('\n').filter(Boolean);
-        } else if (Array.isArray(exp?.description)) {
-          highlights = exp.description.filter(h => typeof h === 'string');
-        } else if (Array.isArray(exp?.highlights)) {
-          highlights = exp.highlights.filter(h => typeof h === 'string');
-        }
-        
-        return {
-          id: Math.random().toString(),
-          company: safeString(exp?.company) || 'Company Name',
-          position: safeString(exp?.position) || 'Position',
-          location: safeString(exp?.location),
-          startDate: safeString(exp?.startDate) || 'Start Date',
-          endDate: exp?.current ? 'Present' : (safeString(exp?.endDate) || 'End Date'),
-          highlights
-        };
-      }),
-      education: safeArray(education).map(edu => ({
-        id: Math.random().toString(),
-        institution: safeString(edu?.institution) || 'University Name',
-        degree: safeString(edu?.degree) || 'Degree',
-        location: safeString(edu?.location),
-        startDate: safeString(edu?.startDate) || 'Start Date',
-        endDate: safeString(edu?.graduationDate) || 'Grad Date',
-        gpa: edu?.cgpa ? `${edu.cgpa}` : null,
-        highlights: edu?.description ? [safeString(edu.description)] : []
-      })),
-      skills: groupedSkills,
-      certifications: safeArray(certifications).map(cert => ({
-        id: Math.random().toString(),
-        name: safeString(cert?.name) || 'Certification Name',
-        issuer: safeString(cert?.issuer) || 'Issuer',
-        date: safeString(cert?.date) || 'Date'
-      })),
-      achievements: safeArray(achievements).map(ach => ({
-        id: Math.random().toString(),
-        title: safeString(ach?.title) || 'Achievement',
-        organization: safeString(ach?.organization),
-        date: safeString(ach?.date),
-        description: safeString(ach?.description)
-      })),
-      projects: (safeArray(projects).length > 0) ? safeArray(projects).map(proj => {
-        let highlights = [];
-        if (Array.isArray(proj?.highlights)) {
-          highlights = proj.highlights;
-        } else if (typeof proj?.description === 'string') {
-          highlights = proj.description.split('\n').filter(Boolean);
-        }
-        return {
-          id: Math.random().toString(),
-          name: safeString(proj?.name) || 'Project Name',
-          link: safeString(proj?.link),
-          description: safeString(proj?.description),
-          highlights
-        };
-      }) : safeArray(achievements).map(ach => ({
-        id: Math.random().toString(),
-        name: safeString(ach?.title) || 'Project / Achievement',
-        description: safeString(ach?.organization),
-        link: '',
-        highlights: ach?.description ? [safeString(ach.description)] : []
-      })),
-      customSections: safeArray(customSections).map(section => ({
-        id: section?.id || Math.random().toString(),
-        title: safeString(section?.title) || 'Custom Section',
-        description: safeString(section?.description),
-        items: Array.isArray(section?.items)
-          ? section.items.filter(item => typeof item === 'string')
-          : safeString(section?.description).split('\n').filter(Boolean)
-      }))
-    };
-  }, [resumeData, hasData]);
+    return transformResumeData(resumeData, customization);
+  }, [resumeData, customization, hasData]);
 
   const renderLiveTemplate = (templateId) => {
     if (!hasData) return null;

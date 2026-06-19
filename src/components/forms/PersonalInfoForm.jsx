@@ -1,6 +1,6 @@
 import React from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { User, Mail, Phone, MapPin, Linkedin, Globe, Camera } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Linkedin, Globe, Camera, BriefcaseBusiness } from 'lucide-react';
 
 /**
  * Personal information form component
@@ -82,6 +82,23 @@ function PersonalInfoForm() {
           />
         </div>
 
+        <div className="md:col-span-2">
+          <label className="form-label">
+            <BriefcaseBusiness className="h-4 w-4 inline mr-1" />
+            Professional Headline
+          </label>
+          <input
+            type="text"
+            value={personalInfo.title || ''}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            className="form-input"
+            placeholder="Full-Stack Developer • AI/ML • Backend Developer"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Optional. Add one role or combine multiple specialties using separators such as • or |.
+          </p>
+        </div>
+
         {/* Email */}
         <div>
           <label className="form-label">
@@ -136,7 +153,7 @@ function PersonalInfoForm() {
             LinkedIn
           </label>
           <input
-            type="url"
+            type="text"
             value={personalInfo.linkedin}
             onChange={(e) => handleInputChange('linkedin', e.target.value)}
             className="form-input"
@@ -151,7 +168,7 @@ function PersonalInfoForm() {
             Website
           </label>
           <input
-            type="url"
+            type="text"
             value={personalInfo.website}
             onChange={(e) => handleInputChange('website', e.target.value)}
             className="form-input"
@@ -166,7 +183,7 @@ function PersonalInfoForm() {
             GitHub URL
           </label>
           <input
-            type="url"
+            type="text"
             value={personalInfo.github || ''}
             onChange={(e) => handleInputChange('github', e.target.value)}
             className="form-input"

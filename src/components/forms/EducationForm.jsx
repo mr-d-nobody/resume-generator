@@ -3,7 +3,7 @@ import { useResume } from '../../contexts/ResumeContext';
 import { GraduationCap, Plus, Trash2, Calendar } from 'lucide-react';
 
 function EducationForm() {
-  const { resumeData, addEducation, updateEducation, deleteEducation } = useResume();
+  const { resumeData, addEducation, deleteEducation } = useResume();
   const { education } = resumeData;
 
   const [showAddForm, setShowAddForm] = useState(false);

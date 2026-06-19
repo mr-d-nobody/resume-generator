@@ -1,8 +1,11 @@
 ﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
+import DateRange from '../components/common/DateRange';
+import CertificateDetails from '../components/common/CertificateDetails';
+import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template11({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, customSections, sectionTitles = {} } = data;
+  const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -15,9 +18,7 @@ export default function Template11({ data, config }) {
         <h1 className="text-4xl font-bold uppercase tracking-wider mb-2" style={{ color: theme.primaryColor }}>
           {personal.name}
         </h1>
-        <h2 className="text-xl font-medium mb-4" style={{ color: theme.secondaryColor }}>
-          {personal.title}
-        </h2>
+        {personal.title && <h2 className="mb-4 break-words text-xl font-medium" style={{ color: theme.secondaryColor }}>{personal.title}</h2>}
         <ContactLinks 
           personal={personal} 
           containerClass="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600"
@@ -50,7 +51,7 @@ export default function Template11({ data, config }) {
                 <div key={edu.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-semibold text-base">{edu.degree}</h4>
-                    <span className="text-sm font-medium" style={{ color: theme.primaryColor }}>{edu.startDate} - {edu.endDate}</span>
+                    <DateRange startDate={edu.startDate} endDate={edu.endDate} className="text-sm font-medium" style={{ color: theme.primaryColor }} />
                   </div>
                   <div className="flex justify-between items-baseline mb-2">
                     <span className="text-sm font-medium text-gray-700">{edu.institution}, {edu.location}</span>
@@ -80,9 +81,7 @@ export default function Template11({ data, config }) {
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-semibold text-base">{project.name}</h4>
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noreferrer" className="text-xs font-medium text-blue-600 hover:underline">{project.link}</a>
-                    )}
+                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-2" />
                   </div>
                   {project.description && (
                     <p className="text-sm italic text-gray-600 mb-1">{project.description}</p>
@@ -128,7 +127,7 @@ export default function Template11({ data, config }) {
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-semibold text-base">{exp.position}</h4>
-                    <span className="text-sm font-medium" style={{ color: theme.primaryColor }}>{exp.startDate} - {exp.endDate}</span>
+                    <DateRange startDate={exp.startDate} endDate={exp.endDate} className="text-sm font-medium" style={{ color: theme.primaryColor }} />
                   </div>
                   <div className="flex justify-between items-baseline mb-2">
                     <span className="text-sm font-medium text-gray-700">{exp.company}, {exp.location}</span>
@@ -141,6 +140,19 @@ export default function Template11({ data, config }) {
                     </ul>
                   )}
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {certifications && certifications.length > 0 && (
+          <section>
+            <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
+              {sectionTitles.certifications || 'Certifications'}
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {certifications.map((cert) => (
+                <CertificateDetails key={cert.id} certificate={cert} className="text-sm" metaClassName="text-xs text-gray-600" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}
             </div>
           </section>

@@ -1,8 +1,11 @@
 ﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
+import DateRange from '../components/common/DateRange';
+import CertificateDetails from '../components/common/CertificateDetails';
+import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template15({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, customSections, sectionTitles = {} } = data;
+  const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -15,9 +18,7 @@ export default function Template15({ data, config }) {
         <h1 className="text-3xl font-bold mb-2">
           <span style={{ color: theme.primaryColor }}>&gt;</span> {personal.name}
         </h1>
-        <div className="text-sm font-bold text-gray-700 mb-2">
-          {personal.title}
-        </div>
+        {personal.title && <div className="mb-2 break-words text-sm font-bold leading-snug text-gray-700">{personal.title}</div>}
         <ContactLinks 
           personal={personal} 
           containerClass="flex flex-wrap gap-4 text-xs text-gray-600"
@@ -61,9 +62,7 @@ export default function Template15({ data, config }) {
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-sm text-gray-900">{project.name}</h4>
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:underline">[{project.link}]</a>
-                    )}
+                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-2" linkClassName="text-xs font-bold text-blue-600 hover:underline" prefix="[" suffix="]" />
                   </div>
                   {project.description && (
                     <p className="text-xs text-gray-700 mb-1">{project.description}</p>
@@ -90,7 +89,7 @@ export default function Template15({ data, config }) {
                 <div key={edu.id}>
                   <div className="flex justify-between items-baseline">
                     <h4 className="font-bold text-sm text-gray-900">{edu.degree}</h4>
-                    <span className="text-xs font-bold">{edu.startDate} - {edu.endDate}</span>
+                    <DateRange startDate={edu.startDate} endDate={edu.endDate} className="text-xs font-bold" />
                   </div>
                   <div className="text-xs text-gray-700">
                     {edu.institution}, {edu.location} {edu.gpa && `| GPA: ${edu.gpa}`}
@@ -110,7 +109,7 @@ export default function Template15({ data, config }) {
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-sm text-gray-900">{exp.position} @ {exp.company}</h4>
-                    <span className="text-xs font-bold">{exp.startDate} - {exp.endDate}</span>
+                    <DateRange startDate={exp.startDate} endDate={exp.endDate} className="text-xs font-bold" />
                   </div>
                   {exp.highlights && exp.highlights.length > 0 && (
                     <ul className="list-disc list-outside ml-4 text-xs text-gray-700 space-y-1 mt-1">
@@ -120,6 +119,17 @@ export default function Template15({ data, config }) {
                     </ul>
                   )}
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {certifications && certifications.length > 0 && (
+          <section>
+            <h3 className="text-sm font-bold mb-2 uppercase" style={{ color: theme.primaryColor }}>// {sectionTitles.certifications || 'Certifications'}</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {certifications.map((cert) => (
+                <CertificateDetails key={cert.id} certificate={cert} className="text-xs" metaClassName="text-xs text-gray-700" linkClassName="text-xs font-bold text-blue-600 hover:underline" />
               ))}
             </div>
           </section>

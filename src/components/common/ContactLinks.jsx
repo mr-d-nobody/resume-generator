@@ -1,5 +1,7 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Linkedin, Github, Globe } from 'lucide-react';
+import { Mail, Phone, MapPin, Linkedin, Github, Globe, Link as LinkIcon } from 'lucide-react';
+import ExternalLink from './ExternalLink';
+import { normalizeResumeLinks } from '../../utils/resumeData';
 
 export default function ContactLinks({ 
   personal, 
@@ -9,7 +11,8 @@ export default function ContactLinks({
   iconSize = 14,
   separator = null,
   showIcons = true,
-  formatGithub = false
+  formatGithub = false,
+  style
 }) {
   if (!personal) return null;
 
@@ -42,36 +45,28 @@ export default function ContactLinks({
     );
   }
 
-  if (personal.linkedin) {
+  normalizeResumeLinks(personal).forEach((link) => {
+    const label = link.label.toLowerCase();
+    const Icon = label === 'linkedin'
+      ? Linkedin
+      : label === 'github'
+        ? Github
+        : label === 'website'
+          ? Globe
+          : LinkIcon;
+    const displayLabel = formatGithub && label === 'github'
+      ? link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
+      : link.label;
     links.push(
-      <span key="linkedin" className={itemClass}>
-        {showIcons && <Linkedin size={iconSize} />}
-        <a href={personal.linkedin} target="_blank" rel="noreferrer" className={linkClass}>LinkedIn</a>
+      <span key={link.id} className={itemClass}>
+        {showIcons && <Icon size={iconSize} />}
+        <ExternalLink href={link.url} className={linkClass}>{displayLabel}</ExternalLink>
       </span>
     );
-  }
-
-  if (personal.github) {
-    const displayGithub = formatGithub ? `github.com/${personal.github.replace(/^https?:\/\/(www\.)?github\.com\//, '')}` : 'GitHub';
-    links.push(
-      <span key="github" className={itemClass}>
-        {showIcons && <Github size={iconSize} />}
-        <a href={personal.github} target="_blank" rel="noreferrer" className={linkClass}>{displayGithub}</a>
-      </span>
-    );
-  }
-
-  if (personal.website) {
-    links.push(
-      <span key="website" className={itemClass}>
-        {showIcons && <Globe size={iconSize} />}
-        <a href={personal.website} target="_blank" rel="noreferrer" className={linkClass}>Website</a>
-      </span>
-    );
-  }
+  });
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} style={style}>
       {links.map((link, index) => (
         <React.Fragment key={link.key}>
           {link}

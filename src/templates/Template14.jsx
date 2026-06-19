@@ -1,8 +1,11 @@
 ﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
+import DateRange from '../components/common/DateRange';
+import CertificateDetails from '../components/common/CertificateDetails';
+import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template14({ data, config }) {
-  const { personal, experience, education, skills, projects, customSections, sectionTitles = {} } = data;
+  const { personal, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -14,6 +17,11 @@ export default function Template14({ data, config }) {
         <h1 className="text-4xl font-semibold mb-1" style={{ color: theme.primaryColor }}>
           {personal.name}
         </h1>
+        {personal.title && (
+          <div className="mb-2 break-words text-sm font-semibold uppercase tracking-wide text-gray-700">
+            {personal.title}
+          </div>
+        )}
         <ContactLinks 
           personal={personal} 
           containerClass="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mb-3 border-b-2 pb-4"
@@ -36,7 +44,7 @@ export default function Template14({ data, config }) {
                 <div key={edu.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-800">{edu.institution}</h4>
-                    <span className="text-sm font-medium text-gray-600">{edu.startDate} - {edu.endDate}</span>
+                    <DateRange startDate={edu.startDate} endDate={edu.endDate} className="text-sm font-medium text-gray-600" />
                   </div>
                   <div className="flex justify-between items-baseline mb-2">
                     <span className="text-sm text-gray-700 italic">{edu.degree}</span>
@@ -79,7 +87,7 @@ export default function Template14({ data, config }) {
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-800">{project.name}</h4>
-                    {project.link && <a href={project.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">{project.link}</a>}
+                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-2" />
                   </div>
                   {project.description && (
                     <p className="text-sm italic text-gray-600 mb-1">{project.description}</p>
@@ -106,7 +114,7 @@ export default function Template14({ data, config }) {
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-800">{exp.position}</h4>
-                    <span className="text-sm font-medium text-gray-600">{exp.startDate} - {exp.endDate}</span>
+                    <DateRange startDate={exp.startDate} endDate={exp.endDate} className="text-sm font-medium text-gray-600" />
                   </div>
                   <div className="text-sm italic text-gray-700 mb-2">{exp.company}, {exp.location}</div>
                   {exp.highlights && exp.highlights.length > 0 && (
@@ -117,6 +125,17 @@ export default function Template14({ data, config }) {
                     </ul>
                   )}
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {certifications && certifications.length > 0 && (
+          <section>
+            <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.certifications || 'Certifications'}</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {certifications.map((cert) => (
+                <CertificateDetails key={cert.id} certificate={cert} className="text-sm" metaClassName="text-xs text-gray-600" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}
             </div>
           </section>

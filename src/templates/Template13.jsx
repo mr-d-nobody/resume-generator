@@ -1,8 +1,11 @@
 ﻿import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
+import DateRange from '../components/common/DateRange';
+import CertificateDetails from '../components/common/CertificateDetails';
+import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template13({ data, config }) {
-  const { personal, summary, education, skills, projects, customSections, sectionTitles = {} } = data;
+  const { personal, summary, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const { theme, spacing } = config;
 
   return (
@@ -17,9 +20,7 @@ export default function Template13({ data, config }) {
         <h1 className="text-5xl font-black tracking-tight mb-2" style={{ color: theme.primaryColor }}>
           {personal.name}
         </h1>
-        <h2 className="text-xl font-medium tracking-wide text-gray-700 mb-4 uppercase">
-          {personal.title}
-        </h2>
+        {personal.title && <h2 className="mb-4 break-words text-xl font-medium uppercase leading-snug tracking-wide text-gray-700">{personal.title}</h2>}
         <ContactLinks 
           personal={personal} 
           containerClass="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-medium text-gray-600"
@@ -56,7 +57,7 @@ export default function Template13({ data, config }) {
                 <div key={edu.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
                   <h4 className="font-bold text-lg text-gray-900">{edu.degree}</h4>
                   <p className="text-base text-gray-700 font-medium mb-1">{edu.institution}, {edu.location}</p>
-                  <p className="text-sm font-semibold" style={{ color: theme.primaryColor }}>{edu.startDate} - {edu.endDate} {edu.gpa && `| GPA: ${edu.gpa}`}</p>
+                  <p className="text-sm font-semibold" style={{ color: theme.primaryColor }}><DateRange startDate={edu.startDate} endDate={edu.endDate} />{edu.gpa && ` | GPA: ${edu.gpa}`}</p>
                 </div>
               ))}
             </div>
@@ -77,7 +78,7 @@ export default function Template13({ data, config }) {
                 <div key={project.id} className="border-l-4 pl-4" style={{ borderColor: theme.primaryColor }}>
                   <div className="flex justify-between items-baseline mb-1">
                     <h4 className="font-bold text-base text-gray-900">{project.name}</h4>
-                    {project.link && <a href={project.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">{project.link}</a>}
+                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-2" />
                   </div>
                   {project.description && (
                     <p className="text-xs font-semibold text-gray-500 mb-2">{project.description}</p>
@@ -90,6 +91,21 @@ export default function Template13({ data, config }) {
                     </ul>
                   )}
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {certifications && certifications.length > 0 && (
+          <section>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="h-px bg-gray-300 flex-1"></div>
+              <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>{sectionTitles.certifications || 'Certifications'}</h3>
+              <div className="h-px bg-gray-300 flex-1"></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {certifications.map((cert) => (
+                <CertificateDetails key={cert.id} certificate={cert} className="border-l-4 pl-4 text-sm" metaClassName="text-xs text-gray-600" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}
             </div>
           </section>
@@ -116,7 +132,7 @@ export default function Template13({ data, config }) {
 
         <CustomSections
           sections={customSections}
-          renderSection={({ title, items }) => (
+          renderSection={({ title, content }) => (
             <section>
               <div className="flex items-center gap-4 mb-4">
                 <div className="h-px bg-gray-300 flex-1"></div>
@@ -124,13 +140,7 @@ export default function Template13({ data, config }) {
                 <div className="h-px bg-gray-300 flex-1"></div>
               </div>
               <div className="border-l-4 pl-4" style={{ borderColor: theme.primaryColor }}>
-                {items.length > 1 ? (
-                  <ul className="list-disc list-outside ml-3 text-sm text-gray-600 space-y-1">
-                    {items.map((item, index) => <li key={index}>{item}</li>)}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-600 leading-relaxed">{items[0]}</p>
-                )}
+                {content}
               </div>
             </section>
           )}

@@ -3,10 +3,95 @@ import json
 from django.contrib.auth import get_user_model
 from django.test import Client, SimpleTestCase, TestCase
 
-from .views import normalize_parsed_resume
+from .views import is_transient_gemini_error, normalize_parsed_resume
 
 
 class NormalizeParsedResumeTests(SimpleTestCase):
+    def test_classifies_temporary_gemini_failures_for_retry(self):
+        temporary_error = type("TemporaryError", (), {"code": 503})()
+        invalid_request = type("InvalidRequest", (), {"code": 400})()
+
+        self.assertTrue(is_transient_gemini_error(temporary_error))
+        self.assertFalse(is_transient_gemini_error(invalid_request))
+
+    def test_preserves_flexible_links_and_certificate_details(self):
+        result = normalize_parsed_resume({
+            "personalInfo": {
+                "links": [{"label": "LeetCode", "url": "leetcode.com/ada"}],
+            },
+            "certifications": [{
+                "name": "Cloud",
+                "credentialURL": "example.com/verify",
+                "credentialID": "ABC-123",
+            }],
+        })
+
+        self.assertEqual(result["personalInfo"]["links"], [{
+            "label": "LeetCode",
+            "url": "leetcode.com/ada",
+        }])
+        self.assertEqual(result["certifications"][0]["url"], "example.com/verify")
+        self.assertEqual(result["certifications"][0]["credentialId"], "ABC-123")
+
+    def test_preserves_project_link_labels(self):
+        result = normalize_parsed_resume({
+            "projects": [{
+                "name": "Portfolio",
+                "links": [
+                    {"label": "Live Demo", "url": "portfolio.example.com"},
+                    {"label": "GitHub", "url": "github.com/ada/portfolio"},
+                ],
+            }],
+        })
+
+        self.assertEqual(result["projects"][0]["links"], [
+            {"label": "Live Demo", "url": "portfolio.example.com"},
+            {"label": "GitHub", "url": "github.com/ada/portfolio"},
+        ])
+
+    def test_preserves_links_inside_custom_sections(self):
+        result = normalize_parsed_resume({
+            "customSections": [{
+                "title": "Competitive Programming Profiles",
+                "links": [
+                    {"label": "LeetCode", "url": "leetcode.com/ada"},
+                    {"label": "Codeforces", "url": "codeforces.com/profile/ada"},
+                ],
+            }],
+        })
+
+        self.assertEqual(result["customSections"][0]["links"], [
+            {"label": "LeetCode", "url": "leetcode.com/ada"},
+            {"label": "Codeforces", "url": "codeforces.com/profile/ada"},
+        ])
+
+    def test_preserves_structured_custom_entries(self):
+        result = normalize_parsed_resume({
+            "customSections": [{
+                "title": "Competitive & Analytical Profile",
+                "entries": [
+                    {
+                        "title": "LeetCode",
+                        "description": "100+ DSA problems solved",
+                        "url": "leetcode.com/ada",
+                        "linkLabel": "Profile",
+                    },
+                    {
+                        "title": "AtCoder",
+                        "description": "Rating 301",
+                        "url": "",
+                        "linkLabel": "",
+                    },
+                ],
+            }],
+        })
+
+        self.assertEqual(len(result["customSections"][0]["entries"]), 2)
+        self.assertEqual(
+            result["customSections"][0]["entries"][0]["url"],
+            "leetcode.com/ada",
+        )
+
     def test_preserves_custom_heading_and_content(self):
         result = normalize_parsed_resume({
             "personalInfo": {"firstName": "Ada"},

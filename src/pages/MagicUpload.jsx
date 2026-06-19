@@ -37,6 +37,9 @@ export default function MagicUpload() {
       setStatus('parsing');
       const category = getTemplateCategory(selectedCategory);
       const parsedData = await parseResumeWithAI(rawText, category.parserType);
+      const uploadedProfileLinks = Array.isArray(parsedData.personalInfo?.links)
+        ? parsedData.personalInfo.links.filter(link => link?.url)
+        : [];
       const customSections = Array.isArray(parsedData.customSections)
         ? parsedData.customSections
             .map((section, index) => ({
@@ -51,11 +54,36 @@ export default function MagicUpload() {
               content: Array.isArray(section?.content)
                 ? section.content.filter(Boolean)
                 : String(section?.description || section?.content || '').split('\n').filter(Boolean),
+              links: Array.isArray(section?.links)
+                ? section.links.filter(link => link?.url)
+                : [],
+              entries: Array.isArray(section?.entries)
+                ? section.entries.filter(entry => entry?.title || entry?.description || entry?.url)
+                : [],
               order: Number.isFinite(section?.order) ? section.order : index,
               visible: section?.visible !== false
             }))
-            .filter(section => section.description)
+            .filter(section => section.description || section.links.length || section.entries.length)
         : [];
+      if (uploadedProfileLinks.length > 0) {
+        customSections.push({
+          id: `upload-profile-links-${Date.now()}`,
+          type: 'custom',
+          title: 'Profiles',
+          description: '',
+          content: [],
+          links: [],
+          entries: uploadedProfileLinks.map((link, index) => ({
+            id: `upload-profile-entry-${index}`,
+            title: link.label || 'Profile',
+            description: '',
+            url: link.url,
+            linkLabel: link.label || 'Profile'
+          })),
+          order: customSections.length,
+          visible: true
+        });
+      }
       
       // We have the structured data! Now load it into our context.
       setStatus('success');
@@ -63,7 +91,10 @@ export default function MagicUpload() {
       // Construct the payload matching the ResumeContext structure
       const payload = {
         resumeData: {
-          personalInfo: parsedData.personalInfo || {},
+          personalInfo: {
+            ...(parsedData.personalInfo || {}),
+            links: []
+          },
           experience: parsedData.experience || [],
           education: parsedData.education || [],
           skills: parsedData.skills || [],
