@@ -20,9 +20,9 @@ function App() {
   const basename = import.meta.env.BASE_URL;
   
   return (
-    <ResumeProvider>
-      <Router basename={basename === '/' ? '' : basename}>
-        <AuthProvider>
+    <Router basename={basename === '/' ? '' : basename}>
+      <AuthProvider>
+        <ResumeProvider>
           <Routes>
           {/* Print/Export Route (No Navbar/Footer) */}
           <Route path="/view-template/:id" element={<TemplateViewer />} />
@@ -49,9 +49,9 @@ function App() {
             </div>
           } />
           </Routes>
-        </AuthProvider>
-      </Router>
-    </ResumeProvider>
+        </ResumeProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -1,3 +1,5 @@
+import { asString, normalizeUrl } from './resumeData';
+
 export const STANDARD_SECTIONS = [
   { id: 'summary', type: 'summary', title: 'Summary' },
   { id: 'experience', type: 'experience', title: 'Experience' },
@@ -23,21 +25,21 @@ export function normalizeCustomSection(section, index = 0) {
     : Array.isArray(section?.items)
       ? section.items
       : String(section?.description || section?.content || '').split('\n');
-  const items = content.map(item => String(item || '').trim()).filter(Boolean);
+  const items = content.map(item => asString(String(item || ''))).filter(Boolean);
   const links = (Array.isArray(section?.links) ? section.links : [])
     .map((link, linkIndex) => ({
       id: link?.id || `custom-link-${index}-${linkIndex}`,
-      label: String(link?.label || '').trim() || 'Profile',
-      url: String(link?.url || '').trim()
+      label: asString(String(link?.label || '')) || 'Profile',
+      url: normalizeUrl(link?.url)
     }))
     .filter(link => link.url);
   const explicitEntries = (Array.isArray(section?.entries) ? section.entries : [])
     .map((entry, entryIndex) => ({
       id: entry?.id || `custom-entry-${index}-${entryIndex}`,
-      title: String(entry?.title || entry?.label || '').trim(),
-      description: String(entry?.description || entry?.details || '').trim(),
-      url: String(entry?.url || '').trim(),
-      linkLabel: String(entry?.linkLabel || entry?.label || '').trim() || 'Profile'
+      title: asString(String(entry?.title || entry?.label || '')),
+      description: asString(String(entry?.description || entry?.details || '')),
+      url: normalizeUrl(entry?.url),
+      linkLabel: asString(String(entry?.linkLabel || entry?.label || '')) || 'Profile'
     }))
     .filter(entry => entry.title || entry.description || entry.url);
   const derivedProfileEntries = explicitEntries.length === 0 && links.length > 0
@@ -63,7 +65,7 @@ export function normalizeCustomSection(section, index = 0) {
     ...section,
     id: section?.id || `custom-${Date.now()}-${index}`,
     type: section?.type || 'custom',
-    title: String(section?.title || '').trim() || 'Custom Section',
+    title: asString(String(section?.title || '')) || 'Custom Section',
     content: displayItems,
     description: displayItems.join('\n'),
     links: derivedProfileEntries.length > 0 ? [] : links,

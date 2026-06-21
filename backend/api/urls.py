@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import auth_views
+from . import resume_views
 
 urlpatterns = [
     path('parse-resume', views.parse_resume, name='parse-resume'),
@@ -11,4 +12,5 @@ urlpatterns = [
     path('auth/login', auth_views.login_user, name='auth-login'),
     path('auth/logout', auth_views.logout_user, name='auth-logout'),
     path('auth/change-password', auth_views.change_password, name='auth-change-password'),
+    path('resume', resume_views.saved_resume, name='saved-resume'),
 ]

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, Menu, UserCircle, X } from 'lucide-react';
+import { AlertCircle, Check, Cloud, CloudUpload, Loader2, LogIn, LogOut, Menu, UserCircle, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useResume } from '../../contexts/ResumeContext';
 import resumeLogo from '../../assets/resume-logo.svg';
 
 /**
@@ -14,6 +15,23 @@ function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const {
+    cloudStatus,
+    cloudError,
+    cloudConflict,
+    useCloudVersion,
+    keepLocalVersion
+  } = useResume();
+
+  const cloudIndicator = isAuthenticated ? {
+    loading: { icon: Loader2, label: 'Loading resume', className: 'text-blue-500', spin: true },
+    saving: { icon: CloudUpload, label: 'Saving to cloud', className: 'text-blue-500', spin: false },
+    saved: { icon: Check, label: 'Saved to cloud', className: 'text-emerald-500', spin: false },
+    conflict: { icon: AlertCircle, label: 'Save conflict', className: 'text-amber-500', spin: false },
+    error: { icon: AlertCircle, label: cloudError || 'Cloud save failed', className: 'text-red-500', spin: false },
+    idle: { icon: Cloud, label: 'Cloud ready', className: 'text-gray-400', spin: false }
+  }[cloudStatus] : null;
+  const CloudIcon = cloudIndicator?.icon;
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -78,6 +96,16 @@ function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {cloudIndicator && (
+              <div
+                className={`flex items-center gap-1.5 text-xs font-medium ${cloudIndicator.className}`}
+                title={cloudIndicator.label}
+                aria-label={cloudIndicator.label}
+              >
+                <CloudIcon className={`h-4 w-4 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
+                <span>{cloudIndicator.label === 'Saving to cloud' ? 'Saving…' : cloudIndicator.label === 'Saved to cloud' ? 'Saved' : ''}</span>
+              </div>
+            )}
             {!isLoading && (
               isAuthenticated ? (
                 <div className="flex items-center gap-2">
@@ -102,6 +130,11 @@ function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="xl:hidden flex items-center gap-2">
+            {cloudIndicator && (
+              <span title={cloudIndicator.label} aria-label={cloudIndicator.label} className={cloudIndicator.className}>
+                <CloudIcon className={`h-5 w-5 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
+              </span>
+            )}
             {!isLoading && (
               isAuthenticated ? (
                 <>
@@ -175,6 +208,27 @@ function Navbar() {
           </div>
         )}
       </div>
+      {cloudConflict && (
+        <div className="border-t border-amber-300 bg-amber-50 px-4 py-2 text-amber-950 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-100">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+            <span>A newer resume was saved from another device. Which version should be kept?</span>
+            <button
+              type="button"
+              onClick={useCloudVersion}
+              className="rounded-md bg-white px-3 py-1.5 font-semibold shadow-sm ring-1 ring-amber-300 hover:bg-amber-100 dark:bg-gray-900 dark:ring-amber-700"
+            >
+              Use cloud version
+            </button>
+            <button
+              type="button"
+              onClick={keepLocalVersion}
+              className="rounded-md bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-700"
+            >
+              Keep my changes
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

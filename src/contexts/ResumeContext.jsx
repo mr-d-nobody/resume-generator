@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { DEFAULT_TEMPLATE_CATEGORY } from '../data/templateCategories';
-import { DEFAULT_SECTION_TITLES, buildUnifiedSections, normalizeCustomSection } from '../utils/resumeSections';
+import { buildUnifiedSections, normalizeCustomSection } from '../utils/resumeSections';
 import { normalizeResumeData } from '../utils/resumeData';
+import { useAuth } from './AuthContext';
+import { fetchSavedResume, saveResume } from '../utils/resumeApi';
 
 // Initial resume data structure
 const initialResumeData = {
@@ -43,6 +45,37 @@ const initialState = {
   },
   isDarkMode: true
 };
+
+const payloadHash = (payload) => JSON.stringify(payload);
+
+function parseResumeCache(rawValue) {
+  if (!rawValue) return null;
+  const parsed = JSON.parse(rawValue);
+  if (parsed?.cacheVersion === 1 && parsed.data) {
+    return {
+      data: parsed.data,
+      revision: Number.isInteger(parsed.revision) ? parsed.revision : 0,
+      updatedAt: parsed.updatedAt || null,
+      syncedHash: typeof parsed.syncedHash === 'string' ? parsed.syncedHash : ''
+    };
+  }
+  return {
+    data: parsed,
+    revision: 0,
+    updatedAt: null,
+    syncedHash: ''
+  };
+}
+
+function writeResumeCache(storageKey, data, revision, updatedAt, syncedHash) {
+  localStorage.setItem(storageKey, JSON.stringify({
+    cacheVersion: 1,
+    data,
+    revision,
+    updatedAt,
+    syncedHash
+  }));
+}
 
 // Action types
 const ACTIONS = {
@@ -418,26 +451,158 @@ const ResumeContext = createContext();
 // Context provider component
 export function ResumeProvider({ children }) {
   const [state, dispatch] = useReducer(resumeReducer, initialState);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const [cloudStatus, setCloudStatus] = useState('loading');
+  const [cloudError, setCloudError] = useState('');
+  const [cloudUpdatedAt, setCloudUpdatedAt] = useState(null);
+  const [cloudConflict, setCloudConflict] = useState(null);
+  const [syncEpoch, setSyncEpoch] = useState(0);
+  const hydratedUserRef = useRef(null);
+  const lastSavedHashRef = useRef('');
+  const revisionRef = useRef(0);
 
-  // Load dark mode preference and saved resume data from localStorage
+  const cloudPayload = useMemo(() => ({
+    resumeData: state.resumeData,
+    selectedTemplate: state.selectedTemplate,
+    templateCategory: state.templateCategory,
+    customization: state.customization
+  }), [state.resumeData, state.selectedTemplate, state.templateCategory, state.customization]);
+
+  const currentPayloadHash = useMemo(() => payloadHash(cloudPayload), [cloudPayload]);
+  const currentPayloadRef = useRef(cloudPayload);
+  currentPayloadRef.current = cloudPayload;
+
+  // Dark mode is device-specific and remains local.
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode === 'true') {
       dispatch({ type: ACTIONS.TOGGLE_DARK_MODE });
     }
-
-    const savedResume = localStorage.getItem('savedResume');
-    if (savedResume) {
-      try {
-        const parsed = JSON.parse(savedResume);
-        dispatch({ type: ACTIONS.LOAD_RESUME, payload: parsed });
-      } catch (err) {
-        console.error('Failed to parse saved resume from local storage', err);
-      }
-    }
   }, []);
 
-  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    let cancelled = false;
+    const hydrate = async () => {
+      const storageKey = user ? `savedResume:${user.id}` : 'savedResume:guest';
+      setCloudError('');
+
+      if (!user) {
+        const localResume = parseResumeCache(localStorage.getItem(storageKey));
+        if (localResume?.data) {
+          try {
+            dispatch({ type: ACTIONS.LOAD_RESUME, payload: localResume.data });
+          } catch (error) {
+            console.error('Failed to read local resume', error);
+          }
+        }
+        hydratedUserRef.current = 'guest';
+        setCloudStatus('local');
+        return;
+      }
+
+      // Restore the account-scoped cache immediately so the editor does not
+      // wait for the network. The cloud copy remains authoritative and will
+      // refresh this state and cache as soon as it arrives.
+      let cachedResume = null;
+      try {
+        cachedResume = parseResumeCache(localStorage.getItem(storageKey));
+      } catch (error) {
+        console.error('Failed to read cached resume', error);
+        localStorage.removeItem(storageKey);
+      }
+      const cachedHash = cachedResume?.data ? payloadHash(cachedResume.data) : '';
+      if (cachedResume?.data) {
+        try {
+          dispatch({ type: ACTIONS.LOAD_RESUME, payload: cachedResume.data });
+          revisionRef.current = cachedResume.revision;
+          lastSavedHashRef.current = cachedResume.syncedHash;
+        } catch (error) {
+          console.error('Failed to read cached resume', error);
+          localStorage.removeItem(storageKey);
+        }
+      } else {
+        dispatch({ type: ACTIONS.LOAD_RESUME, payload: initialState });
+      }
+
+      setCloudStatus('loading');
+      try {
+        const result = await fetchSavedResume();
+        if (cancelled) return;
+
+        const liveHash = payloadHash(currentPayloadRef.current);
+        const localWasEdited = Boolean(cachedHash && liveHash !== cachedHash);
+        const cachedWasDirty = Boolean(
+          cachedResume?.data &&
+          cachedResume.syncedHash &&
+          cachedHash !== cachedResume.syncedHash
+        );
+        const localIsDirty = localWasEdited || cachedWasDirty;
+        const cloudHash = result.exists ? payloadHash(result.data) : '';
+
+        if (
+          result.exists &&
+          localIsDirty &&
+          cachedResume?.revision < result.revision
+        ) {
+          revisionRef.current = result.revision;
+          lastSavedHashRef.current = cloudHash;
+          setCloudConflict({
+            data: result.data,
+            revision: result.revision,
+            updatedAt: result.updatedAt
+          });
+          setCloudUpdatedAt(result.updatedAt);
+          setCloudStatus('conflict');
+        } else if (result.exists && !localIsDirty) {
+          dispatch({ type: ACTIONS.LOAD_RESUME, payload: result.data });
+          revisionRef.current = result.revision;
+          lastSavedHashRef.current = cloudHash;
+          writeResumeCache(
+            storageKey,
+            result.data,
+            result.revision,
+            result.updatedAt,
+            cloudHash
+          );
+          setCloudUpdatedAt(result.updatedAt);
+          setCloudStatus('saved');
+        } else if (cachedResume?.data || localWasEdited) {
+          revisionRef.current = result.revision || 0;
+          lastSavedHashRef.current = result.exists ? cloudHash : '';
+          setCloudUpdatedAt(result.updatedAt || cachedResume?.updatedAt || null);
+          setCloudStatus('idle');
+        } else {
+          dispatch({ type: ACTIONS.LOAD_RESUME, payload: initialState });
+          const emptyPayload = {
+            resumeData: initialState.resumeData,
+            selectedTemplate: initialState.selectedTemplate,
+            templateCategory: initialState.templateCategory,
+            customization: initialState.customization
+          };
+          revisionRef.current = 0;
+          lastSavedHashRef.current = payloadHash(emptyPayload);
+          writeResumeCache(storageKey, emptyPayload, 0, null, lastSavedHashRef.current);
+          setCloudStatus('idle');
+        }
+        hydratedUserRef.current = user.id;
+        setSyncEpoch((value) => value + 1);
+      } catch (error) {
+        if (cancelled) return;
+        hydratedUserRef.current = user.id;
+        setCloudError(error.message);
+        setCloudStatus('error');
+        setSyncEpoch((value) => value + 1);
+      }
+    };
+
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isAuthLoading]);
+
   useEffect(() => {
     localStorage.setItem('darkMode', state.isDarkMode);
     if (state.isDarkMode) {
@@ -446,9 +611,127 @@ export function ResumeProvider({ children }) {
       document.documentElement.classList.remove('dark');
     }
 
-    // Cache the entire state so the user doesn't lose it on refresh
-    localStorage.setItem('savedResume', JSON.stringify(state));
-  }, [state]);
+  }, [state.isDarkMode]);
+
+  useEffect(() => {
+    if (isAuthLoading || hydratedUserRef.current === null) return undefined;
+
+    const storageKey = user ? `savedResume:${user.id}` : 'savedResume:guest';
+    writeResumeCache(
+      storageKey,
+      cloudPayload,
+      revisionRef.current,
+      cloudUpdatedAt,
+      lastSavedHashRef.current
+    );
+
+    if (
+      !user ||
+      hydratedUserRef.current !== user.id ||
+      cloudConflict ||
+      currentPayloadHash === lastSavedHashRef.current
+    ) {
+      return undefined;
+    }
+
+    setCloudStatus('saving');
+    setCloudError('');
+    const timer = setTimeout(async () => {
+      try {
+        const result = await saveResume(cloudPayload, revisionRef.current);
+        revisionRef.current = result.revision;
+        lastSavedHashRef.current = currentPayloadHash;
+        setCloudUpdatedAt(result.updatedAt);
+        setCloudStatus('saved');
+      } catch (error) {
+        if (error.status === 409 && error.data?.current) {
+          const current = error.data.current;
+          revisionRef.current = current.revision;
+          setCloudConflict(current);
+          setCloudError('A newer resume exists in the cloud. Choose which version to keep.');
+          setCloudStatus('conflict');
+        } else {
+          setCloudError(error.message);
+          setCloudStatus('error');
+        }
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [cloudPayload, currentPayloadHash, user, isAuthLoading, cloudConflict, cloudUpdatedAt, syncEpoch]);
+
+  const saveResumeNow = useCallback(async (payload) => {
+    const nextPayload = {
+      resumeData: payload.resumeData || initialResumeData,
+      selectedTemplate: payload.selectedTemplate || state.selectedTemplate,
+      templateCategory: payload.templateCategory || state.templateCategory,
+      customization: payload.customization || state.customization
+    };
+    dispatch({ type: ACTIONS.LOAD_RESUME, payload: nextPayload });
+
+    if (!user) return null;
+    setCloudStatus('saving');
+    setCloudError('');
+    try {
+      const result = await saveResume(nextPayload, revisionRef.current);
+      revisionRef.current = result.revision;
+      lastSavedHashRef.current = payloadHash(nextPayload);
+      setCloudUpdatedAt(result.updatedAt);
+      setCloudStatus('saved');
+      return result;
+    } catch (error) {
+      if (error.status === 409 && error.data?.current) {
+        revisionRef.current = error.data.current.revision;
+        setCloudConflict(error.data.current);
+        setCloudError('A newer resume exists in the cloud. Choose which version to keep.');
+        setCloudStatus('conflict');
+      } else {
+        setCloudError(error.message);
+        setCloudStatus('error');
+      }
+      throw error;
+    }
+  }, [state.selectedTemplate, state.templateCategory, state.customization, user]);
+
+  const useCloudVersion = useCallback(() => {
+    if (!cloudConflict?.data || !user) return;
+    dispatch({ type: ACTIONS.LOAD_RESUME, payload: cloudConflict.data });
+    revisionRef.current = cloudConflict.revision;
+    lastSavedHashRef.current = payloadHash(cloudConflict.data);
+    setCloudUpdatedAt(cloudConflict.updatedAt);
+    writeResumeCache(
+      `savedResume:${user.id}`,
+      cloudConflict.data,
+      cloudConflict.revision,
+      cloudConflict.updatedAt,
+      lastSavedHashRef.current
+    );
+    setCloudConflict(null);
+    setCloudError('');
+    setCloudStatus('saved');
+  }, [cloudConflict, user]);
+
+  const keepLocalVersion = useCallback(async () => {
+    if (!cloudConflict) return;
+    setCloudStatus('saving');
+    setCloudError('');
+    try {
+      const localPayload = currentPayloadRef.current;
+      const result = await saveResume(localPayload, cloudConflict.revision);
+      revisionRef.current = result.revision;
+      lastSavedHashRef.current = payloadHash(localPayload);
+      setCloudUpdatedAt(result.updatedAt);
+      setCloudConflict(null);
+      setCloudStatus('saved');
+    } catch (error) {
+      if (error.status === 409 && error.data?.current) {
+        revisionRef.current = error.data.current.revision;
+        setCloudConflict(error.data.current);
+      }
+      setCloudError(error.message);
+      setCloudStatus(error.status === 409 ? 'conflict' : 'error');
+    }
+  }, [cloudConflict]);
 
   // Action creators
   const actions = {
@@ -489,6 +772,13 @@ export function ResumeProvider({ children }) {
   return (
     <ResumeContext.Provider value={{
       ...state,
+      cloudStatus,
+      cloudError,
+      cloudUpdatedAt,
+      cloudConflict,
+      saveResumeNow,
+      useCloudVersion,
+      keepLocalVersion,
       sections: buildUnifiedSections(state.resumeData, state.customization),
       ...actions
     }}>

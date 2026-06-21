@@ -92,7 +92,10 @@ export default function ResumePreview({ isPrintMode = false }) {
 
   if (isPrintMode) {
     return (
-      <div className="bg-white mx-auto" style={{ width: `${A4_WIDTH}px`, minHeight: `${A4_HEIGHT}px` }}>
+      <div
+        className="resume-print-page mx-auto bg-white"
+        style={{ width: '210mm', minHeight: '297mm' }}
+      >
         {renderTemplate()}
       </div>
     );

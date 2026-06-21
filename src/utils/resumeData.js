@@ -4,11 +4,17 @@ const LEGACY_LINK_FIELDS = [
   ['Website', 'website']
 ];
 
-const asString = (value) => typeof value === 'string' ? value.trim() : '';
+const EMPTY_PLACEHOLDER = /^(?:none|null|undefined|n\/a|na|not available|not applicable|nil|-+)$/i;
+
+export const asString = (value) => {
+  if (typeof value !== 'string') return '';
+  const cleanValue = value.trim();
+  return !cleanValue || EMPTY_PLACEHOLDER.test(cleanValue) ? '' : cleanValue;
+};
 const asArray = (value) => Array.isArray(value) ? value : [];
 const asDate = (value) => {
   const date = asString(value);
-  return /^(date|start date|end date|grad date|n\/a)$/i.test(date) ? '' : date;
+  return /^(date|start date|end date|grad date)$/i.test(date) ? '' : date;
 };
 
 export function normalizeUrl(value) {

@@ -18,6 +18,7 @@ async function parseResponse(response) {
     const error = new Error(data.error || fallbackMessage);
     error.status = response.status;
     error.fieldErrors = data.fieldErrors || {};
+    error.data = data;
     throw error;
   }
   return data;

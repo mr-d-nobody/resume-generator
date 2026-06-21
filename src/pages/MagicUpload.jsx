@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
 import { extractTextFromPDF, parseResumeWithAI } from '../utils/ResumeParser';
-import { UploadCloud, Sparkles, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { UploadCloud, Sparkles, Loader2, CheckCircle, AlertCircle, CloudUpload } from 'lucide-react';
 import { DEFAULT_TEMPLATE_CATEGORY, TEMPLATE_CATEGORIES, getTemplateCategory } from '../data/templateCategories';
 
 export default function MagicUpload() {
@@ -12,7 +12,7 @@ export default function MagicUpload() {
   
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
-  const { loadResume, setTemplateCategory } = useResume();
+  const { saveResumeNow, setTemplateCategory } = useResume();
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -85,9 +85,6 @@ export default function MagicUpload() {
         });
       }
       
-      // We have the structured data! Now load it into our context.
-      setStatus('success');
-      
       // Construct the payload matching the ResumeContext structure
       const payload = {
         resumeData: {
@@ -106,11 +103,13 @@ export default function MagicUpload() {
         }
       };
       
-      loadResume({
+      setStatus('saving');
+      await saveResumeNow({
         ...payload,
         templateCategory: category.id
       });
       setTemplateCategory(category.id);
+      setStatus('success');
       
       // Redirect to templates page to see the magic
       setTimeout(() => {
@@ -205,6 +204,17 @@ export default function MagicUpload() {
               <Sparkles className="w-16 h-16 animate-pulse mb-4" />
               <h3 className="text-xl font-medium mb-2">AI is working its magic...</h3>
               <p className="text-sm opacity-80">Structuring your experience, skills, and projects.</p>
+            </div>
+          )}
+
+          {status === 'saving' && (
+            <div className="flex flex-col items-center text-blue-600 dark:text-blue-400">
+              <div className="relative mb-4">
+                <CloudUpload className="h-16 w-16" />
+                <span className="absolute -bottom-1 -right-1 h-4 w-4 animate-pulse rounded-full bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-950" />
+              </div>
+              <h3 className="mb-2 text-xl font-medium">Saving to your cloud profile...</h3>
+              <p className="text-sm opacity-80">Your previous saved resume will be replaced safely.</p>
             </div>
           )}
 

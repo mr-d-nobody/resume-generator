@@ -21,6 +21,17 @@ STANDARD_SECTION_NAMES = (
 )
 
 TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
+EMPTY_PLACEHOLDERS = {
+    "", "none", "null", "undefined", "n/a", "na",
+    "not available", "not applicable", "nil", "-",
+}
+
+
+def clean_optional_text(value):
+    if value is None:
+        return ""
+    text = str(value).strip()
+    return "" if text.lower() in EMPTY_PLACEHOLDERS else text
 
 
 def is_transient_gemini_error(exc):
@@ -49,34 +60,39 @@ def normalize_parsed_resume(parsed_data):
         links = []
     personal_info["links"] = [
         {
-            "label": str(link.get("label", "")).strip(),
-            "url": str(link.get("url", "")).strip(),
+            "label": clean_optional_text(link.get("label", "")),
+            "url": clean_optional_text(link.get("url", "")),
         }
         for link in links
-        if isinstance(link, dict) and str(link.get("url", "")).strip()
+        if isinstance(link, dict) and clean_optional_text(link.get("url", ""))
     ]
 
     normalized_certifications = []
     for certification in normalized["certifications"]:
         if not isinstance(certification, dict):
             continue
-        normalized_certifications.append({
-            "name": str(certification.get("name", "")).strip(),
-            "issuer": str(certification.get("issuer", "")).strip(),
-            "date": str(certification.get("date", "")).strip(),
-            "expirationDate": str(certification.get("expirationDate", "")).strip(),
-            "credentialId": str(
+        normalized_certification = {
+            "name": clean_optional_text(certification.get("name", "")),
+            "issuer": clean_optional_text(certification.get("issuer", "")),
+            "date": clean_optional_text(certification.get("date", "")),
+            "expirationDate": clean_optional_text(certification.get("expirationDate", "")),
+            "credentialId": clean_optional_text(
                 certification.get("credentialId", certification.get("credentialID", ""))
-            ).strip(),
-            "url": str(
+            ),
+            "url": clean_optional_text(
                 certification.get(
                     "url",
                     certification.get("credentialURL", certification.get("certificateURL", "")),
                 )
-            ).strip(),
-            "linkLabel": str(certification.get("linkLabel", "")).strip() or "Verify",
-            "description": str(certification.get("description", "")).strip(),
-        })
+            ),
+            "linkLabel": clean_optional_text(certification.get("linkLabel", "")) or "Verify",
+            "description": clean_optional_text(certification.get("description", "")),
+        }
+        if any(normalized_certification[field] for field in (
+            "name", "issuer", "date", "expirationDate",
+            "credentialId", "url", "description",
+        )):
+            normalized_certifications.append(normalized_certification)
     normalized["certifications"] = normalized_certifications
 
     normalized_projects = []
@@ -88,16 +104,16 @@ def normalize_parsed_resume(parsed_data):
             links = []
         normalized_links = [
             {
-                "label": str(link.get("label", "")).strip(),
-                "url": str(link.get("url", "")).strip(),
+                "label": clean_optional_text(link.get("label", "")),
+                "url": clean_optional_text(link.get("url", "")),
             }
             for link in links
-            if isinstance(link, dict) and str(link.get("url", "")).strip()
+            if isinstance(link, dict) and clean_optional_text(link.get("url", ""))
         ]
-        legacy_url = str(project.get("link", "")).strip()
+        legacy_url = clean_optional_text(project.get("link", ""))
         if legacy_url and not any(link["url"] == legacy_url for link in normalized_links):
             normalized_links.insert(0, {
-                "label": str(project.get("linkLabel", "")).strip() or "Live Demo",
+                "label": clean_optional_text(project.get("linkLabel", "")) or "Live Demo",
                 "url": legacy_url,
             })
         normalized_projects.append({
@@ -128,29 +144,29 @@ def normalize_parsed_resume(parsed_data):
             links = []
         links = [
             {
-                "label": str(link.get("label", "")).strip() or "Profile",
-                "url": str(link.get("url", "")).strip(),
+                "label": clean_optional_text(link.get("label", "")) or "Profile",
+                "url": clean_optional_text(link.get("url", "")),
             }
             for link in links
-            if isinstance(link, dict) and str(link.get("url", "")).strip()
+            if isinstance(link, dict) and clean_optional_text(link.get("url", ""))
         ]
         entries = section.get("entries")
         if not isinstance(entries, list):
             entries = []
         entries = [
             {
-                "title": str(entry.get("title", "")).strip(),
-                "description": str(
+                "title": clean_optional_text(entry.get("title", "")),
+                "description": clean_optional_text(
                     entry.get("description", entry.get("details", ""))
-                ).strip(),
-                "url": str(entry.get("url", "")).strip(),
-                "linkLabel": str(entry.get("linkLabel", "")).strip()
-                or str(entry.get("title", "")).strip()
+                ),
+                "url": clean_optional_text(entry.get("url", "")),
+                "linkLabel": clean_optional_text(entry.get("linkLabel", ""))
+                or clean_optional_text(entry.get("title", ""))
                 or "Profile",
             }
             for entry in entries
             if isinstance(entry, dict)
-            and any(str(entry.get(key, "")).strip() for key in ("title", "description", "details", "url"))
+            and any(clean_optional_text(entry.get(key, "")) for key in ("title", "description", "details", "url"))
         ]
 
         if description or links or entries:

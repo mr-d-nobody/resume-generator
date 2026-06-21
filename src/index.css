@@ -69,17 +69,83 @@
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
   .resume-template {
     @apply shadow-none;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
+  .resume-container {
+    width: 210mm !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .resume-container > div {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .resume-print-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    overflow: visible !important;
+  }
+
+  .template16-page[data-page-mode="single"] {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    break-after: avoid-page;
+    break-inside: avoid-page;
+  }
+
+  .template16-page[data-page-mode="multi"] {
+    display: block !important;
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 297mm !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .template16-page[data-page-mode="multi"] .template16-content {
+    display: block !important;
+    padding-bottom: 8mm !important;
+  }
+
+  .template16-page[data-page-mode="multi"] .template16-content > * + * {
+    margin-top: 7px;
+  }
+
+  .template16-page section,
+  .template16-page [class*="break-inside-avoid"] {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
   .no-print {
     display: none !important;
   }
-}
-@media print {
+
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
