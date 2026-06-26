@@ -73,17 +73,22 @@ function Download() {
 
         .resume-container {
           width: 210mm !important;
+          height: 297mm !important;
+          max-height: 297mm !important;
           margin: 0 !important;
           border: 0 !important;
           box-shadow: none !important;
+          overflow: hidden !important;
         }
 
-        .resume-container > div,
-        .resume-container .w-\\[210mm\\] {
+        .resume-container > div {
           width: 210mm !important;
           max-width: 210mm !important;
+          height: 297mm !important;
+          max-height: 297mm !important;
           margin: 0 !important;
           box-shadow: none !important;
+          overflow: hidden !important;
         }
 
         .resume-print-page,
@@ -98,12 +103,12 @@ function Download() {
         }
 
         .one-page-fit-content {
-          position: static !important;
-          width: var(--fit-width) !important;
-          max-width: none !important;
-          transform: none !important;
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 210mm !important;
+          max-width: 210mm !important;
           transform-origin: top left !important;
-          zoom: var(--fit-scale);
         }
       }
     `,

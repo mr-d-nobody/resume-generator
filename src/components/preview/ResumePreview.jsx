@@ -80,7 +80,6 @@ function OnePageFit({ children }) {
         className="one-page-fit-content absolute left-0 top-0 w-[210mm] origin-top-left"
         style={{
           '--fit-scale': fitScale,
-          '--fit-width': `${100 / fitScale}%`,
           transform: `scale(${fitScale})`
         }}
       >
