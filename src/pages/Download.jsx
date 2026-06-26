@@ -1,32 +1,27 @@
 import React, { useRef, useState } from 'react';
 import { useResume } from '../contexts/ResumeContext';
-// Import templates when they're available
-// import { ModernTemplate, MinimalTemplate } from '../components/templates';
 import ResumePreview from '../components/preview/ResumePreview';
 import { Button } from '../components/ui';
-import { useReactToPrint } from 'react-to-print';
 import { Download as DownloadIcon, Share2 as ShareIcon } from 'lucide-react';
 
-/**
- * Download page component
- * Handles PDF export and sharing functionality
- */
+const A4_WIDTH_MM = 210;
+const A4_HEIGHT_MM = 297;
+
 function Download() {
   const { resumeData } = useResume();
   const resumeRef = useRef(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-  const [printLinkCount, setPrintLinkCount] = useState(0);
 
-  // Get the appropriate template component based on selection
-  const getTemplateComponent = () => {
-    // For now, use ResumePreview until templates are implemented
-    return <ResumePreview isPrintMode={true} />;
-  };
+  const getDocumentTitle = () => `Resume_${[
+    resumeData?.personalInfo?.firstName,
+    resumeData?.personalInfo?.lastName
+  ].filter(Boolean).join('_') || 'Export'}`;
 
-  const prepareLinksForPrint = () => {
+  const prepareLinksForPdf = () => {
     const links = resumeRef.current?.querySelectorAll('a[href]') || [];
-    let validLinkCount = 0;
+    const validLinks = [];
 
     links.forEach((link) => {
       const rawHref = link.getAttribute('href')?.trim();
@@ -39,94 +34,94 @@ function Download() {
         link.setAttribute('href', absoluteHref);
         link.setAttribute('target', '_blank');
         link.setAttribute('rel', 'noopener noreferrer');
-        validLinkCount += 1;
+        validLinks.push({ element: link, href: absoluteHref });
       } catch {
         console.warn('Skipping invalid resume link:', rawHref);
       }
     });
 
-    setPrintLinkCount(validLinkCount);
-    return validLinkCount;
+    return validLinks;
   };
 
-  const handleExportPDF = useReactToPrint({
-    contentRef: resumeRef,
-    preserveAfterPrint: true,
-    documentTitle: `Resume_${[
-      resumeData?.personalInfo?.firstName,
-      resumeData?.personalInfo?.lastName
-    ].filter(Boolean).join('_') || 'Export'}`,
-    pageStyle: `
-      @page {
-        size: A4 portrait;
-        margin: 0;
-      }
+  const handleExportPDF = async () => {
+    const resumeElement = resumeRef.current?.querySelector('.one-page-fit-page')
+      || resumeRef.current?.querySelector('.resume-print-page')
+      || resumeRef.current;
 
-      @media print {
-        html,
-        body {
-          width: 210mm;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: white !important;
-        }
+    if (!resumeElement) return;
 
-        .resume-container {
-          width: 210mm !important;
-          height: 297mm !important;
-          max-height: 297mm !important;
-          margin: 0 !important;
-          border: 0 !important;
-          box-shadow: none !important;
-          overflow: hidden !important;
-        }
-
-        .resume-container > div {
-          width: 210mm !important;
-          max-width: 210mm !important;
-          height: 297mm !important;
-          max-height: 297mm !important;
-          margin: 0 !important;
-          box-shadow: none !important;
-          overflow: hidden !important;
-        }
-
-        .resume-print-page,
-        .one-page-fit-page {
-          width: 210mm !important;
-          height: 297mm !important;
-          min-height: 297mm !important;
-          max-height: 297mm !important;
-          overflow: hidden !important;
-          break-after: avoid-page;
-          break-inside: avoid-page;
-        }
-
-        .one-page-fit-content {
-          position: absolute !important;
-          left: 0 !important;
-          top: 0 !important;
-          width: 210mm !important;
-          max-width: 210mm !important;
-          transform-origin: top left !important;
-        }
-      }
-    `,
-    onBeforePrint: async () => {
+    try {
       setIsDownloading(true);
       setDownloadSuccess(false);
-      prepareLinksForPrint();
+      setDownloadMessage('');
       await document.fonts?.ready;
-    },
-    onAfterPrint: () => {
-      setIsDownloading(false);
+
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+      const links = prepareLinksForPdf();
+      const pageRect = resumeElement.getBoundingClientRect();
+      const canvas = await html2canvas(resumeElement, {
+        backgroundColor: '#ffffff',
+        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+        useCORS: true,
+        logging: false,
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight
+      });
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+
+      pdf.addImage(
+        canvas.toDataURL('image/jpeg', 0.98),
+        'JPEG',
+        0,
+        0,
+        A4_WIDTH_MM,
+        A4_HEIGHT_MM,
+        undefined,
+        'FAST'
+      );
+
+      links.forEach(({ element, href }) => {
+        const rect = element.getBoundingClientRect();
+        const left = Math.max(rect.left, pageRect.left);
+        const top = Math.max(rect.top, pageRect.top);
+        const right = Math.min(rect.right, pageRect.right);
+        const bottom = Math.min(rect.bottom, pageRect.bottom);
+
+        if (right <= left || bottom <= top) return;
+
+        pdf.link(
+          ((left - pageRect.left) / pageRect.width) * A4_WIDTH_MM,
+          ((top - pageRect.top) / pageRect.height) * A4_HEIGHT_MM,
+          ((right - left) / pageRect.width) * A4_WIDTH_MM,
+          ((bottom - top) / pageRect.height) * A4_HEIGHT_MM,
+          { url: href }
+        );
+      });
+
+      pdf.save(`${getDocumentTitle()}.pdf`);
+      setDownloadMessage(
+        links.length > 0
+          ? `Downloaded one-page PDF with ${links.length} clickable link${links.length === 1 ? '' : 's'}.`
+          : 'Downloaded one-page PDF.'
+      );
       setDownloadSuccess(true);
-    },
-    onPrintError: (error) => {
-      console.error('Print error:', error);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      setDownloadMessage('Could not generate the PDF. Please try again.');
+      setDownloadSuccess(false);
+    } finally {
       setIsDownloading(false);
     }
-  });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -136,34 +131,30 @@ function Download() {
             Download & Share
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Export your resume as PDF or share it with others.
+            Export your resume as a deterministic one-page PDF.
           </p>
         </div>
-        
+
         <div className="card p-6 mb-8">
-          <div className="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-center text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
-            <p className="font-semibold">To keep hyperlinks clickable</p>
+          <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-950 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
+            <p className="font-semibold">One-page PDF export</p>
             <p className="mt-1">
-              In Chrome’s print window choose <strong>Destination → Save to PDF</strong>.
-              Do not choose <strong>Microsoft Print to PDF</strong>—it removes hyperlink annotations.
+              The app generates the PDF directly, so browser print scaling will not distort the resume.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              onClick={() => {
-                prepareLinksForPrint();
-                handleExportPDF();
-              }}
+            <Button
+              onClick={handleExportPDF}
               className="flex items-center gap-2"
               disabled={isDownloading}
             >
               <DownloadIcon size={18} />
-              {isDownloading ? 'Preparing...' : 'Print / Save as PDF'}
+              {isDownloading ? 'Generating...' : 'Download PDF'}
             </Button>
-            
-            <Button 
-              variant="secondary" 
+
+            <Button
+              variant="secondary"
               className="flex items-center gap-2"
               onClick={() => alert('Sharing functionality will be implemented in a future update.')}
               disabled={isDownloading}
@@ -172,27 +163,26 @@ function Download() {
               Share Resume
             </Button>
           </div>
-          
-          {downloadSuccess && (
-            <div className="mt-4 p-3 bg-blue-50 text-blue-800 rounded-md text-center border border-blue-200">
-              <p className="font-medium">Print dialog opened!</p>
-              <p className="text-sm mt-1">
-                Choose Chrome <strong>Save to PDF</strong>, not Microsoft Print to PDF. {printLinkCount > 0
-                  ? `${printLinkCount} clickable link${printLinkCount === 1 ? '' : 's'} prepared.`
-                  : 'No valid hyperlinks were found.'}
-              </p>
+
+          {downloadMessage && (
+            <div className={`mt-4 rounded-md border p-3 text-center ${
+              downloadSuccess
+                ? 'border-blue-200 bg-blue-50 text-blue-800'
+                : 'border-red-200 bg-red-50 text-red-700'
+            }`}>
+              <p className="font-medium">{downloadMessage}</p>
             </div>
           )}
         </div>
-        
+
         <div className="mb-8 bg-white p-2 shadow-lg rounded-lg no-print">
           <div className="text-center mb-4 p-2 bg-gray-100 rounded">
             <p className="text-sm text-gray-600">Preview (This is how your resume will appear in the PDF)</p>
           </div>
-          
+
           <div className="overflow-x-auto pb-4">
             <div ref={resumeRef} className="resume-container bg-white w-fit mx-auto border border-gray-200 shadow-sm">
-              {getTemplateComponent()}
+              <ResumePreview isPrintMode={true} />
             </div>
           </div>
         </div>
