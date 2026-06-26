@@ -12,8 +12,86 @@ import Template14 from '../../templates/Template14';
 import Template15 from '../../templates/Template15';
 import Template16 from '../../templates/Template16';
 
+const A4_WIDTH = 794;
+const A4_HEIGHT = 1123;
+const MIN_FIT_SCALE = 0.1;
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
+}
+
+function OnePageFit({ children }) {
+  const pageRef = React.useRef(null);
+  const contentRef = React.useRef(null);
+  const [fitScale, setFitScale] = React.useState(1);
+
+  React.useLayoutEffect(() => {
+    const page = pageRef.current;
+    const content = contentRef.current;
+    if (!page || !content) return undefined;
+
+    let frame;
+
+    const measure = () => {
+      const availableHeight = page.clientHeight || A4_HEIGHT;
+      const naturalHeight = Math.max(
+        content.scrollHeight,
+        content.getBoundingClientRect().height / Math.max(fitScale, MIN_FIT_SCALE)
+      );
+
+      if (!availableHeight || !naturalHeight) return;
+
+      const nextScale = Math.min(1, Math.max(MIN_FIT_SCALE, availableHeight / naturalHeight));
+      setFitScale((current) => (
+        Math.abs(current - nextScale) > 0.005 ? nextScale : current
+      ));
+    };
+
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+
+    scheduleMeasure();
+    document.fonts?.ready.then(scheduleMeasure);
+
+    const resizeObserver = new ResizeObserver(scheduleMeasure);
+    resizeObserver.observe(content);
+
+    const mutationObserver = new MutationObserver(scheduleMeasure);
+    mutationObserver.observe(content, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [children, fitScale]);
+
+  const scaledWidth = `${100 / fitScale}%`;
+
+  return (
+    <div
+      ref={pageRef}
+      className="one-page-fit-page relative mx-auto h-[297mm] w-[210mm] overflow-hidden bg-white"
+      data-fit-scale={fitScale.toFixed(3)}
+    >
+      <div
+        ref={contentRef}
+        className="one-page-fit-content origin-top-left"
+        style={{
+          width: scaledWidth,
+          zoom: fitScale
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export default function ResumePreview({ isPrintMode = false }) {
@@ -86,17 +164,15 @@ export default function ResumePreview({ isPrintMode = false }) {
     }
   };
 
-  // A4 dimensions in pixels
-  const A4_WIDTH = 794;
-  const A4_HEIGHT = 1123;
-
   if (isPrintMode) {
     return (
       <div
         className="resume-print-page mx-auto bg-white"
-        style={{ width: '210mm', minHeight: '297mm' }}
+        style={{ width: '210mm', height: '297mm', overflow: 'hidden' }}
       >
-        {renderTemplate()}
+        <OnePageFit>
+          {renderTemplate()}
+        </OnePageFit>
       </div>
     );
   }
@@ -117,12 +193,14 @@ export default function ResumePreview({ isPrintMode = false }) {
           className="absolute top-0 left-0 bg-white shadow-2xl overflow-hidden"
           style={{ 
             width: A4_WIDTH, 
-            minHeight: A4_HEIGHT,
+            height: A4_HEIGHT,
             transform: `scale(${scale})`, 
             transformOrigin: 'top left' 
           }}
         >
-          {renderTemplate()}
+          <OnePageFit>
+            {renderTemplate()}
+          </OnePageFit>
         </div>
       </div>
     </div>

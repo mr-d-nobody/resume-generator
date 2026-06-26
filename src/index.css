@@ -104,8 +104,22 @@
 
   .resume-print-page {
     width: 210mm !important;
+    height: 297mm !important;
     min-height: 297mm !important;
-    overflow: visible !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    break-after: avoid-page;
+    break-inside: avoid-page;
+  }
+
+  .one-page-fit-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    overflow: hidden !important;
+  }
+
+  .one-page-fit-content {
+    max-width: 210mm !important;
   }
 
   .template16-page[data-page-mode="single"] {

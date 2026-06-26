@@ -85,6 +85,21 @@ function Download() {
           margin: 0 !important;
           box-shadow: none !important;
         }
+
+        .resume-print-page,
+        .one-page-fit-page {
+          width: 210mm !important;
+          height: 297mm !important;
+          min-height: 297mm !important;
+          max-height: 297mm !important;
+          overflow: hidden !important;
+          break-after: avoid-page;
+          break-inside: avoid-page;
+        }
+
+        .one-page-fit-content {
+          max-width: 210mm !important;
+        }
       }
     `,
     onBeforePrint: async () => {
