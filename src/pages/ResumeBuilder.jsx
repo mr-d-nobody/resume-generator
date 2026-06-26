@@ -104,7 +104,11 @@ function ResumeBuilder() {
             {/* Action Buttons */}
             <div className="card p-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <button className="btn-secondary flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setMobileView('preview')}
+                  className="btn-secondary flex items-center justify-center"
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   Preview Resume
                 </button>

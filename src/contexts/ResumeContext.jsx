@@ -108,6 +108,7 @@ const ACTIONS = {
   SET_TEMPLATE_CATEGORY: 'SET_TEMPLATE_CATEGORY',
   UPDATE_CUSTOMIZATION: 'UPDATE_CUSTOMIZATION',
   REORDER_SECTIONS: 'REORDER_SECTIONS',
+  SET_DARK_MODE: 'SET_DARK_MODE',
   TOGGLE_DARK_MODE: 'TOGGLE_DARK_MODE',
   RESET_RESUME: 'RESET_RESUME',
   LOAD_RESUME: 'LOAD_RESUME'
@@ -412,6 +413,12 @@ function resumeReducer(state, action) {
         }
       };
 
+    case ACTIONS.SET_DARK_MODE:
+      return {
+        ...state,
+        isDarkMode: Boolean(action.payload)
+      };
+
     case ACTIONS.TOGGLE_DARK_MODE:
       return {
         ...state,
@@ -424,21 +431,29 @@ function resumeReducer(state, action) {
         resumeData: initialResumeData
       };
 
-    case ACTIONS.LOAD_RESUME:
+    case ACTIONS.LOAD_RESUME: {
+      const {
+        resumeData,
+        customization,
+        isDarkMode: _deviceThemePreference,
+        ...restPayload
+      } = action.payload || {};
+
       return {
         ...state,
-        ...action.payload,
+        ...restPayload,
         resumeData: normalizeResumeData({
           ...initialResumeData,
-          ...(action.payload.resumeData || {}),
-          customSections: (action.payload.resumeData?.customSections || []).map(normalizeCustomSection)
+          ...(resumeData || {}),
+          customSections: (resumeData?.customSections || []).map(normalizeCustomSection)
         }),
         customization: {
           ...initialState.customization,
-          ...(action.payload.customization || {}),
-          sectionTitles: action.payload.customization?.sectionTitles || {}
+          ...(customization || {}),
+          sectionTitles: customization?.sectionTitles || {}
         }
       };
+    }
 
     default:
       return state;
@@ -475,8 +490,8 @@ export function ResumeProvider({ children }) {
   // Dark mode is device-specific and remains local.
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode === 'true') {
-      dispatch({ type: ACTIONS.TOGGLE_DARK_MODE });
+    if (savedDarkMode === 'true' || savedDarkMode === 'false') {
+      dispatch({ type: ACTIONS.SET_DARK_MODE, payload: savedDarkMode === 'true' });
     }
   }, []);
 
@@ -489,12 +504,19 @@ export function ResumeProvider({ children }) {
       setCloudError('');
 
       if (!user) {
-        const localResume = parseResumeCache(localStorage.getItem(storageKey));
+        let localResume = null;
+        try {
+          localResume = parseResumeCache(localStorage.getItem(storageKey));
+        } catch (error) {
+          console.error('Failed to read local resume', error);
+          localStorage.removeItem(storageKey);
+        }
         if (localResume?.data) {
           try {
             dispatch({ type: ACTIONS.LOAD_RESUME, payload: localResume.data });
           } catch (error) {
             console.error('Failed to read local resume', error);
+            localStorage.removeItem(storageKey);
           }
         }
         hydratedUserRef.current = 'guest';

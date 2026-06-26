@@ -5,6 +5,8 @@ import { extractTextFromPDF, parseResumeWithAI } from '../utils/ResumeParser';
 import { UploadCloud, Sparkles, Loader2, CheckCircle, AlertCircle, CloudUpload } from 'lucide-react';
 import { DEFAULT_TEMPLATE_CATEGORY, TEMPLATE_CATEGORIES, getTemplateCategory } from '../data/templateCategories';
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 export default function MagicUpload() {
   const [status, setStatus] = useState('idle'); // idle, reading, parsing, success, error
   const [errorMessage, setErrorMessage] = useState('');
@@ -20,6 +22,12 @@ export default function MagicUpload() {
       if (selectedFile.type !== 'application/pdf') {
         setErrorMessage('Please upload a valid PDF file.');
         setStatus('error');
+        return;
+      }
+      if (selectedFile.size > MAX_UPLOAD_BYTES) {
+        setErrorMessage('Please upload a PDF smaller than 5MB.');
+        setStatus('error');
+        e.target.value = '';
         return;
       }
       processFile(selectedFile);
