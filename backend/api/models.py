@@ -14,3 +14,5 @@ class SavedResume(models.Model):
 
     def __str__(self):
         return f"Resume for {self.user}"
+
+

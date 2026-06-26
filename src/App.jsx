@@ -1,4 +1,5 @@
 import React from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ResumeProvider } from './contexts/ResumeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -51,6 +52,7 @@ function App() {
           </Routes>
         </ResumeProvider>
       </AuthProvider>
+      <Analytics />
     </Router>
   );
 }
