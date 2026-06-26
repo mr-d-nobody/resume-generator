@@ -6,19 +6,6 @@ import { Download as DownloadIcon, Share2 as ShareIcon } from 'lucide-react';
 
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
-const COLOR_STYLE_PROPERTIES = [
-  'color',
-  'backgroundColor',
-  'borderTopColor',
-  'borderRightColor',
-  'borderBottomColor',
-  'borderLeftColor',
-  'outlineColor',
-  'textDecorationColor',
-  'fill',
-  'stroke'
-];
-
 function clampChannel(value) {
   return Math.round(Math.min(255, Math.max(0, value * 255)));
 }
@@ -65,9 +52,72 @@ function oklchToRgb(color) {
   });
 }
 
-function sanitizeColorValue(value) {
+function oklabToRgb(color) {
+  return color.replace(/oklab\(\s*([0-9.]+%?)\s+(-?[0-9.]+)\s+(-?[0-9.]+)(?:\s*\/\s*([0-9.]+%?))?\s*\)/gi, (
+    _match,
+    lightnessValue,
+    aValue,
+    bValue,
+    alphaValue
+  ) => {
+    const lightness = lightnessValue.endsWith('%')
+      ? parseFloat(lightnessValue) / 100
+      : parseFloat(lightnessValue);
+    const a = parseFloat(aValue);
+    const b = parseFloat(bValue);
+    const alpha = alphaValue
+      ? (alphaValue.endsWith('%') ? parseFloat(alphaValue) / 100 : parseFloat(alphaValue))
+      : 1;
+
+    const lPrime = lightness + 0.3963377774 * a + 0.2158037573 * b;
+    const mPrime = lightness - 0.1055613458 * a - 0.0638541728 * b;
+    const sPrime = lightness - 0.0894841775 * a - 1.291485548 * b;
+    const l = lPrime ** 3;
+    const m = mPrime ** 3;
+    const s = sPrime ** 3;
+
+    const red = linearSrgbToSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s);
+    const green = linearSrgbToSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s);
+    const blue = linearSrgbToSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s);
+
+    return alpha >= 1
+      ? `rgb(${clampChannel(red)}, ${clampChannel(green)}, ${clampChannel(blue)})`
+      : `rgba(${clampChannel(red)}, ${clampChannel(green)}, ${clampChannel(blue)}, ${alpha})`;
+  });
+}
+
+function sanitizeStyleValue(property, value) {
   if (!value || value === 'transparent' || value === 'currentcolor') return value;
-  return value.includes('oklch(') ? oklchToRgb(value) : value;
+  let sanitized = value.includes('oklch(') ? oklchToRgb(value) : value;
+  sanitized = sanitized.includes('oklab(') ? oklabToRgb(sanitized) : sanitized;
+
+  if (/oklch\(|oklab\(|color-mix\(/i.test(sanitized)) {
+    if (property.includes('shadow')) return 'none';
+    if (property.includes('background')) return 'transparent';
+    return 'rgb(0, 0, 0)';
+  }
+
+  return sanitized;
+}
+
+function inlineComputedStyles(sourceElement, clonedElement) {
+  const computed = window.getComputedStyle(sourceElement);
+
+  for (let index = 0; index < computed.length; index += 1) {
+    const property = computed[index];
+    if (property.startsWith('--')) continue;
+
+    const value = sanitizeStyleValue(property, computed.getPropertyValue(property));
+    if (!value) continue;
+    clonedElement.style.setProperty(
+      property,
+      value,
+      computed.getPropertyPriority(property)
+    );
+  }
+
+  clonedElement.style.boxShadow = 'none';
+  clonedElement.style.textShadow = 'none';
 }
 
 function sanitizeCanvasClone(sourceRoot, clonedRoot) {
@@ -77,14 +127,14 @@ function sanitizeCanvasClone(sourceRoot, clonedRoot) {
   sourceElements.forEach((sourceElement, index) => {
     const clonedElement = clonedElements[index];
     if (!clonedElement) return;
-
-    const computed = window.getComputedStyle(sourceElement);
-    COLOR_STYLE_PROPERTIES.forEach((property) => {
-      clonedElement.style[property] = sanitizeColorValue(computed[property]);
-    });
-    clonedElement.style.boxShadow = 'none';
-    clonedElement.style.textShadow = 'none';
+    inlineComputedStyles(sourceElement, clonedElement);
   });
+}
+
+function removeClonedStylesheets(clonedDocument) {
+  clonedDocument
+    .querySelectorAll('style, link[rel="stylesheet"]')
+    .forEach((node) => node.remove());
 }
 
 function Download() {
@@ -156,6 +206,7 @@ function Download() {
           if (clonedElement) {
             sanitizeCanvasClone(resumeElement, clonedElement);
           }
+          removeClonedStylesheets(clonedDocument);
         }
       });
 
