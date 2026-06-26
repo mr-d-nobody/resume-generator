@@ -98,7 +98,12 @@ function Download() {
         }
 
         .one-page-fit-content {
-          max-width: 210mm !important;
+          position: static !important;
+          width: var(--fit-width) !important;
+          max-width: none !important;
+          transform: none !important;
+          transform-origin: top left !important;
+          zoom: var(--fit-scale);
         }
       }
     `,

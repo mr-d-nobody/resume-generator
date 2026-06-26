@@ -34,10 +34,7 @@ function OnePageFit({ children }) {
 
     const measure = () => {
       const availableHeight = page.clientHeight || A4_HEIGHT;
-      const naturalHeight = Math.max(
-        content.scrollHeight,
-        content.getBoundingClientRect().height / Math.max(fitScale, MIN_FIT_SCALE)
-      );
+      const naturalHeight = content.scrollHeight;
 
       if (!availableHeight || !naturalHeight) return;
 
@@ -72,8 +69,6 @@ function OnePageFit({ children }) {
     };
   }, [children, fitScale]);
 
-  const scaledWidth = `${100 / fitScale}%`;
-
   return (
     <div
       ref={pageRef}
@@ -82,10 +77,11 @@ function OnePageFit({ children }) {
     >
       <div
         ref={contentRef}
-        className="one-page-fit-content origin-top-left"
+        className="one-page-fit-content absolute left-0 top-0 w-[210mm] origin-top-left"
         style={{
-          width: scaledWidth,
-          zoom: fitScale
+          '--fit-scale': fitScale,
+          '--fit-width': `${100 / fitScale}%`,
+          transform: `scale(${fitScale})`
         }}
       >
         {children}
