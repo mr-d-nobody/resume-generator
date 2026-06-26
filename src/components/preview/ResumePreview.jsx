@@ -14,79 +14,9 @@ import Template16 from '../../templates/Template16';
 
 const A4_WIDTH = 794;
 const A4_HEIGHT = 1123;
-const MIN_FIT_SCALE = 0.1;
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
-}
-
-function OnePageFit({ children }) {
-  const pageRef = React.useRef(null);
-  const contentRef = React.useRef(null);
-  const [fitScale, setFitScale] = React.useState(1);
-
-  React.useLayoutEffect(() => {
-    const page = pageRef.current;
-    const content = contentRef.current;
-    if (!page || !content) return undefined;
-
-    let frame;
-
-    const measure = () => {
-      const availableHeight = page.clientHeight || A4_HEIGHT;
-      const naturalHeight = content.scrollHeight;
-
-      if (!availableHeight || !naturalHeight) return;
-
-      const nextScale = Math.min(1, Math.max(MIN_FIT_SCALE, availableHeight / naturalHeight));
-      setFitScale((current) => (
-        Math.abs(current - nextScale) > 0.005 ? nextScale : current
-      ));
-    };
-
-    const scheduleMeasure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(measure);
-    };
-
-    scheduleMeasure();
-    document.fonts?.ready.then(scheduleMeasure);
-
-    const resizeObserver = new ResizeObserver(scheduleMeasure);
-    resizeObserver.observe(content);
-
-    const mutationObserver = new MutationObserver(scheduleMeasure);
-    mutationObserver.observe(content, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-    };
-  }, [children, fitScale]);
-
-  return (
-    <div
-      ref={pageRef}
-      className="one-page-fit-page relative mx-auto h-[297mm] w-[210mm] overflow-hidden bg-white"
-      data-fit-scale={fitScale.toFixed(3)}
-    >
-      <div
-        ref={contentRef}
-        className="one-page-fit-content absolute left-0 top-0 w-[210mm] origin-top-left"
-        style={{
-          '--fit-scale': fitScale,
-          transform: `scale(${fitScale})`
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
 }
 
 export default function ResumePreview({ isPrintMode = false }) {
@@ -163,11 +93,9 @@ export default function ResumePreview({ isPrintMode = false }) {
     return (
       <div
         className="resume-print-page mx-auto bg-white"
-        style={{ width: '210mm', height: '297mm', overflow: 'hidden' }}
+        style={{ width: '210mm' }}
       >
-        <OnePageFit>
-          {renderTemplate()}
-        </OnePageFit>
+        {renderTemplate()}
       </div>
     );
   }
@@ -188,14 +116,12 @@ export default function ResumePreview({ isPrintMode = false }) {
           className="absolute top-0 left-0 bg-white shadow-2xl overflow-hidden"
           style={{ 
             width: A4_WIDTH, 
-            height: A4_HEIGHT,
+            minHeight: A4_HEIGHT,
             transform: `scale(${scale})`, 
             transformOrigin: 'top left' 
           }}
         >
-          <OnePageFit>
-            {renderTemplate()}
-          </OnePageFit>
+          {renderTemplate()}
         </div>
       </div>
     </div>

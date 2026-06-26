@@ -137,6 +137,56 @@ function removeClonedStylesheets(clonedDocument) {
     .forEach((node) => node.remove());
 }
 
+function addCanvasPagesToPdf(pdf, canvas) {
+  const pageHeightPx = Math.floor(canvas.width * (A4_HEIGHT_MM / A4_WIDTH_MM));
+  const overflowPx = canvas.height % pageHeightPx;
+  const effectiveHeight = canvas.height - (
+    overflowPx > 0 && overflowPx < pageHeightPx * 0.03 ? overflowPx : 0
+  );
+  const pageCount = Math.max(
+    1,
+    Math.ceil(effectiveHeight / pageHeightPx)
+  );
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    if (pageIndex > 0) pdf.addPage('a4', 'portrait');
+
+    const sourceY = pageIndex * pageHeightPx;
+    const sliceHeight = Math.min(pageHeightPx, canvas.height - sourceY);
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = pageHeightPx;
+
+    const context = pageCanvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+    context.drawImage(
+      canvas,
+      0,
+      sourceY,
+      canvas.width,
+      sliceHeight,
+      0,
+      0,
+      pageCanvas.width,
+      sliceHeight
+    );
+
+    pdf.addImage(
+      pageCanvas.toDataURL('image/jpeg', 0.98),
+      'JPEG',
+      0,
+      0,
+      A4_WIDTH_MM,
+      A4_HEIGHT_MM,
+      undefined,
+      'FAST'
+    );
+  }
+
+  return { pageCount, pageHeightPx };
+}
+
 function Download() {
   const { resumeData } = useResume();
   const resumeRef = useRef(null);
@@ -174,8 +224,7 @@ function Download() {
   };
 
   const handleExportPDF = async () => {
-    const resumeElement = resumeRef.current?.querySelector('.one-page-fit-page')
-      || resumeRef.current?.querySelector('.resume-print-page')
+    const resumeElement = resumeRef.current?.querySelector('.resume-print-page')
       || resumeRef.current;
 
     if (!resumeElement) return;
@@ -192,19 +241,30 @@ function Download() {
       ]);
       const links = prepareLinksForPdf();
       const pageRect = resumeElement.getBoundingClientRect();
+      const naturalHeight = Math.max(
+        resumeElement.scrollHeight,
+        resumeElement.getBoundingClientRect().height
+      );
+      const captureScale = Math.min(2.5, Math.max(2, window.devicePixelRatio || 1));
       const canvas = await html2canvas(resumeElement, {
         backgroundColor: '#ffffff',
-        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+        scale: captureScale,
         useCORS: true,
         logging: false,
-        windowWidth: document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight,
+        width: pageRect.width,
+        height: naturalHeight,
+        windowWidth: Math.max(document.documentElement.scrollWidth, Math.ceil(pageRect.width)),
+        windowHeight: Math.max(document.documentElement.scrollHeight, Math.ceil(naturalHeight)),
         onclone: (clonedDocument) => {
-          const clonedElement = clonedDocument.querySelector('.one-page-fit-page')
-            || clonedDocument.querySelector('.resume-print-page')
+          const clonedElement = clonedDocument.querySelector('.resume-print-page')
             || clonedDocument.querySelector('.resume-container');
           if (clonedElement) {
             sanitizeCanvasClone(resumeElement, clonedElement);
+            clonedElement.style.width = `${pageRect.width}px`;
+            clonedElement.style.height = 'auto';
+            clonedElement.style.minHeight = `${pageRect.width * (A4_HEIGHT_MM / A4_WIDTH_MM)}px`;
+            clonedElement.style.maxHeight = 'none';
+            clonedElement.style.overflow = 'visible';
           }
           removeClonedStylesheets(clonedDocument);
         }
@@ -217,16 +277,8 @@ function Download() {
         compress: true
       });
 
-      pdf.addImage(
-        canvas.toDataURL('image/jpeg', 0.98),
-        'JPEG',
-        0,
-        0,
-        A4_WIDTH_MM,
-        A4_HEIGHT_MM,
-        undefined,
-        'FAST'
-      );
+      const { pageCount } = addCanvasPagesToPdf(pdf, canvas);
+      const pageHeightDom = pageRect.width * (A4_HEIGHT_MM / A4_WIDTH_MM);
 
       links.forEach(({ element, href }) => {
         const rect = element.getBoundingClientRect();
@@ -237,20 +289,23 @@ function Download() {
 
         if (right <= left || bottom <= top) return;
 
+        const relativeTop = top - pageRect.top;
+        const pageIndex = Math.floor(relativeTop / pageHeightDom);
+        if (pageIndex < 0 || pageIndex >= pageCount) return;
+
+        pdf.setPage(pageIndex + 1);
         pdf.link(
           ((left - pageRect.left) / pageRect.width) * A4_WIDTH_MM,
-          ((top - pageRect.top) / pageRect.height) * A4_HEIGHT_MM,
+          ((relativeTop - pageIndex * pageHeightDom) / pageHeightDom) * A4_HEIGHT_MM,
           ((right - left) / pageRect.width) * A4_WIDTH_MM,
-          ((bottom - top) / pageRect.height) * A4_HEIGHT_MM,
+          ((bottom - top) / pageHeightDom) * A4_HEIGHT_MM,
           { url: href }
         );
       });
 
       pdf.save(`${getDocumentTitle()}.pdf`);
       setDownloadMessage(
-        links.length > 0
-          ? `Downloaded one-page PDF with ${links.length} clickable link${links.length === 1 ? '' : 's'}.`
-          : 'Downloaded one-page PDF.'
+        `Downloaded ${pageCount}-page A4 PDF${links.length > 0 ? ` with ${links.length} clickable link${links.length === 1 ? '' : 's'}` : ''}.`
       );
       setDownloadSuccess(true);
     } catch (error) {
@@ -270,15 +325,15 @@ function Download() {
             Download & Share
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Export your resume as a deterministic one-page PDF.
+            Export your resume as a properly paginated A4 PDF.
           </p>
         </div>
 
         <div className="card p-6 mb-8">
           <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-950 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
-            <p className="font-semibold">One-page PDF export</p>
+            <p className="font-semibold">Professional A4 PDF export</p>
             <p className="mt-1">
-              The app generates the PDF directly, so browser print scaling will not distort the resume.
+              The app generates real A4 pages directly. It uses page 2 only when the content truly overflows.
             </p>
           </div>
 
