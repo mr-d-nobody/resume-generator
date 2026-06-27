@@ -106,7 +106,7 @@ export default function Template11({ data, config }) {
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
               {sectionTitles.skills || 'Technical Skills'}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 text-sm" style={{ gap: spacing.itemGap }}>
+            <div className="grid grid-cols-2 text-sm" style={{ gap: spacing.itemGap }}>
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="mb-2">
                   <span className="font-semibold mr-2">{category}:</span>

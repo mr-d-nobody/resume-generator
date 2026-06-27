@@ -7,6 +7,8 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   
   body {
@@ -156,6 +158,14 @@
 
 .resume-print-document {
   color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+[data-resume-measure-root],
+[data-resume-preview-stack] {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .resume-preview-print-page {
