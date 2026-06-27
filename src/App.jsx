@@ -1,6 +1,6 @@
 import React from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ResumeProvider } from './contexts/ResumeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
@@ -18,6 +18,34 @@ import Login from './pages/Login';
 import Account from './pages/Account';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
+const TOOL_ROUTES_WITHOUT_FOOTER = new Set(['/builder', '/download']);
+
+function AppLayout() {
+  const location = useLocation();
+  const hideFooter = TOOL_ROUTES_WITHOUT_FOOTER.has(location.pathname);
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-gray-50 transition-colors duration-300 dark:bg-gray-900">
+      <Navbar />
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/magic" element={<ProtectedRoute><MagicUpload /></ProtectedRoute>} />
+          <Route path="/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+          <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+          <Route path="/download" element={<ProtectedRoute><Download /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+          <Route path="*" element={<Home />} />
+        </Routes>
+      </main>
+      {!hideFooter && <Footer />}
+    </div>
+  );
+}
+
 function App() {
   const basename = import.meta.env.BASE_URL;
   
@@ -32,24 +60,7 @@ function App() {
           
           {/* App Routes with Layout */}
           <Route path="*" element={
-            <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-              <Navbar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/magic" element={<ProtectedRoute><MagicUpload /></ProtectedRoute>} />
-                  <Route path="/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
-                  <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-                  <Route path="/download" element={<ProtectedRoute><Download /></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-                  <Route path="*" element={<Home />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
+            <AppLayout />
           } />
           </Routes>
         </ResumeProvider>

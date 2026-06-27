@@ -22,6 +22,8 @@ import {
   Award,
   Briefcase,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Code,
   Download,
   Eye,
@@ -111,6 +113,14 @@ function ResumeBuilder() {
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
   const currentStepIndex = tabs.findIndex((tab) => tab.id === activeTab);
   const downloadPath = `/download?template=${activeTemplate}`;
+  const canGoPrevious = currentStepIndex > 0;
+  const canGoNext = currentStepIndex < tabs.length - 1;
+  const goPrevious = () => {
+    if (canGoPrevious) setActiveTab(tabs[currentStepIndex - 1].id);
+  };
+  const goNext = () => {
+    if (canGoNext) setActiveTab(tabs[currentStepIndex + 1].id);
+  };
 
   const setColorTheme = (colorTheme) => updateCustomization({ colorTheme });
   const setFontFamily = (fontFamily) => updateCustomization({ fontFamily });
@@ -341,15 +351,15 @@ function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="resume-studio-editor h-[calc(100svh-15rem)] overflow-y-auto px-5 py-6 custom-scrollbar sm:px-8 xl:h-[calc(100vh-18rem)]">
+              <div className="resume-studio-editor h-[calc(100svh-9rem)] overflow-y-auto px-5 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar sm:px-8 xl:h-[calc(100vh-18rem)] xl:pb-6">
                 {ActiveComponent && <ActiveComponent />}
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-200 bg-white px-8 py-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="hidden items-center justify-between border-t border-gray-200 bg-white px-8 py-4 dark:border-gray-800 dark:bg-gray-950 xl:flex">
                 <button
                   type="button"
-                  disabled={currentStepIndex <= 0}
-                  onClick={() => setActiveTab(tabs[Math.max(0, currentStepIndex - 1)].id)}
+                  disabled={!canGoPrevious}
+                  onClick={goPrevious}
                   className="rounded-md border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200"
                 >
                   Back
@@ -367,8 +377,8 @@ function ResumeBuilder() {
                 </div>
                 <button
                   type="button"
-                  disabled={currentStepIndex >= tabs.length - 1}
-                  onClick={() => setActiveTab(tabs[Math.min(tabs.length - 1, currentStepIndex + 1)].id)}
+                  disabled={!canGoNext}
+                  onClick={goNext}
                   className="rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
                 >
                   Next
@@ -376,7 +386,7 @@ function ResumeBuilder() {
               </div>
             </>
           ) : (
-            <div className="h-[calc(100svh-13rem)] overflow-y-auto px-6 py-6 custom-scrollbar sm:px-8 xl:h-[calc(100vh-13rem)]">
+            <div className="h-[calc(100svh-9rem)] overflow-y-auto px-6 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar sm:px-8 xl:h-[calc(100vh-13rem)] xl:pb-6">
               {renderCustomizePanel()}
             </div>
           )}
@@ -411,22 +421,48 @@ function ResumeBuilder() {
         </section>
       </div>
 
-      <div className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 grid grid-cols-2 rounded-lg border border-gray-200 bg-white p-1 shadow-xl dark:border-gray-800 dark:bg-gray-950 xl:hidden">
-        {[
-          { id: 'edit', label: 'Edit' },
-          { id: 'preview', label: 'Preview' }
-        ].map((item) => (
+      <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:hidden">
+        {mobileView === 'edit' && (
           <button
-            key={item.id}
             type="button"
-            onClick={() => setMobileView(item.id)}
-            className={`rounded-md px-4 py-3 text-sm font-semibold ${
-              mobileView === item.id ? 'bg-gray-100 text-gray-950 dark:bg-white dark:text-gray-950' : 'text-gray-500 dark:text-white'
-            }`}
+            disabled={!canGoPrevious}
+            onClick={goPrevious}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 disabled:opacity-35 dark:border-gray-700 dark:text-gray-200"
+            aria-label="Previous section"
           >
-            {item.label}
+            <ChevronLeft className="h-5 w-5" />
           </button>
-        ))}
+        )}
+
+        <div className="grid min-w-0 flex-1 grid-cols-2 rounded-xl bg-gray-100 p-1 dark:bg-gray-900">
+          {[
+            { id: 'edit', label: 'Edit' },
+            { id: 'preview', label: 'Preview' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setMobileView(item.id)}
+              className={`rounded-lg px-3 py-2.5 text-sm font-semibold ${
+                mobileView === item.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-100' : 'text-gray-500 dark:text-gray-300'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {mobileView === 'edit' && (
+          <button
+            type="button"
+            disabled={!canGoNext}
+            onClick={goNext}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white disabled:opacity-35"
+            aria-label="Next section"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
       </div>
     </div>
   );
