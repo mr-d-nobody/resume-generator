@@ -46,22 +46,38 @@ export default function ResumePreview({ isPrintMode = false, outputMode = 'previ
   const [isMeasured, setIsMeasured] = React.useState(false);
   const isPrintOutput = outputMode === 'print';
 
-  React.useEffect(() => {
-    const updateScale = () => {
-      if (containerRef.current) {
-        // Calculate available width with some padding (40px)
-        const availableWidth = containerRef.current.clientWidth - 40;
-        // A4 width in pixels (approx 210mm at 96 DPI)
-        const a4Width = 794; 
-        const newScale = Math.min(availableWidth / a4Width, 1);
-        setScale(newScale);
-      }
-    };
+  const updateScale = React.useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const containerWidth = container.clientWidth;
+    if (containerWidth <= 0) return;
+
+    const horizontalInset = containerWidth < 640 ? 24 : 40;
+    const availableWidth = Math.max(160, containerWidth - horizontalInset);
+    setScale(Math.min(availableWidth / A4_WIDTH, 1));
+  }, []);
+
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
 
     updateScale();
+    const resizeObserver = new ResizeObserver(updateScale);
+    resizeObserver.observe(container);
     window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
+    window.addEventListener('orientationchange', updateScale);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateScale);
+      window.removeEventListener('orientationchange', updateScale);
+    };
+  }, [updateScale]);
+
+  React.useLayoutEffect(() => {
+    updateScale();
+  }, [pageCount, pageWidth, updateScale]);
 
   React.useLayoutEffect(() => {
     const measureElement = measureRef.current;

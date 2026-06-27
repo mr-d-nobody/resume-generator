@@ -280,8 +280,8 @@ function ResumeBuilder() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f4f6fb] dark:bg-gray-950">
-      <div className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="min-h-[calc(100svh-4rem)] bg-[#f4f6fb] pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-gray-950 xl:min-h-[calc(100vh-4rem)] xl:pb-0">
+      <div className="hidden border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 xl:block">
         <div className="mx-auto flex max-w-[1800px] items-center justify-center px-4 py-3">
           <div className="grid grid-cols-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
             {[
@@ -304,8 +304,8 @@ function ResumeBuilder() {
       </div>
 
       <div className="mx-auto grid max-w-[1800px] grid-cols-1 xl:grid-cols-[minmax(560px,960px)_minmax(480px,1fr)]">
-        <section className={`min-h-[calc(100vh-8rem)] bg-white dark:bg-gray-950 ${mobileView !== 'edit' ? 'hidden xl:block' : ''}`}>
-          <div className="border-b border-gray-200 dark:border-gray-800">
+        <section className={`min-h-[calc(100svh-8rem)] bg-white dark:bg-gray-950 xl:min-h-[calc(100vh-8rem)] ${mobileView !== 'edit' ? 'hidden xl:block' : ''}`}>
+          <div className="hidden border-b border-gray-200 dark:border-gray-800 xl:block">
             <div className="flex items-center gap-3 px-8 py-5">
               <span className={`rounded-md px-2.5 py-1 text-sm font-bold text-white ${score < 55 ? 'bg-rose-500' : score < 80 ? 'bg-amber-500' : 'bg-emerald-600'}`}>
                 {score}%
@@ -316,7 +316,7 @@ function ResumeBuilder() {
 
           {workspaceMode === 'edit' ? (
             <>
-              <div className="border-b border-gray-200 px-8 py-4 dark:border-gray-800">
+              <div className="hidden border-b border-gray-200 px-8 py-4 dark:border-gray-800 xl:block">
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                   {tabs.map((tab, index) => {
                     const Icon = tab.icon;
@@ -341,7 +341,7 @@ function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="resume-studio-editor h-[calc(100vh-18rem)] overflow-y-auto px-8 py-6 custom-scrollbar">
+              <div className="resume-studio-editor h-[calc(100svh-15rem)] overflow-y-auto px-5 py-6 custom-scrollbar sm:px-8 xl:h-[calc(100vh-18rem)]">
                 {ActiveComponent && <ActiveComponent />}
               </div>
 
@@ -376,13 +376,13 @@ function ResumeBuilder() {
               </div>
             </>
           ) : (
-            <div className="h-[calc(100vh-13rem)] overflow-y-auto px-8 py-6 custom-scrollbar">
+            <div className="h-[calc(100svh-13rem)] overflow-y-auto px-6 py-6 custom-scrollbar sm:px-8 xl:h-[calc(100vh-13rem)]">
               {renderCustomizePanel()}
             </div>
           )}
         </section>
 
-        <section className={`relative min-h-[calc(100vh-8rem)] bg-[#eef2f7] dark:bg-gray-950 ${mobileView !== 'preview' ? 'hidden xl:block' : ''}`}>
+        <section className={`relative min-h-[calc(100svh-8rem)] bg-[#eef2f7] dark:bg-gray-950 xl:min-h-[calc(100vh-8rem)] ${mobileView !== 'preview' ? 'hidden xl:block' : ''}`}>
           <div className="sticky top-16 z-10 flex items-center justify-between border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300">
               <Eye className="h-4 w-4" />
@@ -403,7 +403,7 @@ function ResumeBuilder() {
             </div>
           </div>
 
-          <div className="flex min-h-[calc(100vh-12rem)] items-start justify-center px-4 py-8">
+          <div className="flex min-h-[calc(100svh-12rem)] items-start justify-center px-4 py-5 pb-[calc(7rem+env(safe-area-inset-bottom))] xl:min-h-[calc(100vh-12rem)] xl:py-8 xl:pb-8">
             <div className="w-full max-w-[920px]">
               <ResumePreview />
             </div>
@@ -411,7 +411,7 @@ function ResumeBuilder() {
         </section>
       </div>
 
-      <div className="fixed inset-x-4 bottom-4 z-40 grid grid-cols-2 rounded-lg border border-gray-200 bg-white p-1 shadow-xl dark:border-gray-800 dark:bg-gray-950 xl:hidden">
+      <div className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 grid grid-cols-2 rounded-lg border border-gray-200 bg-white p-1 shadow-xl dark:border-gray-800 dark:bg-gray-950 xl:hidden">
         {[
           { id: 'edit', label: 'Edit' },
           { id: 'preview', label: 'Preview' }
