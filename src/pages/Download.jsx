@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
 import ResumePreview from '../components/preview/ResumePreview';
@@ -29,6 +29,7 @@ const LIGHT_GRAY = [229, 231, 235];
 const NAVY = [11, 32, 56];
 const ACCENT_BLUE = [74, 143, 193];
 const PALE_BLUE = [234, 240, 248];
+const UNSUPPORTED_CANVAS_COLOR = /(oklch|oklab|color-mix|lab|lch)\(/i;
 
 const PDF_TEMPLATE_PROFILES = {
   '11': {
@@ -121,6 +122,169 @@ function hexToRgb(hexValue, fallback) {
   ];
 }
 
+function getPdfFont(fontFamily) {
+  if (fontFamily === 'serif') return 'times';
+  if (fontFamily === 'mono') return 'courier';
+  return 'helvetica';
+}
+
+function canvasFallbackForProperty(property, value) {
+  if (!value || value === 'transparent' || value === 'rgba(0, 0, 0, 0)') return 'transparent';
+  if (property === 'boxShadow' || property === 'box-shadow') return 'none';
+  if (property.includes('background')) return '#ffffff';
+  if (property.includes('border') || property.includes('outline')) return '#e5e7eb';
+  return '#111827';
+}
+
+function sanitizeCanvasStyleValue(property, value) {
+  if (!value || !UNSUPPORTED_CANVAS_COLOR.test(value)) return value;
+  return canvasFallbackForProperty(property, value);
+}
+
+function inlineSafeCanvasColors(sourceElement, clonedElement) {
+  if (!sourceElement || !clonedElement) return;
+  const computedStyle = window.getComputedStyle(sourceElement);
+  for (let index = 0; index < computedStyle.length; index += 1) {
+    const property = computedStyle[index];
+    const value = computedStyle.getPropertyValue(property);
+    const safeValue = sanitizeCanvasStyleValue(property, value);
+    if (safeValue) {
+      clonedElement.style.setProperty(
+        property,
+        safeValue,
+        computedStyle.getPropertyPriority(property)
+      );
+    }
+  }
+}
+
+function removeClonedStylesheets(clonedDocument) {
+  clonedDocument
+    .querySelectorAll('style, link[rel="stylesheet"]')
+    .forEach((node) => node.remove());
+}
+
+function sanitizeCanvasClone(sourceRoot, clonedRoot) {
+  if (!sourceRoot || !clonedRoot) return;
+  const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+  const clonedElements = [clonedRoot, ...clonedRoot.querySelectorAll('*')];
+
+  sourceElements.forEach((sourceElement, index) => {
+    inlineSafeCanvasColors(sourceElement, clonedElements[index]);
+  });
+
+  clonedRoot.style.backgroundColor = '#ffffff';
+  removeClonedStylesheets(clonedRoot.ownerDocument);
+}
+
+function waitForPreviewRender() {
+  const fontReady = document.fonts?.ready || Promise.resolve();
+  return fontReady.then(
+    () => new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    })
+  );
+}
+
+function getVisualExportBounds(resumeElement) {
+  const rootRect = resumeElement.getBoundingClientRect();
+  let bottom = rootRect.bottom;
+
+  resumeElement.querySelectorAll('*').forEach((element) => {
+    [...element.getClientRects()].forEach((rect) => {
+      if (rect.width > 0 && rect.height > 0) {
+        bottom = Math.max(bottom, rect.bottom);
+      }
+    });
+  });
+
+  return {
+    width: Math.ceil(rootRect.width),
+    height: Math.ceil(Math.max(rootRect.height, bottom - rootRect.top))
+  };
+}
+
+function getResumeLinks(resumeElement) {
+  const rootRect = resumeElement.getBoundingClientRect();
+  const pageHeightPx = rootRect.width * (A4_HEIGHT / A4_WIDTH);
+  return [...resumeElement.querySelectorAll('a[href]')]
+    .map((anchor) => {
+      const url = normalizeUrl(anchor.getAttribute('href'));
+      if (!url && !anchor.getAttribute('href')?.startsWith('mailto:')) return null;
+      return [...anchor.getClientRects()].map((rect) => ({
+        url: url || anchor.getAttribute('href'),
+        page: Math.floor((rect.top - rootRect.top) / pageHeightPx) + 1,
+        x: ((rect.left - rootRect.left) / rootRect.width) * A4_WIDTH,
+        y: (((rect.top - rootRect.top) % pageHeightPx) / pageHeightPx) * A4_HEIGHT,
+        width: (rect.width / rootRect.width) * A4_WIDTH,
+        height: (rect.height / pageHeightPx) * A4_HEIGHT
+      }));
+    })
+    .filter(Boolean)
+    .flat()
+    .filter((link) => link.width > 0 && link.height > 0);
+}
+
+function addResumeLinks(pdf, links, pageCount) {
+  let linkCount = 0;
+  links.forEach((link) => {
+    if (link.page < 1 || link.page > pageCount) return;
+    pdf.setPage(link.page);
+    pdf.link(link.x, link.y, link.width, link.height, { url: link.url });
+    linkCount += 1;
+  });
+  pdf.setPage(pageCount);
+  return linkCount;
+}
+
+function addCanvasPagesToPdf(pdf, canvas) {
+  const pageHeightPx = Math.floor(canvas.width * (A4_HEIGHT / A4_WIDTH));
+  const pageOverflowTolerancePx = Math.max(4, Math.round(canvas.width * 0.003));
+  const pageCanvas = document.createElement('canvas');
+  const pageContext = pageCanvas.getContext('2d');
+  pageCanvas.width = canvas.width;
+  pageCanvas.height = pageHeightPx;
+
+  const pageCount = canvas.height <= pageHeightPx + pageOverflowTolerancePx
+    ? 1
+    : Math.max(1, Math.ceil(canvas.height / pageHeightPx));
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    if (pageIndex > 0) {
+      pdf.addPage('a4', 'portrait');
+    }
+
+    const sourceY = pageIndex * pageHeightPx;
+    const sliceHeight = Math.min(pageHeightPx, canvas.height - sourceY);
+    pageContext.fillStyle = '#ffffff';
+    pageContext.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+    pageContext.drawImage(
+      canvas,
+      0,
+      sourceY,
+      canvas.width,
+      sliceHeight,
+      0,
+      0,
+      canvas.width,
+      sliceHeight
+    );
+
+    pdf.addImage(
+      pageCanvas.toDataURL('image/jpeg', 0.94),
+      'JPEG',
+      0,
+      0,
+      A4_WIDTH,
+      A4_HEIGHT,
+      undefined,
+      'FAST'
+    );
+  }
+
+  return pageCount;
+}
+
 function makeStyle(scale, templateId = '12', customization = {}) {
   const profile = getTemplateProfile(templateId);
   const theme = getColorTheme(customization.colorTheme);
@@ -135,6 +299,7 @@ function makeStyle(scale, templateId = '12', customization = {}) {
   const itemGapRatio = layout.itemGap / DEFAULT_LAYOUT.itemGap;
   return {
     ...profile,
+    font: getPdfFont(customization.fontFamily),
     templateId: getTemplateId(templateId),
     primary,
     accent: primary,
@@ -851,11 +1016,59 @@ async function generateResumePdf({ jsPDF, resumeData, customization, templateId 
   };
 }
 
+async function generatePreviewPdf({ jsPDF, html2canvas, resumeElement }) {
+  await waitForPreviewRender();
+
+  const exportBounds = getVisualExportBounds(resumeElement);
+  const exportWidth = exportBounds.width;
+  const exportHeight = exportBounds.height;
+  const links = getResumeLinks(resumeElement);
+
+  resumeElement.setAttribute('data-pdf-export-root', 'true');
+
+  try {
+    const canvas = await html2canvas(resumeElement, {
+      backgroundColor: '#ffffff',
+      height: exportHeight,
+      width: exportWidth,
+      logging: false,
+      scale: Math.min(2, Math.max(1.35, window.devicePixelRatio || 1.5)),
+      scrollX: -window.scrollX,
+      scrollY: -window.scrollY,
+      useCORS: true,
+      windowHeight: Math.max(document.documentElement.clientHeight, exportHeight),
+      windowWidth: Math.max(document.documentElement.clientWidth, exportWidth),
+      onclone: (clonedDocument) => {
+        const clonedRoot = clonedDocument.querySelector('[data-pdf-export-root="true"]');
+        sanitizeCanvasClone(resumeElement, clonedRoot);
+        if (clonedRoot) {
+          clonedRoot.style.width = `${exportWidth}px`;
+          clonedRoot.style.minHeight = `${exportHeight}px`;
+        }
+      }
+    });
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+    const pageCount = addCanvasPagesToPdf(pdf, canvas);
+    const linkCount = addResumeLinks(pdf, links, pageCount);
+
+    return { pdf, pageCount, linkCount };
+  } finally {
+    resumeElement.removeAttribute('data-pdf-export-root');
+  }
+}
+
 function Download() {
   const location = useLocation();
   const { resumeData, customization, selectedTemplate } = useResume();
   const queryTemplate = new URLSearchParams(location.search).get('template');
   const templateId = getTemplateId(queryTemplate || selectedTemplate);
+  const previewRef = useRef(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -872,16 +1085,32 @@ function Download() {
       setDownloadMessage('');
 
       const { jsPDF } = await import('jspdf');
-      const { pdf, pageCount, linkCount } = await generateResumePdf({
-        jsPDF,
-        resumeData,
-        customization,
-        templateId
-      });
+      let exportResult;
+      let usedFallback = false;
+
+      try {
+        const { default: html2canvas } = await import('html2canvas');
+        const resumeElement = previewRef.current?.querySelector('.resume-print-page');
+        if (!resumeElement) {
+          throw new Error('Resume preview is not ready yet.');
+        }
+        exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
+      } catch (captureError) {
+        console.warn('Preview PDF export failed, falling back to vector renderer:', captureError);
+        usedFallback = true;
+        exportResult = await generateResumePdf({
+          jsPDF,
+          resumeData,
+          customization,
+          templateId
+        });
+      }
+
+      const { pdf, pageCount, linkCount } = exportResult;
 
       pdf.save(`${getDocumentTitle()}.pdf`);
       setDownloadMessage(
-        `Downloaded template ${templateId} as a ${pageCount}-page A4 PDF${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
+        `Downloaded template ${templateId} as a ${pageCount}-page A4 PDF${usedFallback ? ' with the backup renderer' : ' matching the preview'}${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
       );
       setDownloadSuccess(true);
     } catch (error) {
@@ -901,15 +1130,15 @@ function Download() {
             Download & Share
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Export template {templateId} as a compact, selectable A4 PDF.
+            Export template {templateId} as an exact A4 PDF from the preview.
           </p>
         </div>
 
         <div className="card p-6 mb-8">
           <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-950 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
-            <p className="font-semibold">Selected-template A4 PDF export</p>
+            <p className="font-semibold">Exact selected-template A4 PDF export</p>
             <p className="mt-1">
-              The export uses the selected template, tries hard to fit one page, and adds page 2 only when needed.
+              The PDF is generated from the same preview, so font, layout, density, and spacing stay aligned.
             </p>
           </div>
 
@@ -951,7 +1180,7 @@ function Download() {
           </div>
 
           <div className="overflow-x-auto pb-4">
-            <div className="resume-container bg-white w-fit mx-auto border border-gray-200 shadow-sm">
+            <div ref={previewRef} className="resume-container bg-white w-fit mx-auto border border-gray-200 shadow-sm">
               <ResumePreview isPrintMode={true} />
             </div>
           </div>

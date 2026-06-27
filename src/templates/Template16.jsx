@@ -12,16 +12,16 @@ const accentBlue = '#4A8FC1';
 const textMuted = '#4E6278';
 const borderGray = '#C2D5E8';
 
-function Section({ title, children }) {
+function Section({ title, children, titleColor = navyDark, borderColor = borderGray }) {
   if (!children) return null;
 
   return (
     <section className="break-inside-avoid">
-      <h3 className="mb-[3px] flex items-center gap-1.5 text-[11px] font-extrabold uppercase leading-none tracking-wide" style={{ color: navyDark }}>
-        <span className="inline-block h-3.5 w-[3px]" style={{ backgroundColor: navyDark }} />
+      <h3 className="mb-[3px] flex items-center gap-1.5 text-[11px] font-extrabold uppercase leading-none tracking-wide" style={{ color: titleColor }}>
+        <span className="inline-block h-3.5 w-[3px]" style={{ backgroundColor: titleColor }} />
         {title}
       </h3>
-      <div className="mb-1 h-px w-full" style={{ backgroundColor: borderGray }} />
+      <div className="mb-1 h-px w-full" style={{ backgroundColor: borderColor }} />
       {children}
     </section>
   );
@@ -58,7 +58,7 @@ const TARGET_PAGE_FILL = 0.9;
 const MIN_QUALITY_SCALE = 0.84;
 const MAX_FILL_SCALE = 1.18;
 
-function FittedPageBody({ children, onPageModeChange }) {
+function FittedPageBody({ children, onPageModeChange, layout = {} }) {
   const viewportRef = useRef(null);
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -125,8 +125,12 @@ function FittedPageBody({ children, onPageModeChange }) {
     >
       <div
         ref={contentRef}
-        className="template16-content mx-auto flex flex-col gap-[7px] px-[14mm] pb-[3mm] pt-[3mm]"
-        style={{ width: `${100 / scale}%`, zoom: scale }}
+        className="template16-content mx-auto flex flex-col px-[14mm] pb-[3mm] pt-[3mm]"
+        style={{
+          width: `${100 / scale}%`,
+          zoom: scale,
+          gap: `${Math.max(0.35, Number(layout.itemGap) || 0.85) * 0.52}rem`
+        }}
         data-fit-scale={scale.toFixed(3)}
       >
         {children}
@@ -135,9 +139,14 @@ function FittedPageBody({ children, onPageModeChange }) {
   );
 }
 
-export default function Template16({ data }) {
+export default function Template16({ data, config = {} }) {
   const { personal, summary, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
   const [pageMode, setPageMode] = useState('single');
+  const theme = config.theme || {};
+  const layout = config.layout || {};
+  const primaryColor = theme.primaryColor || navyDark;
+  const accentColor = theme.secondaryColor || accentBlue;
+  const pageTextColor = theme.textColor || navyDark;
 
   return (
     <div
@@ -145,16 +154,16 @@ export default function Template16({ data }) {
         pageMode === 'single' ? 'h-[297mm] overflow-hidden' : 'min-h-[297mm] overflow-visible'
       }`}
       data-page-mode={pageMode}
-      style={{ fontFamily: 'Inter, Arial, sans-serif', color: navyDark }}
+      style={{ fontFamily: theme.fontFamily || 'Inter, Arial, sans-serif', color: pageTextColor }}
     >
-      <header className="relative shrink-0 text-white" style={{ backgroundColor: navyDark }}>
+      <header className="relative shrink-0 text-white" style={{ backgroundColor: primaryColor }}>
         <div className="px-[14mm] pb-[13px] pt-[14px] text-center">
           <h1 className="text-[28px] font-extrabold leading-none tracking-tight">
             {personal.name}
           </h1>
           {personal.title && (
             <div className="mt-1.5 flex items-center justify-center gap-2">
-              <span className="h-px w-9" style={{ backgroundColor: accentBlue }} />
+              <span className="h-px w-9" style={{ backgroundColor: accentColor }} />
               <p className="max-w-[650px] break-words text-[8px] font-bold uppercase leading-tight tracking-[0.15em]" style={{ color: '#9CBCE0' }}>
                 {personal.title}
               </p>
@@ -170,23 +179,23 @@ export default function Template16({ data }) {
             style={{ color: '#B8C9DC' }}
           />
         </div>
-        <div className="h-[3px] w-full" style={{ backgroundColor: accentBlue }} />
+        <div className="h-[3px] w-full" style={{ backgroundColor: accentColor }} />
       </header>
 
-      <FittedPageBody onPageModeChange={setPageMode}>
+      <FittedPageBody onPageModeChange={setPageMode} layout={layout}>
         {summary && (
-          <Section title={sectionTitles.summary || 'Summary'}>
+          <Section title={sectionTitles.summary || 'Summary'} titleColor={primaryColor}>
             <p className="text-[9px] leading-[1.3]" style={{ color: textMuted }}>{summary}</p>
           </Section>
         )}
 
         {education && education.length > 0 && (
-          <Section title={sectionTitles.education || 'Education'}>
+          <Section title={sectionTitles.education || 'Education'} titleColor={primaryColor}>
             <div className="space-y-1">
               {education.map((edu) => (
                 <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-3">
                   <div>
-                    <h4 className="text-[9.5px] font-extrabold leading-tight" style={{ color: navyDark }}>{edu.institution}</h4>
+                    <h4 className="text-[9.5px] font-extrabold leading-tight" style={{ color: primaryColor }}>{edu.institution}</h4>
                     <p className="text-[9px] leading-tight" style={{ color: textMuted }}>{edu.degree}{edu.location ? `, ${edu.location}` : ''}</p>
                     {edu.gpa && <p className="text-[8px] font-bold leading-tight" style={{ color: navyMid }}>GPA: {edu.gpa}</p>}
                     <BulletList items={edu.highlights} />
@@ -201,11 +210,11 @@ export default function Template16({ data }) {
         )}
 
         {skills && Object.keys(skills).length > 0 && (
-          <Section title={sectionTitles.skills || 'Technical Skills'}>
+          <Section title={sectionTitles.skills || 'Technical Skills'} titleColor={primaryColor}>
             <div className="space-y-px">
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="grid grid-cols-[82px_1fr] gap-1.5">
-                  <span className="text-[9px] font-extrabold capitalize leading-tight" style={{ color: navyDark }}>{category}</span>
+                  <span className="text-[9px] font-extrabold capitalize leading-tight" style={{ color: primaryColor }}>{category}</span>
                   <div>
                     {(skillList || []).map((skill) => <SkillTag key={skill}>{skill}</SkillTag>)}
                   </div>
@@ -216,12 +225,12 @@ export default function Template16({ data }) {
         )}
 
         {projects && projects.length > 0 && (
-          <Section title={sectionTitles.projects || 'Projects'}>
+          <Section title={sectionTitles.projects || 'Projects'} titleColor={primaryColor}>
             <div className="space-y-1">
               {projects.slice(0, 4).map((project) => (
-                <div key={project.id} className="break-inside-avoid border-l-[3px] px-2 py-1" style={{ borderColor: navyDark, backgroundColor: '#F8FBFF' }}>
+                <div key={project.id} className="break-inside-avoid border-l-[3px] px-2 py-1" style={{ borderColor: primaryColor, backgroundColor: '#F8FBFF' }}>
                   <div className="flex items-baseline justify-between gap-2">
-                    <h4 className="text-[9.5px] font-extrabold leading-tight" style={{ color: navyDark }}>{project.name}</h4>
+                    <h4 className="text-[9.5px] font-extrabold leading-tight" style={{ color: primaryColor }}>{project.name}</h4>
                     <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-1.5" linkClassName="shrink-0 text-[8px] font-bold text-blue-600 hover:underline" />
                   </div>
                   {project.description && <p className="mt-px text-[8.5px] italic leading-[1.2]" style={{ color: textMuted }}>{project.description}</p>}
@@ -233,7 +242,7 @@ export default function Template16({ data }) {
         )}
 
         {certifications && certifications.length > 0 && (
-          <Section title={sectionTitles.certifications || 'Certifications'}>
+          <Section title={sectionTitles.certifications || 'Certifications'} titleColor={primaryColor}>
             <div className="space-y-px">
               {certifications.map((cert) => (
                 <CertificateDetails key={cert.id} certificate={cert} className="text-[9px] leading-tight" metaClassName="text-[8px] leading-tight" linkClassName="text-[8px] font-bold hover:underline" />
@@ -247,7 +256,7 @@ export default function Template16({ data }) {
           className=""
           itemClassName="text-[8.5px] leading-[1.2]"
           paragraphClassName="text-[8.5px] leading-[1.2]"
-          renderSection={({ title, content }) => <Section title={title}>{content}</Section>}
+          renderSection={({ title, content }) => <Section title={title} titleColor={primaryColor}>{content}</Section>}
         />
       </FittedPageBody>
     </div>

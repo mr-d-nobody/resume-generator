@@ -52,7 +52,7 @@ export default function Template13({ data, config }) {
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
             
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1" style={{ gap: spacing.itemGap }}>
               {education.map((edu) => (
                 <div key={edu.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
                   <h4 className="font-bold text-lg text-gray-900">{edu.degree}</h4>
@@ -73,7 +73,7 @@ export default function Template13({ data, config }) {
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
             
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2" style={{ gap: spacing.itemGap }}>
               {projects.map((project) => (
                 <div key={project.id} className="border-l-4 pl-4" style={{ borderColor: theme.primaryColor }}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -103,7 +103,7 @@ export default function Template13({ data, config }) {
               <h3 className="text-xl font-bold uppercase tracking-widest" style={{ color: theme.primaryColor }}>{sectionTitles.certifications || 'Certifications'}</h3>
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2" style={{ gap: spacing.itemGap }}>
               {certifications.map((cert) => (
                 <CertificateDetails key={cert.id} certificate={cert} className="border-l-4 pl-4 text-sm" metaClassName="text-xs text-gray-600" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}
@@ -120,7 +120,7 @@ export default function Template13({ data, config }) {
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center" style={{ gap: spacing.itemGap }}>
               {Object.values(skills).flat().map((skill, idx) => (
                 <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full border border-gray-200">
                   {skill}

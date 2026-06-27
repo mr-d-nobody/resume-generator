@@ -39,7 +39,7 @@ export default function Template14({ data, config }) {
         {education && education.length > 0 && (
           <section>
             <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.education || 'Education'}</h3>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
               {education.map((edu) => (
                 <div key={edu.id}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -67,7 +67,7 @@ export default function Template14({ data, config }) {
         {skills && Object.keys(skills).length > 0 && (
           <section>
             <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.skills || 'Technical Skills'}</h3>
-            <div className="flex flex-col gap-2 text-sm">
+            <div className="flex flex-col text-sm" style={{ gap: spacing.itemGap }}>
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="flex">
                   <span className="font-bold w-32 shrink-0">{category}:</span>
@@ -82,7 +82,7 @@ export default function Template14({ data, config }) {
         {projects && projects.length > 0 && (
           <section>
             <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.projects || 'Academic Projects'}</h3>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
               {projects.map((project) => (
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -109,7 +109,7 @@ export default function Template14({ data, config }) {
         {experience && experience.length > 0 && (
           <section>
             <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.experience || 'Experience'}</h3>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
               {experience.map((exp) => (
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -133,7 +133,7 @@ export default function Template14({ data, config }) {
         {certifications && certifications.length > 0 && (
           <section>
             <h3 className="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900">{sectionTitles.certifications || 'Certifications'}</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2" style={{ gap: spacing.itemGap }}>
               {certifications.map((cert) => (
                 <CertificateDetails key={cert.id} certificate={cert} className="text-sm" metaClassName="text-xs text-gray-600" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}

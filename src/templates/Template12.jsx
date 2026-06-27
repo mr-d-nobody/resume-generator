@@ -61,7 +61,7 @@ export default function Template12({ data, config }) {
           )}
         </div>
 
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col" style={{ gap: spacing.sectionGap }}>
           <SidebarBlock title="Details">
             <ContactLinks
               personal={personal}
@@ -74,7 +74,7 @@ export default function Template12({ data, config }) {
 
           {education && education.length > 0 && (
             <SidebarBlock title={sectionTitles.education || 'Education'}>
-              <div className="space-y-4">
+              <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
                 {education.map((edu) => (
                   <div key={edu.id}>
                     <h4 className="text-[11px] font-bold leading-tight">{edu.degree}</h4>
@@ -91,7 +91,7 @@ export default function Template12({ data, config }) {
 
           {skills && Object.keys(skills).length > 0 && (
             <SidebarBlock title={sectionTitles.skills || 'Skills'}>
-              <div className="space-y-3">
+              <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
                 {Object.entries(skills).map(([category, skillList]) => (
                   <div key={category}>
                     <div className="mb-1 text-[9.5px] font-bold uppercase tracking-wide text-white/75">{category}</div>
@@ -114,7 +114,7 @@ export default function Template12({ data, config }) {
 
           {projects && projects.length > 0 && (
             <MainSection title={sectionTitles.projects || 'Key Projects'} color={theme.primaryColor}>
-              <div className="space-y-4">
+              <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
                 {projects.map((project) => (
                   <div key={project.id} className="break-inside-avoid">
                     <div className="mb-1 flex items-baseline justify-between gap-3">
@@ -139,7 +139,7 @@ export default function Template12({ data, config }) {
 
           {experience && experience.length > 0 && (
             <MainSection title={sectionTitles.experience || 'Experience'} color={theme.primaryColor}>
-              <div className="space-y-4">
+              <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
                 {experience.map((exp) => (
                   <div key={exp.id} className="break-inside-avoid">
                     <div className="mb-1 flex items-baseline justify-between gap-3">
@@ -162,7 +162,7 @@ export default function Template12({ data, config }) {
 
           {certifications && certifications.length > 0 && (
             <MainSection title={sectionTitles.certifications || 'Certifications'} color={theme.primaryColor}>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1" style={{ gap: spacing.itemGap }}>
                 {certifications.map((cert) => (
                   <CertificateDetails key={cert.id} certificate={cert} className="text-[10.5px] font-semibold text-gray-900" metaClassName="text-[9px] text-gray-600" linkClassName="text-[9px] font-bold text-blue-600 hover:underline" />
                 ))}

@@ -46,7 +46,7 @@ export default function Template11({ data, config }) {
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
               {sectionTitles.education || 'Education'}
             </h3>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
               {education.map((edu) => (
                 <div key={edu.id}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -76,7 +76,7 @@ export default function Template11({ data, config }) {
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
               {sectionTitles.projects || 'Academic & Personal Projects'}
             </h3>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
               {projects.map((project) => (
                 <div key={project.id}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -105,7 +105,7 @@ export default function Template11({ data, config }) {
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
               {sectionTitles.skills || 'Technical Skills'}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 text-sm" style={{ gap: spacing.itemGap }}>
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="mb-2">
                   <span className="font-semibold mr-2">{category}:</span>
@@ -122,7 +122,7 @@ export default function Template11({ data, config }) {
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
               {sectionTitles.experience || 'Internships & Experience'}
             </h3>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col" style={{ gap: spacing.itemGap }}>
               {experience.map((exp) => (
                 <div key={exp.id}>
                   <div className="flex justify-between items-baseline mb-1">
@@ -150,7 +150,7 @@ export default function Template11({ data, config }) {
             <h3 className="text-lg font-bold uppercase tracking-widest border-b-2 mb-4 pb-1" style={{ borderColor: theme.primaryColor, color: theme.primaryColor }}>
               {sectionTitles.certifications || 'Certifications'}
             </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2" style={{ gap: spacing.itemGap }}>
               {certifications.map((cert) => (
                 <CertificateDetails key={cert.id} certificate={cert} className="text-sm" metaClassName="text-xs text-gray-600" linkClassName="text-xs text-blue-600 hover:underline" />
               ))}

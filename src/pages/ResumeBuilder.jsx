@@ -256,7 +256,7 @@ function ResumeBuilder() {
           {[
             { key: 'sectionGap', label: 'Between sections', min: 0.7, max: 2.3, step: 0.05, value: layout.sectionGap, suffix: 'rem' },
             { key: 'itemGap', label: 'Between blocks', min: 0.4, max: 1.8, step: 0.05, value: layout.itemGap, suffix: 'rem' },
-            { key: 'density', label: 'PDF density', min: 0.86, max: 1.08, step: 0.01, value: layout.density, suffix: 'x' }
+            { key: 'density', label: 'Resume density', min: 0.72, max: 1.12, step: 0.01, value: layout.density, suffix: 'x' }
           ].map((control) => (
             <label key={control.key} className="grid gap-3 sm:grid-cols-[150px_1fr_70px] sm:items-center">
               <span className="text-sm font-medium text-gray-700">{control.label}</span>
