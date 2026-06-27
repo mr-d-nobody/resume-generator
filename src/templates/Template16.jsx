@@ -63,6 +63,7 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [pageMode, setPageMode] = useState('single');
+  const itemGap = Math.max(0.35, Number(layout.itemGap) || 0.85) * 0.52;
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -116,7 +117,7 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [children, onPageModeChange]);
+  }, [children, itemGap, onPageModeChange]);
 
   return (
     <div
@@ -125,11 +126,12 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
     >
       <div
         ref={contentRef}
-        className="template16-content mx-auto flex flex-col px-[14mm] pb-[3mm] pt-[3mm]"
+        className="template16-content flex flex-col px-[14mm] pb-[3mm] pt-[3mm]"
         style={{
           width: `${100 / scale}%`,
-          zoom: scale,
-          gap: `${Math.max(0.35, Number(layout.itemGap) || 0.85) * 0.52}rem`
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          gap: `${itemGap}rem`
         }}
         data-fit-scale={scale.toFixed(3)}
       >

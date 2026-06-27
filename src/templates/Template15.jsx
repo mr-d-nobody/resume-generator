@@ -9,13 +9,18 @@ export default function Template15({ data, config }) {
   const { theme, spacing, layout = {} } = config;
   const density = Math.max(0.72, Math.min(1.18, Number(layout.density) || 1));
   const scaledWidth = `${100 / density}%`;
+  const densityStyle = {
+    width: scaledWidth,
+    transform: `scale(${density})`,
+    transformOrigin: 'top left'
+  };
 
   return (
-    <div 
+    <div
       className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg overflow-visible"
       style={{ fontFamily: theme.fontFamily, color: theme.textColor }}
     >
-      <div className="flex min-h-[297mm] flex-col p-10" style={{ width: scaledWidth, zoom: density }}>
+      <div className="flex min-h-[297mm] flex-col p-10" style={densityStyle}>
         {/* Header */}
         <header className="mb-8 border-b-2 pb-4" style={{ borderColor: theme.primaryColor }}>
           <h1 className="text-3xl font-bold mb-2">
