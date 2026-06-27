@@ -138,7 +138,7 @@ function Navbar() {
             {!isLoading && (
               isAuthenticated ? (
                 <>
-                  <Link to="/account" className="hidden items-center gap-2 rounded-lg border border-gray-600 px-3 py-2 text-sm font-semibold text-white sm:inline-flex">
+                  <Link to="/account" className="hidden items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-600 sm:inline-flex dark:border-gray-600 dark:text-white">
                     <UserCircle className="h-4 w-4" />
                     {user.firstName || 'Account'}
                   </Link>

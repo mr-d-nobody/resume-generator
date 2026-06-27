@@ -132,8 +132,8 @@ function ResumeBuilder() {
         key={template.id}
         type="button"
         onClick={() => setTemplate(template.id)}
-        className={`group rounded-md border bg-white p-3 text-left transition hover:border-blue-300 hover:shadow-sm ${
-          selected ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'
+        className={`group rounded-md border bg-white p-3 text-left transition hover:border-blue-300 hover:shadow-sm dark:bg-gray-900 ${
+          selected ? 'border-blue-500 ring-2 ring-blue-100 dark:ring-blue-900/50' : 'border-gray-200 dark:border-gray-700'
         }`}
       >
         <div className={`relative mb-3 h-36 overflow-hidden rounded border border-gray-200 bg-white ${template.accent}`} style={{ borderColor: theme.primaryColor }}>
@@ -157,8 +157,8 @@ function ResumeBuilder() {
         </div>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold text-gray-950">{template.name}</div>
-            <div className="text-xs text-gray-500">{template.tone}</div>
+            <div className="text-sm font-semibold text-gray-950 dark:text-white">{template.name}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{template.tone}</div>
           </div>
           <span className="text-xs font-semibold text-blue-600">#{template.id}</span>
         </div>
@@ -168,7 +168,7 @@ function ResumeBuilder() {
 
   const renderCustomizePanel = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 rounded-md bg-gray-100 p-1">
+      <div className="grid grid-cols-3 rounded-md bg-gray-100 p-1 dark:bg-gray-800">
         {[
           { id: 'template', label: 'Template', icon: LayoutTemplate },
           { id: 'text', label: 'Text', icon: Type },
@@ -181,7 +181,7 @@ function ResumeBuilder() {
               type="button"
               onClick={() => setCustomizeTab(tab.id)}
               className={`flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-semibold ${
-                customizeTab === tab.id ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-500'
+                customizeTab === tab.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -194,7 +194,7 @@ function ResumeBuilder() {
       {customizeTab === 'template' && (
         <div className="space-y-6">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
               <Palette className="h-4 w-4" />
               Main color
             </div>
@@ -207,7 +207,7 @@ function ResumeBuilder() {
                     type="button"
                     onClick={() => setColorTheme(theme.id)}
                     className={`flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm ${
-                      selected ? 'border-gray-900' : 'border-white'
+                      selected ? 'border-gray-900 dark:border-white' : 'border-white dark:border-gray-700'
                     }`}
                     style={{ backgroundColor: theme.primaryColor }}
                     aria-label={theme.label}
@@ -235,14 +235,14 @@ function ResumeBuilder() {
                 key={font.id}
                 type="button"
                 onClick={() => setFontFamily(font.id)}
-                className={`rounded-md border bg-white px-4 py-5 text-left transition ${
-                  selected ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200 hover:border-blue-300'
+                className={`rounded-md border bg-white px-4 py-5 text-left transition dark:bg-gray-900 ${
+                  selected ? 'border-blue-500 ring-2 ring-blue-100 dark:ring-blue-900/50' : 'border-gray-200 hover:border-blue-300 dark:border-gray-700'
                 }`}
               >
-                <span className="block text-sm font-semibold text-gray-900" style={{ fontFamily: font.fontFamily }}>
+                <span className="block text-sm font-semibold text-gray-900 dark:text-white" style={{ fontFamily: font.fontFamily }}>
                   {font.label}
                 </span>
-                <span className="mt-2 block text-xs text-gray-500" style={{ fontFamily: font.fontFamily }}>
+                <span className="mt-2 block text-xs text-gray-500 dark:text-gray-400" style={{ fontFamily: font.fontFamily }}>
                   Aa Bb Cc 123
                 </span>
               </button>
@@ -252,14 +252,14 @@ function ResumeBuilder() {
       )}
 
       {customizeTab === 'layout' && (
-        <div className="space-y-6 rounded-md border border-gray-200 bg-white p-5">
+        <div className="space-y-6 rounded-md border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
           {[
             { key: 'sectionGap', label: 'Between sections', min: 0.7, max: 2.3, step: 0.01, value: layout.sectionGap, suffix: 'rem' },
             { key: 'itemGap', label: 'Between blocks', min: 0.4, max: 1.8, step: 0.01, value: layout.itemGap, suffix: 'rem' },
             { key: 'density', label: 'Resume density', min: 0.72, max: 1.12, step: 0.01, value: layout.density, suffix: 'x' }
           ].map((control) => (
             <label key={control.key} className="grid gap-3 sm:grid-cols-[150px_1fr_70px] sm:items-center">
-              <span className="text-sm font-medium text-gray-700">{control.label}</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{control.label}</span>
               <input
                 type="range"
                 min={control.min}
@@ -269,7 +269,7 @@ function ResumeBuilder() {
                 onChange={(event) => setLayoutValue(control.key, event.target.value)}
                 className="w-full accent-blue-600"
               />
-              <span className="rounded-md bg-gray-100 px-3 py-2 text-center text-sm font-semibold text-gray-600">
+              <span className="rounded-md bg-gray-100 px-3 py-2 text-center text-sm font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-200">
                 {control.value.toFixed(2)}{control.suffix}
               </span>
             </label>
@@ -280,10 +280,10 @@ function ResumeBuilder() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f4f6fb]">
-      <div className="border-b border-gray-200 bg-white">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f4f6fb] dark:bg-gray-950">
+      <div className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="mx-auto flex max-w-[1800px] items-center justify-center px-4 py-3">
-          <div className="grid grid-cols-2 rounded-lg bg-gray-100 p-1">
+          <div className="grid grid-cols-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
             {[
               { id: 'edit', label: 'Edit' },
               { id: 'customize', label: 'Customize' }
@@ -293,7 +293,7 @@ function ResumeBuilder() {
                 type="button"
                 onClick={() => setWorkspaceMode(mode.id)}
                 className={`rounded-md px-10 py-2 text-sm font-semibold transition ${
-                  workspaceMode === mode.id ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-500'
+                  workspaceMode === mode.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 {mode.label}
@@ -304,19 +304,19 @@ function ResumeBuilder() {
       </div>
 
       <div className="mx-auto grid max-w-[1800px] grid-cols-1 xl:grid-cols-[minmax(560px,960px)_minmax(480px,1fr)]">
-        <section className={`min-h-[calc(100vh-8rem)] bg-white ${mobileView !== 'edit' ? 'hidden xl:block' : ''}`}>
-          <div className="border-b border-gray-200">
+        <section className={`min-h-[calc(100vh-8rem)] bg-white dark:bg-gray-950 ${mobileView !== 'edit' ? 'hidden xl:block' : ''}`}>
+          <div className="border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-3 px-8 py-5">
               <span className={`rounded-md px-2.5 py-1 text-sm font-bold text-white ${score < 55 ? 'bg-rose-500' : score < 80 ? 'bg-amber-500' : 'bg-emerald-600'}`}>
                 {score}%
               </span>
-              <span className="text-sm font-medium text-gray-500">Resume score</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Resume score</span>
             </div>
           </div>
 
           {workspaceMode === 'edit' ? (
             <>
-              <div className="border-b border-gray-200 px-8 py-4">
+              <div className="border-b border-gray-200 px-8 py-4 dark:border-gray-800">
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                   {tabs.map((tab, index) => {
                     const Icon = tab.icon;
@@ -329,7 +329,7 @@ function ResumeBuilder() {
                         className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                           active
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:text-gray-900'
+                            : 'border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-blue-800 dark:hover:text-white'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -345,12 +345,12 @@ function ResumeBuilder() {
                 {ActiveComponent && <ActiveComponent />}
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-200 bg-white px-8 py-4">
+              <div className="flex items-center justify-between border-t border-gray-200 bg-white px-8 py-4 dark:border-gray-800 dark:bg-gray-950">
                 <button
                   type="button"
                   disabled={currentStepIndex <= 0}
                   onClick={() => setActiveTab(tabs[Math.max(0, currentStepIndex - 1)].id)}
-                  className="rounded-md border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 disabled:opacity-40"
+                  className="rounded-md border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 disabled:opacity-40 dark:border-gray-700 dark:text-gray-200"
                 >
                   Back
                 </button>
@@ -382,9 +382,9 @@ function ResumeBuilder() {
           )}
         </section>
 
-        <section className={`relative min-h-[calc(100vh-8rem)] bg-[#eef2f7] ${mobileView !== 'preview' ? 'hidden xl:block' : ''}`}>
-          <div className="sticky top-16 z-10 flex items-center justify-between border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur">
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+        <section className={`relative min-h-[calc(100vh-8rem)] bg-[#eef2f7] dark:bg-gray-950 ${mobileView !== 'preview' ? 'hidden xl:block' : ''}`}>
+          <div className="sticky top-16 z-10 flex items-center justify-between border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300">
               <Eye className="h-4 w-4" />
               Template {activeTemplate}
             </div>
@@ -392,7 +392,7 @@ function ResumeBuilder() {
               <button
                 type="button"
                 onClick={() => setMobileView('edit')}
-                className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 xl:hidden"
+                className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 xl:hidden dark:border-gray-700 dark:text-gray-200"
               >
                 Edit
               </button>
@@ -411,7 +411,7 @@ function ResumeBuilder() {
         </section>
       </div>
 
-      <div className="fixed inset-x-4 bottom-4 z-40 grid grid-cols-2 rounded-lg bg-gray-950 p-1 shadow-xl xl:hidden">
+      <div className="fixed inset-x-4 bottom-4 z-40 grid grid-cols-2 rounded-lg border border-gray-200 bg-white p-1 shadow-xl dark:border-gray-800 dark:bg-gray-950 xl:hidden">
         {[
           { id: 'edit', label: 'Edit' },
           { id: 'preview', label: 'Preview' }
@@ -421,7 +421,7 @@ function ResumeBuilder() {
             type="button"
             onClick={() => setMobileView(item.id)}
             className={`rounded-md px-4 py-3 text-sm font-semibold ${
-              mobileView === item.id ? 'bg-white text-gray-950' : 'text-white'
+              mobileView === item.id ? 'bg-gray-100 text-gray-950 dark:bg-white dark:text-gray-950' : 'text-gray-500 dark:text-white'
             }`}
           >
             {item.label}

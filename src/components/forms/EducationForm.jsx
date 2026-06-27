@@ -35,9 +35,9 @@ function EducationForm() {
   };
 
   return (
-    <div className="card p-6 bg-gray-900 text-white">
+    <div className="card p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold flex items-center">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
           <GraduationCap className="h-5 w-5 mr-2" /> Education
         </h2>
         {!showAddForm && (
@@ -52,11 +52,11 @@ function EducationForm() {
 
       {/* Existing Education */}
       {education.map((edu, index) => (
-        <div key={edu.id || index} className="border p-4 rounded-lg mb-4 bg-gray-800">
+        <div key={edu.id || index} className="border border-gray-200 p-4 rounded-lg mb-4 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
           <div className="flex justify-between">
             <div>
               <p className="font-semibold">{edu.degree}</p>
-              <p>{edu.institution}</p>
+              <p className="text-gray-600 dark:text-gray-300">{edu.institution}</p>
             </div>
             <button
               onClick={() => deleteEducation(index)}
@@ -70,46 +70,46 @@ function EducationForm() {
 
       {/* Add New Education Form */}
       {showAddForm && (
-        <div className="border p-4 rounded-lg mb-4 bg-gray-800 space-y-2">
+        <div className="border border-gray-200 p-4 rounded-lg mb-4 bg-gray-50 space-y-2 dark:border-gray-700 dark:bg-gray-800">
           <input
             type="text"
             value={newEducation.degree}
             onChange={(e) => handleChangeNew('degree', e.target.value)}
             placeholder="Degree *"
-            className="form-input bg-gray-700 text-white border-gray-600 w-full"
+            className="form-input w-full"
           />
           <input
             type="text"
             value={newEducation.institution}
             onChange={(e) => handleChangeNew('institution', e.target.value)}
             placeholder="Institution *"
-            className="form-input bg-gray-700 text-white border-gray-600 w-full"
+            className="form-input w-full"
           />
           <input
             type="text"
             value={newEducation.location}
             onChange={(e) => handleChangeNew('location', e.target.value)}
             placeholder="Location"
-            className="form-input bg-gray-700 text-white border-gray-600 w-full"
+            className="form-input w-full"
           />
           <input
             type="month"
             value={newEducation.graduationDate}
             onChange={(e) => handleChangeNew('graduationDate', e.target.value)}
-            className="form-input bg-gray-700 text-white border-gray-600 w-full"
+            className="form-input w-full"
           />
           <input
             type="text"
             value={newEducation.cgpa}
             onChange={(e) => handleChangeNew('cgpa', e.target.value)}
             placeholder="CGPA"
-            className="form-input bg-gray-700 text-white border-gray-600 w-full"
+            className="form-input w-full"
           />
           <textarea
             value={newEducation.description}
             onChange={(e) => handleChangeNew('description', e.target.value)}
             placeholder="Additional details"
-            className="form-input bg-gray-700 text-white border-gray-600 w-full h-24"
+            className="form-input w-full h-24"
           />
           <div className="flex justify-end space-x-2">
             <button

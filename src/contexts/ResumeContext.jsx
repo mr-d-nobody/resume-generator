@@ -31,6 +31,13 @@ const initialResumeData = {
   languages: []
 };
 
+function getSystemDarkMode() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 // Initial state
 const initialState = {
   resumeData: initialResumeData,
@@ -48,7 +55,7 @@ const initialState = {
     sectionTitles: {},
     sectionVisibility: {}
   },
-  isDarkMode: true
+  isDarkMode: getSystemDarkMode()
 };
 
 const payloadHash = (payload) => JSON.stringify(payload);
@@ -492,12 +499,24 @@ export function ResumeProvider({ children }) {
   const currentPayloadRef = useRef(cloudPayload);
   currentPayloadRef.current = cloudPayload;
 
-  // Dark mode is device-specific and remains local.
+  // Theme follows the user's system/browser setting.
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode === 'true' || savedDarkMode === 'false') {
-      dispatch({ type: ACTIONS.SET_DARK_MODE, payload: savedDarkMode === 'true' });
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined;
     }
+
+    localStorage.removeItem('darkMode');
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const applySystemTheme = (event) => {
+      dispatch({ type: ACTIONS.SET_DARK_MODE, payload: event.matches });
+    };
+
+    dispatch({ type: ACTIONS.SET_DARK_MODE, payload: mediaQuery.matches });
+    mediaQuery.addEventListener('change', applySystemTheme);
+
+    return () => {
+      mediaQuery.removeEventListener('change', applySystemTheme);
+    };
   }, []);
 
   useEffect(() => {
@@ -631,12 +650,9 @@ export function ResumeProvider({ children }) {
   }, [user, isAuthLoading]);
 
   useEffect(() => {
-    localStorage.setItem('darkMode', state.isDarkMode);
-    if (state.isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.toggle('dark', state.isDarkMode);
+    document.documentElement.style.colorScheme = state.isDarkMode ? 'dark' : 'light';
 
   }, [state.isDarkMode]);
 

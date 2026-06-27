@@ -46,8 +46,8 @@ function SkillsForm() {
   }, {});
 
   return (
-    <div className="card p-6 bg-gray-900 text-white">
-      <h2 className="text-xl font-semibold mb-6 flex items-center">
+    <div className="card p-6">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
         Skills
       </h2>
 
@@ -56,17 +56,17 @@ function SkillsForm() {
         <div className="mb-6">
           {Object.entries(groupedSkills).map(([category, skills]) => (
             <div key={category} className="mb-4">
-              <h4 className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
+              <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
                 {category}
               </h4>
               <div className="flex flex-wrap gap-2">
                 {skills.map(skill => (
                   <div
                     key={skill.id}
-                    className="bg-gray-800 px-3 py-1 rounded-full flex items-center"
+                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center dark:bg-gray-800"
                   >
-                    <span className="text-sm text-gray-200 mr-1">{skill.name}</span>
-                    <span className="text-xs text-gray-400">({skill.level})</span>
+                    <span className="text-sm text-gray-800 mr-1 dark:text-gray-200">{skill.name}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">({skill.level})</span>
                     <button
                       onClick={() => handleRemoveSkill(skill.id)}
                       className="ml-2 text-gray-500 hover:text-red-400"
@@ -85,7 +85,7 @@ function SkillsForm() {
       {/* Add New Skill */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Skill Name *
           </label>
           <input
@@ -93,21 +93,21 @@ function SkillsForm() {
             name="name"
             value={newSkill.name}
             onChange={handleChange}
-            className="form-input bg-gray-700 text-white border-gray-600"
+            className="form-input"
             placeholder="e.g. JavaScript, Project Management"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Proficiency Level
             </label>
             <select
               name="level"
               value={newSkill.level}
               onChange={handleChange}
-              className="form-select bg-gray-700 text-white border-gray-600"
+              className="form-select"
             >
               {skillLevels.map(level => (
                 <option key={level} value={level}>{level}</option>
@@ -116,14 +116,14 @@ function SkillsForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category
             </label>
             <select
               name="category"
               value={newSkill.category}
               onChange={handleChange}
-              className="form-select bg-gray-700 text-white border-gray-600"
+              className="form-select"
             >
               {skillCategories.map(category => (
                 <option key={category} value={category}>{category}</option>
