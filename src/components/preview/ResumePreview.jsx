@@ -13,10 +13,27 @@ import Template15 from '../../templates/Template15';
 import Template16 from '../../templates/Template16';
 
 const A4_WIDTH = 794;
-const A4_HEIGHT = 1123;
+const A4_RATIO = 297 / 210;
+const A4_HEIGHT = A4_WIDTH * A4_RATIO;
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
+}
+
+function getVisualResumeHeight(resumeElement) {
+  if (!resumeElement) return A4_HEIGHT;
+  const rootRect = resumeElement.getBoundingClientRect();
+  let bottom = rootRect.bottom;
+
+  resumeElement.querySelectorAll('*').forEach((element) => {
+    [...element.getClientRects()].forEach((rect) => {
+      if (rect.width > 0 && rect.height > 0) {
+        bottom = Math.max(bottom, rect.bottom);
+      }
+    });
+  });
+
+  return Math.max(rootRect.height, bottom - rootRect.top);
 }
 
 export default function ResumePreview({ isPrintMode = false }) {
@@ -37,7 +54,11 @@ export default function ResumePreview({ isPrintMode = false }) {
   const templateConfig = useMemo(() => buildTemplateConfig(customization), [customization]);
 
   const containerRef = React.useRef(null);
+  const measureRef = React.useRef(null);
   const [scale, setScale] = React.useState(0.7);
+  const [pageWidth, setPageWidth] = React.useState(A4_WIDTH);
+  const [pageCount, setPageCount] = React.useState(1);
+  const [pageHeight, setPageHeight] = React.useState(A4_HEIGHT);
 
   React.useEffect(() => {
     const updateScale = () => {
@@ -55,6 +76,48 @@ export default function ResumePreview({ isPrintMode = false }) {
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
   }, []);
+
+  React.useLayoutEffect(() => {
+    const measureElement = measureRef.current;
+    if (!measureElement) return undefined;
+
+    let frame;
+    const updatePages = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = measureElement.getBoundingClientRect();
+        const nextPageHeight = rect.width * A4_RATIO;
+        const visualHeight = getVisualResumeHeight(measureElement);
+        const tolerance = Math.max(2, rect.width * 0.003);
+        const nextPageCount = visualHeight <= nextPageHeight + tolerance
+          ? 1
+          : Math.ceil(visualHeight / nextPageHeight);
+
+        setPageWidth(rect.width || A4_WIDTH);
+        setPageHeight(nextPageHeight || A4_HEIGHT);
+        setPageCount(Math.max(1, nextPageCount));
+      });
+    };
+
+    const fontReady = document.fonts?.ready || Promise.resolve();
+    fontReady.then(updatePages);
+
+    const resizeObserver = new ResizeObserver(updatePages);
+    const mutationObserver = new MutationObserver(updatePages);
+    resizeObserver.observe(measureElement);
+    mutationObserver.observe(measureElement, {
+      attributes: true,
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [customization, resumeData, templateId, transformedData, templateConfig]);
 
   const renderTemplate = () => {
     const templateCapabilities = {
@@ -104,26 +167,46 @@ export default function ResumePreview({ isPrintMode = false }) {
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-[calc(100vh-180px)] overflow-auto bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-center py-8 custom-scrollbar"
+      className="relative w-full h-[calc(100vh-180px)] overflow-auto bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-center py-8 custom-scrollbar"
     >
-      <div 
-        className="relative transition-all duration-300"
-        style={{ 
-          width: A4_WIDTH * scale, 
-          height: A4_HEIGHT * scale 
-        }}
+      <div
+        ref={measureRef}
+        data-resume-measure-root
+        className="pointer-events-none absolute left-0 top-0 -z-10 bg-white opacity-0"
+        style={{ width: '210mm' }}
       >
-        <div 
-          className="absolute top-0 left-0 bg-white shadow-2xl overflow-hidden"
-          style={{ 
-            width: A4_WIDTH, 
-            minHeight: A4_HEIGHT,
-            transform: `scale(${scale})`, 
-            transformOrigin: 'top left' 
-          }}
-        >
-          {renderTemplate()}
-        </div>
+        {renderTemplate()}
+      </div>
+
+      <div
+        className="flex shrink-0 flex-col items-center gap-6 transition-all duration-300"
+        style={{ width: pageWidth * scale }}
+      >
+        {Array.from({ length: pageCount }).map((_, pageIndex) => (
+          <div
+            key={pageIndex}
+            data-resume-preview-page
+            data-page-index={pageIndex + 1}
+            className="relative shrink-0 bg-white shadow-2xl overflow-hidden"
+            style={{
+              width: pageWidth * scale,
+              height: pageHeight * scale
+            }}
+          >
+            <div
+              className="absolute left-0 top-0"
+              style={{
+                width: pageWidth,
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left'
+              }}
+            >
+              <div style={{ transform: `translateY(-${pageIndex * pageHeight}px)` }}>
+                {renderTemplate()}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

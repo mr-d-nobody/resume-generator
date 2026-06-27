@@ -62,7 +62,6 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
   const viewportRef = useRef(null);
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
-  const [pageMode, setPageMode] = useState('single');
   const itemGap = Math.max(0.2, Number(layout.itemGap) || 0.85) * 0.35;
   const sectionGap = Math.max(0.35, Number(layout.sectionGap) || 1.35) * 0.45;
   const density = Math.max(0.72, Math.min(1.18, Number(layout.density) || 1));
@@ -86,7 +85,6 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
         : Math.max(MIN_QUALITY_SCALE, Math.min(MAX_FILL_SCALE, idealScale));
 
       setScale(nextScale);
-      setPageMode(nextMode);
       onPageModeChange(nextMode);
 
       if (nextMode === 'single') {
@@ -126,7 +124,7 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
   return (
     <div
       ref={viewportRef}
-      className={pageMode === 'single' ? 'min-h-0 flex-1 overflow-hidden' : 'template16-multipage-body'}
+      className="template16-multipage-body min-h-0 flex-1 overflow-visible"
     >
       <div
         ref={contentRef}
@@ -159,9 +157,7 @@ export default function Template16({ data, config = {} }) {
 
   return (
     <div
-      className={`template16-page mx-auto flex w-[210mm] flex-col bg-white shadow-lg ${
-        pageMode === 'single' ? 'h-[297mm] overflow-hidden' : 'min-h-[297mm] overflow-visible'
-      }`}
+      className="template16-page mx-auto flex min-h-[297mm] w-[210mm] flex-col overflow-visible bg-white shadow-lg"
       data-page-mode={pageMode}
       style={{ fontFamily: theme.fontFamily || 'Inter, Arial, sans-serif', color: pageTextColor }}
     >
