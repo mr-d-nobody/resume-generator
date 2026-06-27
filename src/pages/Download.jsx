@@ -175,6 +175,12 @@ function sanitizeCanvasClone(sourceRoot, clonedRoot) {
   });
 
   clonedRoot.style.backgroundColor = '#ffffff';
+  clonedElements.forEach((element) => {
+    element.style.visibility = 'visible';
+  });
+  clonedRoot.style.position = 'static';
+  clonedRoot.style.left = '0';
+  clonedRoot.style.top = '0';
   removeClonedStylesheets(clonedRoot.ownerDocument);
 }
 
@@ -260,8 +266,8 @@ function addCanvasPagesToPdf(pdf, canvas) {
     );
 
     pdf.addImage(
-      pageCanvas.toDataURL('image/jpeg', 0.94),
-      'JPEG',
+      pageCanvas.toDataURL('image/png'),
+      'PNG',
       0,
       0,
       A4_WIDTH,
@@ -1021,7 +1027,7 @@ async function generatePreviewPdf({ jsPDF, html2canvas, resumeElement }) {
       height: exportHeight,
       width: exportWidth,
       logging: false,
-      scale: Math.min(2, Math.max(1.35, window.devicePixelRatio || 1.5)),
+      scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
       scrollX: -window.scrollX,
       scrollY: -window.scrollY,
       useCORS: true,
@@ -1032,6 +1038,7 @@ async function generatePreviewPdf({ jsPDF, html2canvas, resumeElement }) {
         sanitizeCanvasClone(resumeElement, clonedRoot);
         if (clonedRoot) {
           clonedRoot.style.width = `${exportWidth}px`;
+          clonedRoot.style.height = `${exportHeight}px`;
           clonedRoot.style.minHeight = `${exportHeight}px`;
         }
       }
@@ -1079,7 +1086,7 @@ function Download() {
 
       try {
         const { default: html2canvas } = await import('html2canvas');
-        const resumeElement = previewRef.current?.querySelector('.resume-print-page');
+        const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
         if (!resumeElement) {
           throw new Error('Resume preview is not ready yet.');
         }
@@ -1169,8 +1176,8 @@ function Download() {
           </div>
 
           <div className="overflow-x-auto pb-4">
-            <div ref={previewRef} className="resume-container bg-white w-fit mx-auto border border-gray-200 shadow-sm">
-              <ResumePreview isPrintMode={true} />
+            <div ref={previewRef} className="mx-auto w-full max-w-[980px]">
+              <ResumePreview />
             </div>
           </div>
         </div>
