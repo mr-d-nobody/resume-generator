@@ -6,15 +6,16 @@ import CertificateDetails from '../components/common/CertificateDetails';
 import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template11({ data, config }) {
   const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
-  const { theme, spacing } = config;
+  const { theme, spacing, densityStyle } = config;
 
   return (
-    <div 
-      className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg overflow-hidden flex flex-col"
+    <div
+      className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg overflow-visible"
       style={{ fontFamily: theme.fontFamily, color: theme.textColor }}
     >
-      {/* Header */}
-      <header className="px-10 py-8 border-b-4" style={{ borderColor: theme.primaryColor, backgroundColor: '#f8fafc' }}>
+      <div className="flex min-h-[297mm] flex-col bg-white" style={densityStyle}>
+        {/* Header */}
+        <header className="px-10 py-8 border-b-4" style={{ borderColor: theme.primaryColor, backgroundColor: '#f8fafc' }}>
         <h1 className="text-4xl font-bold uppercase tracking-wider mb-2" style={{ color: theme.primaryColor }}>
           {personal.name}
         </h1>
@@ -165,6 +166,7 @@ export default function Template11({ data, config }) {
           headingStyle={{ borderColor: theme.primaryColor, color: theme.primaryColor }}
         />
 
+        </div>
       </div>
     </div>
   );

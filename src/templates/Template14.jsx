@@ -6,14 +6,15 @@ import CertificateDetails from '../components/common/CertificateDetails';
 import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template14({ data, config }) {
   const { personal, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
-  const { theme, spacing } = config;
+  const { theme, spacing, densityStyle } = config;
 
   return (
-    <div 
-      className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg overflow-hidden flex flex-col p-12"
+    <div
+      className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg overflow-visible"
       style={{ fontFamily: theme.fontFamily, color: theme.textColor }}
     >
-      <header className="mb-6">
+      <div className="flex min-h-[297mm] flex-col bg-white p-12" style={densityStyle}>
+        <header className="mb-6">
         <h1 className="text-4xl font-semibold mb-1" style={{ color: theme.primaryColor }}>
           {personal.name}
         </h1>
@@ -147,6 +148,7 @@ export default function Template14({ data, config }) {
           headingClassName="text-lg font-bold mb-3 uppercase tracking-wide text-gray-900"
         />
 
+        </div>
       </div>
     </div>
   );

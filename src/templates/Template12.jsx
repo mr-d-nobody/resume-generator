@@ -41,14 +41,15 @@ export default function Template12({ data, config }) {
     customSections,
     sectionTitles = {}
   } = data;
-  const { theme, spacing } = config;
+  const { theme, spacing, densityStyle } = config;
 
   return (
     <div
-      className="mx-auto grid min-h-[297mm] w-[210mm] grid-cols-[34%_66%] overflow-hidden bg-white shadow-lg"
+      className="mx-auto min-h-[297mm] w-[210mm] overflow-visible bg-white shadow-lg"
       style={{ fontFamily: theme.fontFamily, color: theme.textColor }}
     >
-      <aside className="px-8 py-10 text-white" style={{ backgroundColor: theme.primaryColor }}>
+      <div className="grid min-h-[297mm] grid-cols-[34%_66%] bg-white" style={densityStyle}>
+        <aside className="px-8 py-10 text-white" style={{ backgroundColor: theme.primaryColor }}>
         <div className="mb-10 text-center">
           <h1 className="text-[27px] font-black leading-tight tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
             {personal.name}
@@ -179,7 +180,8 @@ export default function Template12({ data, config }) {
             paragraphClassName="text-[10.5px] leading-[1.35] text-gray-700"
           />
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -51,6 +51,20 @@ export const DEFAULT_LAYOUT = {
   density: 1
 };
 
+export function getDensityScale(layout = {}) {
+  const value = Number(layout.density);
+  return Math.max(0.72, Math.min(1.18, Number.isFinite(value) ? value : DEFAULT_LAYOUT.density));
+}
+
+export function getDensityStyle(layout = {}) {
+  const density = getDensityScale(layout);
+  return {
+    width: `${100 / density}%`,
+    transform: `scale(${density})`,
+    transformOrigin: 'top left'
+  };
+}
+
 export function getColorTheme(themeId) {
   return COLOR_THEMES.find((theme) => theme.id === themeId) || COLOR_THEMES[0];
 }
@@ -77,6 +91,7 @@ export function buildTemplateConfig(customization = {}) {
   const theme = getColorTheme(customization.colorTheme);
   const font = getFontOption(customization.fontFamily);
   const layout = getLayoutSettings(customization.layout);
+  const densityScale = getDensityScale(layout);
 
   return {
     ...baseTemplateConfig,
@@ -92,6 +107,8 @@ export function buildTemplateConfig(customization = {}) {
       sectionGap: `${layout.sectionGap}rem`,
       itemGap: `${layout.itemGap}rem`
     },
-    layout
+    layout,
+    densityScale,
+    densityStyle: getDensityStyle(layout)
   };
 }

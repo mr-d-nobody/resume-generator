@@ -6,14 +6,7 @@ import CertificateDetails from '../components/common/CertificateDetails';
 import ProjectLinks from '../components/common/ProjectLinks';
 export default function Template15({ data, config }) {
   const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
-  const { theme, spacing, layout = {} } = config;
-  const density = Math.max(0.72, Math.min(1.18, Number(layout.density) || 1));
-  const scaledWidth = `${100 / density}%`;
-  const densityStyle = {
-    width: scaledWidth,
-    transform: `scale(${density})`,
-    transformOrigin: 'top left'
-  };
+  const { theme, spacing, densityStyle } = config;
 
   return (
     <div

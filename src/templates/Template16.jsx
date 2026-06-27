@@ -63,7 +63,9 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
   const contentRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [pageMode, setPageMode] = useState('single');
-  const itemGap = Math.max(0.35, Number(layout.itemGap) || 0.85) * 0.52;
+  const itemGap = Math.max(0.2, Number(layout.itemGap) || 0.85) * 0.35;
+  const sectionGap = Math.max(0.35, Number(layout.sectionGap) || 1.35) * 0.45;
+  const density = Math.max(0.72, Math.min(1.18, Number(layout.density) || 1));
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -117,7 +119,9 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [children, itemGap, onPageModeChange]);
+  }, [children, density, itemGap, onPageModeChange, sectionGap]);
+
+  const visualScale = Math.max(0.5, scale * density);
 
   return (
     <div
@@ -128,12 +132,12 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
         ref={contentRef}
         className="template16-content flex flex-col px-[14mm] pb-[3mm] pt-[3mm]"
         style={{
-          width: `${100 / scale}%`,
-          transform: `scale(${scale})`,
+          width: `${100 / visualScale}%`,
+          transform: `scale(${visualScale})`,
           transformOrigin: 'top left',
-          gap: `${itemGap}rem`
+          gap: `${sectionGap}rem`
         }}
-        data-fit-scale={scale.toFixed(3)}
+        data-fit-scale={visualScale.toFixed(3)}
       >
         {children}
       </div>
@@ -149,6 +153,9 @@ export default function Template16({ data, config = {} }) {
   const primaryColor = theme.primaryColor || navyDark;
   const accentColor = theme.secondaryColor || accentBlue;
   const pageTextColor = theme.textColor || navyDark;
+  const itemGapStyle = {
+    gap: `${Math.max(0.2, Number(layout.itemGap) || 0.85) * 0.35}rem`
+  };
 
   return (
     <div
@@ -193,7 +200,7 @@ export default function Template16({ data, config = {} }) {
 
         {education && education.length > 0 && (
           <Section title={sectionTitles.education || 'Education'} titleColor={primaryColor}>
-            <div className="space-y-1">
+            <div className="flex flex-col" style={itemGapStyle}>
               {education.map((edu) => (
                 <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-3">
                   <div>
@@ -213,7 +220,7 @@ export default function Template16({ data, config = {} }) {
 
         {skills && Object.keys(skills).length > 0 && (
           <Section title={sectionTitles.skills || 'Technical Skills'} titleColor={primaryColor}>
-            <div className="space-y-px">
+            <div className="flex flex-col" style={itemGapStyle}>
               {Object.entries(skills).map(([category, skillList]) => (
                 <div key={category} className="grid grid-cols-[82px_1fr] gap-1.5">
                   <span className="text-[9px] font-extrabold capitalize leading-tight" style={{ color: primaryColor }}>{category}</span>
@@ -228,7 +235,7 @@ export default function Template16({ data, config = {} }) {
 
         {projects && projects.length > 0 && (
           <Section title={sectionTitles.projects || 'Projects'} titleColor={primaryColor}>
-            <div className="space-y-1">
+            <div className="flex flex-col" style={itemGapStyle}>
               {projects.slice(0, 4).map((project) => (
                 <div key={project.id} className="break-inside-avoid border-l-[3px] px-2 py-1" style={{ borderColor: primaryColor, backgroundColor: '#F8FBFF' }}>
                   <div className="flex items-baseline justify-between gap-2">
@@ -245,7 +252,7 @@ export default function Template16({ data, config = {} }) {
 
         {certifications && certifications.length > 0 && (
           <Section title={sectionTitles.certifications || 'Certifications'} titleColor={primaryColor}>
-            <div className="space-y-px">
+            <div className="flex flex-col" style={itemGapStyle}>
               {certifications.map((cert) => (
                 <CertificateDetails key={cert.id} certificate={cert} className="text-[9px] leading-tight" metaClassName="text-[8px] leading-tight" linkClassName="text-[8px] font-bold hover:underline" />
               ))}
