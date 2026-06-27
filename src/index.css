@@ -55,6 +55,56 @@
   @apply text-base font-medium;
 }
 
+.resume-studio-editor .card {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+.resume-studio-editor h1,
+.resume-studio-editor h2,
+.resume-studio-editor h3,
+.resume-studio-editor h4,
+.resume-studio-editor label {
+  color: #0f172a !important;
+}
+
+.resume-studio-editor p,
+.resume-studio-editor span {
+  color: inherit;
+}
+
+.resume-studio-editor .form-label {
+  color: #64748b !important;
+  font-weight: 600;
+}
+
+.resume-studio-editor .form-input,
+.resume-studio-editor .form-select,
+.resume-studio-editor input,
+.resume-studio-editor textarea,
+.resume-studio-editor select {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  min-height: 44px;
+}
+
+.resume-studio-editor .form-input:focus,
+.resume-studio-editor .form-select:focus,
+.resume-studio-editor input:focus,
+.resume-studio-editor textarea:focus,
+.resume-studio-editor select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 1px #2563eb !important;
+}
+
+.resume-studio-editor .btn-secondary {
+  background: #ffffff !important;
+  border: 1px solid #dbe3ef;
+  color: #2563eb !important;
+}
+
 .text-balance {
   text-wrap: balance;
 }

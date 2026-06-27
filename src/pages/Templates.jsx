@@ -10,8 +10,8 @@ import Template13 from '../templates/Template13';
 import Template14 from '../templates/Template14';
 import Template15 from '../templates/Template15';
 import Template16 from '../templates/Template16';
-import templateConfig from '../data/template-config.json';
 import { transformResumeData } from '../utils/resumeData';
+import { buildTemplateConfig } from '../utils/templateStyle';
   
 function Templates() {
   const base = import.meta.env.BASE_URL;
@@ -28,6 +28,7 @@ function Templates() {
     
     return transformResumeData(resumeData, customization);
   }, [resumeData, customization, hasData]);
+  const templateConfig = useMemo(() => buildTemplateConfig(customization), [customization]);
 
   const renderLiveTemplate = (templateId) => {
     if (!hasData) return null;

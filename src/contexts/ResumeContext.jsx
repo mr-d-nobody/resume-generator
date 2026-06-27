@@ -37,8 +37,13 @@ const initialState = {
   selectedTemplate: '12',
   templateCategory: DEFAULT_TEMPLATE_CATEGORY,
   customization: {
-    fontFamily: 'Inter',
-    colorTheme: 'blue',
+    fontFamily: 'inter',
+    colorTheme: 'emerald',
+    layout: {
+      sectionGap: 1.35,
+      itemGap: 0.85,
+      density: 1
+    },
     sectionOrder: ['personalInfo', 'summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements', 'customSections'],
     sectionTitles: {},
     sectionVisibility: {}

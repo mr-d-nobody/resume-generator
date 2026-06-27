@@ -1,164 +1,185 @@
-﻿import React from 'react';
+import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 import DateRange from '../components/common/DateRange';
 import CertificateDetails from '../components/common/CertificateDetails';
 import ProjectLinks from '../components/common/ProjectLinks';
-export default function Template12({ data, config }) {
-  const { personal, summary, experience, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
-  const { theme, spacing } = config;
 
+function SidebarBlock({ title, children }) {
+  if (!children) return null;
   return (
-    <div 
-      className="w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg overflow-hidden flex flex-row"
-      style={{ fontFamily: theme.fontFamily, color: theme.textColor }}
-    >
-      {/* Left Sidebar */}
-      <div className="w-[35%] p-8 text-white flex flex-col gap-8" style={{ backgroundColor: theme.primaryColor }}>
-        
-        {/* Name & Title */}
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight mb-2">{personal.name}</h1>
-          {personal.title && <h2 className="break-words text-lg font-medium leading-snug opacity-90">{personal.title}</h2>}
-        </div>
-
-        {/* Contact Info */}
-        <div>
-          <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">Contact</h3>
-          <ContactLinks 
-            personal={personal} 
-            containerClass="flex flex-col gap-3 text-sm opacity-90"
-            itemClass="flex items-center gap-3"
-            linkClass="hover:underline"
-            iconSize={16}
-          />
-        </div>
-
-        {/* Education (Prominent for Fresher) */}
-        {education && education.length > 0 && (
-          <div>
-            <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">{sectionTitles.education || 'Education'}</h3>
-            <div className="flex flex-col gap-4">
-              {education.map((edu) => (
-                <div key={edu.id}>
-                  <h4 className="font-bold text-sm">{edu.degree}</h4>
-                  <p className="text-xs opacity-90 mb-1">{edu.institution}</p>
-                  <div className="flex justify-between text-xs opacity-80">
-                    <DateRange startDate={edu.startDate} endDate={edu.endDate} />
-                    {edu.gpa && <span>GPA: {edu.gpa}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Skills */}
-        {skills && Object.keys(skills).length > 0 && (
-          <div>
-            <h3 className="text-lg font-bold uppercase tracking-wider mb-4 border-b border-white/30 pb-2">{sectionTitles.skills || 'Skills'}</h3>
-            <div className="flex flex-col gap-3">
-              {Object.entries(skills).map(([category, skillList]) => (
-                <div key={category}>
-                  <div className="text-xs font-bold uppercase opacity-80 mb-1">{category}</div>
-                  <div className="flex flex-wrap gap-1">
-                    {skillList.map((skill, i) => (
-                      <span key={i} className="text-xs bg-white/20 px-2 py-1 rounded">{skill}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* Right Content */}
-      <div className="w-[65%] p-8 flex flex-col" style={{ gap: spacing.sectionGap }}>
-        
-        {/* Summary */}
-        {summary && (
-          <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-3" style={{ color: theme.primaryColor }}>{sectionTitles.summary || 'Profile'}</h3>
-            <p className="text-sm leading-relaxed text-gray-700">{summary}</p>
-          </section>
-        )}
-
-        {/* Projects (Highest priority for right col) */}
-        {projects && projects.length > 0 && (
-          <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.projects || 'Key Projects'}</h3>
-            <div className="flex flex-col gap-5">
-              {projects.map((project) => (
-                <div key={project.id}>
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="font-bold text-base text-gray-900">{project.name}</h4>
-                    <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-1" linkClassName="text-xs font-medium bg-gray-100 px-2 py-1 rounded text-blue-600 hover:underline" />
-                  </div>
-                  {project.description && (
-                    <p className="text-sm font-medium text-gray-600 mb-2">{project.description}</p>
-                  )}
-                  {project.highlights && project.highlights.length > 0 && (
-                    <ul className="list-disc list-outside ml-4 text-sm text-gray-600 space-y-1">
-                      {project.highlights.map((highlight, idx) => (
-                        <li key={idx}>{highlight}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Experience (Internships) */}
-        {experience && experience.length > 0 && (
-          <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.experience || 'Experience'}</h3>
-            <div className="flex flex-col gap-5">
-              {experience.map((exp) => (
-                <div key={exp.id}>
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="font-bold text-base text-gray-900">{exp.position}</h4>
-                    <DateRange startDate={exp.startDate} endDate={exp.endDate} className="text-sm font-semibold" style={{ color: theme.primaryColor }} />
-                  </div>
-                  <div className="text-sm font-medium text-gray-700 mb-2">{exp.company}, {exp.location}</div>
-                  {exp.highlights && exp.highlights.length > 0 && (
-                    <ul className="list-disc list-outside ml-4 text-sm text-gray-600 space-y-1">
-                      {exp.highlights.map((highlight, idx) => (
-                        <li key={idx}>{highlight}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Certifications */}
-        {certifications && certifications.length > 0 && (
-          <section>
-            <h3 className="text-xl font-bold uppercase tracking-widest mb-4" style={{ color: theme.primaryColor }}>{sectionTitles.certifications || 'Certifications'}</h3>
-            <div className="grid grid-cols-1 gap-3">
-              {certifications.map((cert) => (
-                <CertificateDetails key={cert.id} certificate={cert} className="bg-gray-50 p-3 rounded border border-gray-100 text-sm text-gray-900" metaClassName="text-xs text-gray-600 mt-1" linkClassName="text-xs text-blue-600 hover:underline" />
-              ))}
-            </div>
-          </section>
-        )}
-
-        <CustomSections
-          sections={customSections}
-          className=""
-          headingClassName="text-xl font-bold uppercase tracking-widest mb-4"
-          headingStyle={{ color: theme.primaryColor }}
-        />
-
-      </div>
-    </div>
+    <section>
+      <h3 className="mb-3 border-b border-white/35 pb-1.5 text-[13px] font-bold uppercase tracking-[0.12em]">
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
 
+function MainSection({ title, children, color }) {
+  if (!children) return null;
+  return (
+    <section className="break-inside-avoid">
+      <h3 className="mb-3 border-b pb-1.5 text-[13px] font-extrabold uppercase tracking-[0.14em]" style={{ color, borderColor: color }}>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
 
+export default function Template12({ data, config }) {
+  const {
+    personal,
+    summary,
+    experience,
+    education,
+    skills,
+    projects,
+    certifications,
+    customSections,
+    sectionTitles = {}
+  } = data;
+  const { theme, spacing } = config;
+
+  return (
+    <div
+      className="mx-auto grid min-h-[297mm] w-[210mm] grid-cols-[34%_66%] overflow-hidden bg-white shadow-lg"
+      style={{ fontFamily: theme.fontFamily, color: theme.textColor }}
+    >
+      <aside className="px-8 py-10 text-white" style={{ backgroundColor: theme.primaryColor }}>
+        <div className="mb-10 text-center">
+          <h1 className="text-[27px] font-black leading-tight tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+            {personal.name}
+          </h1>
+          <div className="mx-auto my-4 h-px w-12 bg-white/70" />
+          {personal.title && (
+            <p className="break-words text-[10px] font-bold uppercase leading-snug tracking-[0.15em] text-white/85">
+              {personal.title}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-7">
+          <SidebarBlock title="Details">
+            <ContactLinks
+              personal={personal}
+              containerClass="flex flex-col gap-1.5 text-[10.5px] leading-snug text-white/95"
+              itemClass="inline"
+              linkClass="underline underline-offset-2"
+              showIcons={false}
+            />
+          </SidebarBlock>
+
+          {education && education.length > 0 && (
+            <SidebarBlock title={sectionTitles.education || 'Education'}>
+              <div className="space-y-4">
+                {education.map((edu) => (
+                  <div key={edu.id}>
+                    <h4 className="text-[11px] font-bold leading-tight">{edu.degree}</h4>
+                    <p className="mt-1 text-[9.5px] leading-tight text-white/85">{edu.institution}</p>
+                    <p className="mt-1 text-[9px] text-white/75">
+                      <DateRange startDate={edu.startDate} endDate={edu.endDate} />
+                      {edu.gpa ? ` | GPA: ${edu.gpa}` : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </SidebarBlock>
+          )}
+
+          {skills && Object.keys(skills).length > 0 && (
+            <SidebarBlock title={sectionTitles.skills || 'Skills'}>
+              <div className="space-y-3">
+                {Object.entries(skills).map(([category, skillList]) => (
+                  <div key={category}>
+                    <div className="mb-1 text-[9.5px] font-bold uppercase tracking-wide text-white/75">{category}</div>
+                    <p className="text-[10px] leading-snug text-white/95">{skillList.join(', ')}</p>
+                  </div>
+                ))}
+              </div>
+            </SidebarBlock>
+          )}
+        </div>
+      </aside>
+
+      <main className="px-8 py-10">
+        <div className="flex flex-col" style={{ gap: spacing.sectionGap }}>
+          {summary && (
+            <MainSection title={sectionTitles.summary || 'Profile'} color={theme.primaryColor}>
+              <p className="text-[11px] leading-[1.45] text-gray-700">{summary}</p>
+            </MainSection>
+          )}
+
+          {projects && projects.length > 0 && (
+            <MainSection title={sectionTitles.projects || 'Key Projects'} color={theme.primaryColor}>
+              <div className="space-y-4">
+                {projects.map((project) => (
+                  <div key={project.id} className="break-inside-avoid">
+                    <div className="mb-1 flex items-baseline justify-between gap-3">
+                      <h4 className="text-[12px] font-extrabold text-gray-950">{project.name}</h4>
+                      <ProjectLinks project={project} containerClassName="flex flex-wrap justify-end gap-1.5" linkClassName="text-[9px] font-bold text-blue-600 hover:underline" />
+                    </div>
+                    {project.description && (
+                      <p className="mb-1 text-[10.5px] italic leading-[1.35] text-gray-600">{project.description}</p>
+                    )}
+                    {project.highlights && project.highlights.length > 0 && (
+                      <ul className="ml-3 list-disc space-y-0.5 text-[10px] leading-tight text-gray-600">
+                        {project.highlights.map((highlight, index) => (
+                          <li key={index}>{highlight}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </MainSection>
+          )}
+
+          {experience && experience.length > 0 && (
+            <MainSection title={sectionTitles.experience || 'Experience'} color={theme.primaryColor}>
+              <div className="space-y-4">
+                {experience.map((exp) => (
+                  <div key={exp.id} className="break-inside-avoid">
+                    <div className="mb-1 flex items-baseline justify-between gap-3">
+                      <h4 className="text-[12px] font-extrabold text-gray-950">{exp.position}</h4>
+                      <DateRange startDate={exp.startDate} endDate={exp.endDate} className="text-[10px] font-bold" style={{ color: theme.primaryColor }} />
+                    </div>
+                    <p className="mb-1 text-[10.5px] font-semibold text-gray-700">{exp.company}{exp.location ? `, ${exp.location}` : ''}</p>
+                    {exp.highlights && exp.highlights.length > 0 && (
+                      <ul className="ml-3 list-disc space-y-0.5 text-[10px] leading-tight text-gray-600">
+                        {exp.highlights.map((highlight, index) => (
+                          <li key={index}>{highlight}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </MainSection>
+          )}
+
+          {certifications && certifications.length > 0 && (
+            <MainSection title={sectionTitles.certifications || 'Certifications'} color={theme.primaryColor}>
+              <div className="grid grid-cols-1 gap-2">
+                {certifications.map((cert) => (
+                  <CertificateDetails key={cert.id} certificate={cert} className="text-[10.5px] font-semibold text-gray-900" metaClassName="text-[9px] text-gray-600" linkClassName="text-[9px] font-bold text-blue-600 hover:underline" />
+                ))}
+              </div>
+            </MainSection>
+          )}
+
+          <CustomSections
+            sections={customSections}
+            className=""
+            headingClassName="mb-3 border-b pb-1.5 text-[13px] font-extrabold uppercase tracking-[0.14em]"
+            headingStyle={{ color: theme.primaryColor, borderColor: theme.primaryColor }}
+            itemClassName="text-[10.5px] text-gray-700"
+            paragraphClassName="text-[10.5px] leading-[1.35] text-gray-700"
+          />
+        </div>
+      </main>
+    </div>
+  );
+}

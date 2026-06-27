@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useResume } from '../../contexts/ResumeContext';
-import templateConfig from '../../data/template-config.json';
 import { customSectionFromStandard, normalizeCustomSection } from '../../utils/resumeSections';
 import { transformResumeData } from '../../utils/resumeData';
+import { buildTemplateConfig } from '../../utils/templateStyle';
 
 import Template11 from '../../templates/Template11';
 import Template12 from '../../templates/Template12';
@@ -34,6 +34,7 @@ export default function ResumePreview({ isPrintMode = false }) {
       customSections: (transformed.customSections || []).map(normalizeCustomSection)
     };
   }, [resumeData, customization]);
+  const templateConfig = useMemo(() => buildTemplateConfig(customization), [customization]);
 
   const containerRef = React.useRef(null);
   const [scale, setScale] = React.useState(0.7);

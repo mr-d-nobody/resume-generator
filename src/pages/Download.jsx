@@ -6,6 +6,7 @@ import { Button } from '../components/ui';
 import { Download as DownloadIcon, Share2 as ShareIcon } from 'lucide-react';
 import { normalizeCustomSection } from '../utils/resumeSections';
 import { normalizeUrl, transformResumeData } from '../utils/resumeData';
+import { DEFAULT_LAYOUT, getColorTheme, getLayoutSettings } from '../utils/templateStyle';
 
 const A4_WIDTH = 210;
 const A4_HEIGHT = 297;
@@ -110,28 +111,51 @@ function getTemplateProfile(templateId) {
   return PDF_TEMPLATE_PROFILES[getTemplateId(templateId)] || PDF_TEMPLATE_PROFILES['12'];
 }
 
-function makeStyle(scale, templateId = '12') {
+function hexToRgb(hexValue, fallback) {
+  const hex = String(hexValue || '').replace('#', '');
+  if (!/^[0-9a-f]{6}$/i.test(hex)) return fallback;
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16)
+  ];
+}
+
+function makeStyle(scale, templateId = '12', customization = {}) {
   const profile = getTemplateProfile(templateId);
+  const theme = getColorTheme(customization.colorTheme);
+  const layout = getLayoutSettings(customization.layout);
+  const primary = hexToRgb(theme.primaryColor, profile.primary);
+  const secondary = hexToRgb(theme.secondaryColor, profile.muted);
+  const textColor = hexToRgb(theme.textColor, profile.text);
   const compact = profile.variant === 'code' || profile.variant === 'navy';
   const centered = profile.variant === 'centered';
+  const typeScale = scale * layout.density;
+  const sectionGapRatio = layout.sectionGap / DEFAULT_LAYOUT.sectionGap;
+  const itemGapRatio = layout.itemGap / DEFAULT_LAYOUT.itemGap;
   return {
     ...profile,
     templateId: getTemplateId(templateId),
+    primary,
+    accent: primary,
+    text: textColor,
+    muted: secondary,
+    sidebar: profile.variant === 'sidebar' ? primary : profile.sidebar,
     scale,
     marginX: Math.max(8, (centered ? 15 : 12) * scale),
     marginTop: Math.max(8, (centered ? 13 : 11) * scale),
     marginBottom: Math.max(8, 10 * scale),
-    name: (compact ? 14.5 : centered ? 19 : 16) * scale,
-    title: (compact ? 6.8 : 7.8) * scale,
-    section: (compact ? 6.9 : 7.6) * scale,
-    itemTitle: (compact ? 6.6 : 7.1) * scale,
-    body: (compact ? 6.0 : 6.5) * scale,
-    small: (compact ? 5.4 : 5.8) * scale,
-    nameLine: (compact ? 5.7 : 6.2) * scale,
-    bodyLine: (compact ? 2.95 : 3.25) * scale,
-    smallLine: (compact ? 2.65 : 2.85) * scale,
-    sectionGap: (compact ? 1.9 : 2.4) * scale,
-    itemGap: (compact ? 1.5 : 1.9) * scale
+    name: (compact ? 14.5 : centered ? 19 : 16) * typeScale,
+    title: (compact ? 6.8 : 7.8) * typeScale,
+    section: (compact ? 6.9 : 7.6) * typeScale,
+    itemTitle: (compact ? 6.6 : 7.1) * typeScale,
+    body: (compact ? 6.0 : 6.5) * typeScale,
+    small: (compact ? 5.4 : 5.8) * typeScale,
+    nameLine: (compact ? 5.7 : 6.2) * typeScale,
+    bodyLine: (compact ? 2.95 : 3.25) * typeScale,
+    smallLine: (compact ? 2.65 : 2.85) * typeScale,
+    sectionGap: (compact ? 1.9 : 2.4) * scale * sectionGapRatio,
+    itemGap: (compact ? 1.5 : 1.9) * scale * itemGapRatio
   };
 }
 
@@ -786,7 +810,7 @@ function createRenderer(pdf, exportData, style, options = {}) {
 
 function pickLayoutScale(pdf, exportData, templateId) {
   return FIT_SCALES.find((scale) => {
-    const renderer = createRenderer(pdf, exportData, makeStyle(scale, templateId), {
+    const renderer = createRenderer(pdf, exportData, makeStyle(scale, templateId, exportData.customization), {
       dryRun: true,
       paginate: false
     });
@@ -795,10 +819,13 @@ function pickLayoutScale(pdf, exportData, templateId) {
 }
 
 async function generateResumePdf({ jsPDF, resumeData, customization, templateId }) {
-  const exportData = buildExportData(resumeData, customization);
+  const exportData = {
+    ...buildExportData(resumeData, customization),
+    customization
+  };
   const measurementPdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const scale = pickLayoutScale(measurementPdf, exportData, templateId);
-  const dryRenderer = createRenderer(measurementPdf, exportData, makeStyle(scale, templateId), {
+  const dryRenderer = createRenderer(measurementPdf, exportData, makeStyle(scale, templateId, customization), {
     dryRun: true,
     paginate: false
   });
@@ -810,7 +837,7 @@ async function generateResumePdf({ jsPDF, resumeData, customization, templateId 
     format: 'a4',
     compress: true
   });
-  const renderer = createRenderer(pdf, exportData, makeStyle(scale, templateId), {
+  const renderer = createRenderer(pdf, exportData, makeStyle(scale, templateId, customization), {
     dryRun: false,
     paginate: !fitsOnePage
   });
