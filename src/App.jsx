@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import ResumeBuilder from './pages/ResumeBuilder';
 import Templates from './pages/Templates';
 import Download from './pages/Download';
+import PrintResume from './pages/PrintResume';
 import TemplateViewer from './pages/TemplateViewer';
 import MagicUpload from './pages/MagicUpload';
 import Profile from './pages/Profile';
@@ -27,6 +28,7 @@ function App() {
           <Routes>
           {/* Print/Export Route (No Navbar/Footer) */}
           <Route path="/view-template/:id" element={<TemplateViewer />} />
+          <Route path="/print-resume" element={<PrintResume />} />
           
           {/* App Routes with Layout */}
           <Route path="*" element={

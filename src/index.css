@@ -118,6 +118,22 @@
   display: none;
 }
 
+.resume-print-document {
+  color-scheme: light;
+}
+
+.resume-preview-print-page {
+  width: 210mm;
+  height: 297mm;
+  break-after: page;
+  page-break-after: always;
+}
+
+.resume-preview-print-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -219,6 +235,22 @@
 
   .no-print {
     display: none !important;
+  }
+
+  .resume-print-document {
+    width: 210mm !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .resume-preview-print-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
   }
 
   * {

@@ -280,6 +280,44 @@ function addCanvasPagesToPdf(pdf, canvas) {
   return pageCount;
 }
 
+function saveBlobAsFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function generateServerPdf({ resumeData, customization, templateId, fileName }) {
+  const response = await fetch('/api/export-pdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      resumeData,
+      customization,
+      selectedTemplate: templateId,
+      templateId
+    })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || 'Server PDF export failed.');
+  }
+
+  const blob = await response.blob();
+  saveBlobAsFile(blob, `${fileName}.pdf`);
+
+  return {
+    pageCount: Number(response.headers.get('X-Resume-Page-Count')) || 1,
+    linkCount: 0
+  };
+}
+
 function makeStyle(scale, templateId = '12', customization = {}) {
   const profile = getTemplateProfile(templateId);
   const theme = getColorTheme(customization.colorTheme);
@@ -1080,33 +1118,46 @@ function Download() {
       setDownloadSuccess(false);
       setDownloadMessage('');
 
-      const { jsPDF } = await import('jspdf');
       let exportResult;
       let usedFallback = false;
+      const documentTitle = getDocumentTitle();
 
       try {
-        const { default: html2canvas } = await import('html2canvas');
-        const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
-        if (!resumeElement) {
-          throw new Error('Resume preview is not ready yet.');
-        }
-        exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
-      } catch (captureError) {
-        console.warn('Preview PDF export failed, falling back to vector renderer:', captureError);
-        usedFallback = true;
-        exportResult = await generateResumePdf({
-          jsPDF,
+        exportResult = await generateServerPdf({
           resumeData,
           customization,
-          templateId
+          templateId,
+          fileName: documentTitle
         });
+      } catch (serverError) {
+        console.warn('Server PDF export failed, falling back to client renderer:', serverError);
+        usedFallback = true;
+        const { jsPDF } = await import('jspdf');
+        try {
+          const { default: html2canvas } = await import('html2canvas');
+          const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
+          if (!resumeElement) {
+            throw new Error('Resume preview is not ready yet.');
+          }
+          exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
+        } catch (captureError) {
+          console.warn('Client preview PDF export failed, falling back to vector renderer:', captureError);
+          exportResult = await generateResumePdf({
+            jsPDF,
+            resumeData,
+            customization,
+            templateId
+          });
+        }
       }
 
       const { pdf, pageCount, linkCount } = exportResult;
 
-      pdf.save(`${getDocumentTitle()}.pdf`);
+      if (pdf) {
+        pdf.save(`${documentTitle}.pdf`);
+      }
       setDownloadMessage(
-        `Downloaded template ${templateId} as a ${pageCount}-page A4 PDF${usedFallback ? ' with the backup renderer' : ' matching the preview'}${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
+        `Downloaded template ${templateId} as a ${pageCount}-page A4 PDF${usedFallback ? ' with the backup renderer' : ' from the browser print engine'}${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
       );
       setDownloadSuccess(true);
     } catch (error) {

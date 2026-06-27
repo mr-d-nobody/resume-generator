@@ -20,7 +20,7 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-export default function ResumePreview({ isPrintMode = false }) {
+export default function ResumePreview({ isPrintMode = false, outputMode = 'preview' }) {
   const { resumeData, selectedTemplate, customization } = useResume();
   const query = useQuery();
   const requestedTemplate = query.get('template') || selectedTemplate || '12';
@@ -43,6 +43,8 @@ export default function ResumePreview({ isPrintMode = false }) {
   const [pageWidth, setPageWidth] = React.useState(A4_WIDTH);
   const [pageCount, setPageCount] = React.useState(1);
   const [pageHeight, setPageHeight] = React.useState(A4_HEIGHT);
+  const [isMeasured, setIsMeasured] = React.useState(false);
+  const isPrintOutput = outputMode === 'print';
 
   React.useEffect(() => {
     const updateScale = () => {
@@ -65,6 +67,7 @@ export default function ResumePreview({ isPrintMode = false }) {
     const measureElement = measureRef.current;
     if (!measureElement) return undefined;
 
+    setIsMeasured(false);
     let frames = [];
     const cancelMeasurements = () => {
       frames.forEach((frame) => cancelAnimationFrame(frame));
@@ -83,6 +86,7 @@ export default function ResumePreview({ isPrintMode = false }) {
       setPageWidth(nextPageWidth);
       setPageHeight(nextPageHeight || A4_HEIGHT);
       setPageCount(Math.max(1, nextPageCount));
+      setIsMeasured(true);
     };
     const queueMeasure = (remainingPasses = 3) => {
       const frame = requestAnimationFrame(() => {
@@ -168,7 +172,12 @@ export default function ResumePreview({ isPrintMode = false }) {
       ref={containerRef} 
       data-resume-preview-shell
       data-resume-page-count={pageCount}
-      className="relative w-full h-[calc(100vh-180px)] overflow-auto bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-center py-8 custom-scrollbar"
+      data-resume-ready={isMeasured ? 'true' : 'false'}
+      className={
+        isPrintOutput
+          ? 'resume-print-document relative flex min-h-screen justify-center bg-white'
+          : 'relative w-full h-[calc(100vh-180px)] overflow-auto bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-center py-8 custom-scrollbar'
+      }
     >
       <div
         ref={measureRef}
@@ -180,26 +189,34 @@ export default function ResumePreview({ isPrintMode = false }) {
       </div>
 
       <div
-        className="flex shrink-0 flex-col items-center gap-6 transition-all duration-300"
+        className={
+          isPrintOutput
+            ? 'flex shrink-0 flex-col items-center'
+            : 'flex shrink-0 flex-col items-center gap-6 transition-all duration-300'
+        }
         data-resume-preview-stack
-        style={{ width: pageWidth * scale }}
+        style={{ width: isPrintOutput ? '210mm' : pageWidth * scale }}
       >
         {Array.from({ length: pageCount }).map((_, pageIndex) => (
           <div
             key={pageIndex}
             data-resume-preview-page
             data-page-index={pageIndex + 1}
-            className="relative shrink-0 bg-white shadow-2xl overflow-hidden"
+            className={
+              isPrintOutput
+                ? 'resume-preview-print-page relative shrink-0 overflow-hidden bg-white'
+                : 'relative shrink-0 bg-white shadow-2xl overflow-hidden'
+            }
             style={{
-              width: pageWidth * scale,
-              height: pageHeight * scale
+              width: isPrintOutput ? '210mm' : pageWidth * scale,
+              height: isPrintOutput ? '297mm' : pageHeight * scale
             }}
           >
             <div
               className="absolute left-0 top-0"
               style={{
                 width: pageWidth,
-                transform: `scale(${scale})`,
+                transform: isPrintOutput ? 'none' : `scale(${scale})`,
                 transformOrigin: 'top left'
               }}
             >

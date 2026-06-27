@@ -1,5 +1,10 @@
 {
   "framework": "vite",
+  "functions": {
+    "api/export-pdf.js": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",
