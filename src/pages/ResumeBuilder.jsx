@@ -115,11 +115,25 @@ function ResumeBuilder() {
   const downloadPath = `/download?template=${activeTemplate}`;
   const canGoPrevious = currentStepIndex > 0;
   const canGoNext = currentStepIndex < tabs.length - 1;
+  const showCustomizePanel = workspaceMode === 'customize' || mobileView === 'adjust';
+  const activeMobileMode = mobileView === 'preview' ? 'preview' : showCustomizePanel ? 'adjust' : 'edit';
   const goPrevious = () => {
     if (canGoPrevious) setActiveTab(tabs[currentStepIndex - 1].id);
   };
   const goNext = () => {
     if (canGoNext) setActiveTab(tabs[currentStepIndex + 1].id);
+  };
+  const openMobileEditor = () => {
+    setWorkspaceMode('edit');
+    setMobileView('edit');
+  };
+  const openMobileAdjust = () => {
+    setWorkspaceMode('customize');
+    setCustomizeTab('layout');
+    setMobileView('adjust');
+  };
+  const openMobilePreview = () => {
+    setMobileView('preview');
   };
 
   const setColorTheme = (colorTheme) => updateCustomization({ colorTheme });
@@ -314,7 +328,7 @@ function ResumeBuilder() {
       </div>
 
       <div className="mx-auto grid max-w-[1800px] grid-cols-1 xl:grid-cols-[minmax(560px,960px)_minmax(480px,1fr)]">
-        <section className={`min-h-[calc(100svh-8rem)] bg-white dark:bg-gray-950 xl:min-h-[calc(100vh-8rem)] ${mobileView !== 'edit' ? 'hidden xl:block' : ''}`}>
+        <section className={`min-h-[calc(100svh-8rem)] bg-white dark:bg-gray-950 xl:min-h-[calc(100vh-8rem)] ${mobileView === 'preview' ? 'hidden xl:block' : ''}`}>
           <div className="hidden border-b border-gray-200 dark:border-gray-800 xl:block">
             <div className="flex items-center gap-3 px-8 py-5">
               <span className={`rounded-md px-2.5 py-1 text-sm font-bold text-white ${score < 55 ? 'bg-rose-500' : score < 80 ? 'bg-amber-500' : 'bg-emerald-600'}`}>
@@ -324,7 +338,7 @@ function ResumeBuilder() {
             </div>
           </div>
 
-          {workspaceMode === 'edit' ? (
+          {!showCustomizePanel ? (
             <>
               <div className="hidden border-b border-gray-200 px-8 py-4 dark:border-gray-800 xl:block">
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -401,7 +415,7 @@ function ResumeBuilder() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setMobileView('edit')}
+                onClick={openMobileEditor}
                 className="rounded-md border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 xl:hidden dark:border-gray-700 dark:text-gray-200"
               >
                 Edit
@@ -422,7 +436,7 @@ function ResumeBuilder() {
       </div>
 
       <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:hidden">
-        {mobileView === 'edit' && (
+        {activeMobileMode === 'edit' && (
           <button
             type="button"
             disabled={!canGoPrevious}
@@ -434,17 +448,18 @@ function ResumeBuilder() {
           </button>
         )}
 
-        <div className="grid min-w-0 flex-1 grid-cols-2 rounded-xl bg-gray-100 p-1 dark:bg-gray-900">
+        <div className="grid min-w-0 flex-1 grid-cols-3 rounded-xl bg-gray-100 p-1 dark:bg-gray-900">
           {[
-            { id: 'edit', label: 'Edit' },
-            { id: 'preview', label: 'Preview' }
+            { id: 'edit', label: 'Edit', action: openMobileEditor },
+            { id: 'adjust', label: 'Adjust', action: openMobileAdjust },
+            { id: 'preview', label: 'Preview', action: openMobilePreview }
           ].map((item) => (
             <button
               key={item.id}
               type="button"
-              onClick={() => setMobileView(item.id)}
-              className={`rounded-lg px-3 py-2.5 text-sm font-semibold ${
-                mobileView === item.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-100' : 'text-gray-500 dark:text-gray-300'
+              onClick={item.action}
+              className={`rounded-lg px-2 py-2.5 text-xs font-semibold sm:text-sm ${
+                activeMobileMode === item.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-100 dark:text-gray-950' : 'text-gray-500 dark:text-gray-300'
               }`}
             >
               {item.label}
@@ -452,7 +467,7 @@ function ResumeBuilder() {
           ))}
         </div>
 
-        {mobileView === 'edit' && (
+        {activeMobileMode === 'edit' && (
           <button
             type="button"
             disabled={!canGoNext}
