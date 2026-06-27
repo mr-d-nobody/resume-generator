@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
 import ResumePreview from '../components/preview/ResumePreview';
 import { Button } from '../components/ui';
@@ -9,6 +10,7 @@ import { normalizeUrl, transformResumeData } from '../utils/resumeData';
 const A4_WIDTH = 210;
 const A4_HEIGHT = 297;
 const FIT_SCALES = [1, 0.96, 0.92, 0.88, 0.84, 0.8, 0.76, 0.72, 0.68];
+const TEMPLATE_IDS = ['11', '12', '13', '14', '15', '16'];
 const DEFAULT_SECTION_ORDER = [
   'summary',
   'experience',
@@ -23,6 +25,71 @@ const BLUE = [37, 99, 235];
 const TEXT = [31, 41, 55];
 const MUTED = [75, 85, 99];
 const LIGHT_GRAY = [229, 231, 235];
+const NAVY = [11, 32, 56];
+const ACCENT_BLUE = [74, 143, 193];
+const PALE_BLUE = [234, 240, 248];
+
+const PDF_TEMPLATE_PROFILES = {
+  '11': {
+    variant: 'classic',
+    font: 'helvetica',
+    primary: BLUE,
+    accent: BLUE,
+    text: TEXT,
+    muted: MUTED,
+    sectionFallbacks: { projects: 'Academic & Personal Projects', experience: 'Internships & Experience' }
+  },
+  '12': {
+    variant: 'sidebar',
+    font: 'helvetica',
+    primary: BLUE,
+    accent: BLUE,
+    text: TEXT,
+    muted: MUTED,
+    sidebar: BLUE,
+    sectionFallbacks: { projects: 'Key Projects' }
+  },
+  '13': {
+    variant: 'centered',
+    font: 'helvetica',
+    primary: BLUE,
+    accent: BLUE,
+    text: TEXT,
+    muted: MUTED,
+    pale: [239, 246, 255],
+    sectionFallbacks: { projects: 'Featured Projects', skills: 'Skills Arsenal' }
+  },
+  '14': {
+    variant: 'minimal',
+    font: 'helvetica',
+    primary: TEXT,
+    accent: BLUE,
+    text: TEXT,
+    muted: MUTED,
+    sectionFallbacks: { projects: 'Academic Projects' }
+  },
+  '15': {
+    variant: 'code',
+    font: 'courier',
+    primary: BLUE,
+    accent: BLUE,
+    text: TEXT,
+    muted: MUTED,
+    sectionPrefix: '// ',
+    namePrefix: '> ',
+    sectionFallbacks: { skills: 'Technical_Skills', projects: 'Projects' }
+  },
+  '16': {
+    variant: 'navy',
+    font: 'helvetica',
+    primary: NAVY,
+    accent: ACCENT_BLUE,
+    text: NAVY,
+    muted: [78, 98, 120],
+    pale: PALE_BLUE,
+    sectionFallbacks: { summary: 'Summary', projects: 'Projects' }
+  }
+};
 
 function cleanText(value) {
   return String(value || '')
@@ -35,28 +102,41 @@ function cleanText(value) {
     .trim();
 }
 
-function makeStyle(scale) {
+function getTemplateId(value) {
+  return TEMPLATE_IDS.includes(String(value)) ? String(value) : '12';
+}
+
+function getTemplateProfile(templateId) {
+  return PDF_TEMPLATE_PROFILES[getTemplateId(templateId)] || PDF_TEMPLATE_PROFILES['12'];
+}
+
+function makeStyle(scale, templateId = '12') {
+  const profile = getTemplateProfile(templateId);
+  const compact = profile.variant === 'code' || profile.variant === 'navy';
+  const centered = profile.variant === 'centered';
   return {
+    ...profile,
+    templateId: getTemplateId(templateId),
     scale,
-    marginX: Math.max(8, 12 * scale),
-    marginTop: Math.max(8, 11 * scale),
+    marginX: Math.max(8, (centered ? 15 : 12) * scale),
+    marginTop: Math.max(8, (centered ? 13 : 11) * scale),
     marginBottom: Math.max(8, 10 * scale),
-    name: 16 * scale,
-    title: 7.8 * scale,
-    section: 7.6 * scale,
-    itemTitle: 7.1 * scale,
-    body: 6.5 * scale,
-    small: 5.8 * scale,
-    nameLine: 6.2 * scale,
-    bodyLine: 3.25 * scale,
-    smallLine: 2.85 * scale,
-    sectionGap: 2.4 * scale,
-    itemGap: 1.9 * scale
+    name: (compact ? 14.5 : centered ? 19 : 16) * scale,
+    title: (compact ? 6.8 : 7.8) * scale,
+    section: (compact ? 6.9 : 7.6) * scale,
+    itemTitle: (compact ? 6.6 : 7.1) * scale,
+    body: (compact ? 6.0 : 6.5) * scale,
+    small: (compact ? 5.4 : 5.8) * scale,
+    nameLine: (compact ? 5.7 : 6.2) * scale,
+    bodyLine: (compact ? 2.95 : 3.25) * scale,
+    smallLine: (compact ? 2.65 : 2.85) * scale,
+    sectionGap: (compact ? 1.9 : 2.4) * scale,
+    itemGap: (compact ? 1.5 : 1.9) * scale
   };
 }
 
-function setFont(pdf, size, style = 'normal', color = TEXT) {
-  pdf.setFont('helvetica', style);
+function setFont(pdf, size, style = 'normal', color = TEXT, family = 'helvetica') {
+  pdf.setFont(family, style);
   pdf.setFontSize(size);
   pdf.setTextColor(...color);
 }
@@ -90,7 +170,268 @@ function buildExportData(resumeData, customization) {
   };
 }
 
+function getSectionTitle(exportData, style, key, fallback) {
+  return getTitle(
+    exportData.sectionTitles,
+    key,
+    style.sectionFallbacks?.[key] || fallback
+  );
+}
+
+function createSidebarRenderer(pdf, exportData, style, options = {}) {
+  const { dryRun = false, paginate = true } = options;
+  const sidebarWidth = A4_WIDTH * 0.35;
+  const leftMargin = Math.max(6, 8 * style.scale);
+  const rightX = sidebarWidth + Math.max(7, 8 * style.scale);
+  const rightWidth = A4_WIDTH - rightX - Math.max(8, 9 * style.scale);
+  const pageTop = Math.max(8, 11 * style.scale);
+  const pageBottom = Math.max(8, 10 * style.scale);
+  const left = { y: pageTop };
+  const right = { y: pageTop };
+  let page = 1;
+  let linkCount = 0;
+
+  const paintPage = () => {
+    if (dryRun) return;
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, A4_WIDTH, A4_HEIGHT, 'F');
+    pdf.setFillColor(...style.sidebar);
+    pdf.rect(0, 0, sidebarWidth, A4_HEIGHT, 'F');
+  };
+
+  const addPage = () => {
+    if (!dryRun) pdf.addPage('a4', 'portrait');
+    page += 1;
+    left.y = pageTop;
+    right.y = pageTop;
+    paintPage();
+  };
+
+  const ensureRightSpace = (height) => {
+    if (
+      paginate &&
+      right.y + height > A4_HEIGHT - pageBottom &&
+      right.y > pageTop + 4
+    ) {
+      addPage();
+    }
+  };
+
+  const text = (value, x, lineY, size, fontStyle = 'normal', color = style.text, opts = {}) => {
+    if (dryRun) return;
+    setFont(pdf, size, fontStyle, color, style.font);
+    pdf.text(value, x, lineY, opts);
+  };
+
+  const wrapped = (cursor, value, x, width, size, lineHeight, opts = {}) => {
+    const content = cleanText(value);
+    if (!content) return 0;
+    setFont(pdf, size, opts.fontStyle || 'normal', opts.color || style.text, style.font);
+    const lines = pdf.splitTextToSize(content, width);
+    lines.forEach((line) => {
+      if (cursor === right) ensureRightSpace(lineHeight);
+      const lineX = opts.align === 'center' ? x + width / 2 : x;
+      text(line, lineX, cursor.y, size, opts.fontStyle || 'normal', opts.color || style.text, opts);
+      cursor.y += lineHeight;
+    });
+    return lines.length * lineHeight;
+  };
+
+  const section = (cursor, title, x, width, color, renderContent, dark = false) => {
+    if (cursor === right) ensureRightSpace(style.section + style.sectionGap + 2);
+    text(title.toUpperCase(), x, cursor.y, style.section, 'bold', color);
+    if (!dryRun) {
+      pdf.setDrawColor(...color);
+      pdf.setLineWidth(dark ? 0.16 : 0.25);
+      pdf.line(x, cursor.y + 1.1, x + width, cursor.y + 1.1);
+    }
+    cursor.y += style.section + 1.6;
+    renderContent();
+    cursor.y += style.sectionGap + (dark ? 1.1 : 0);
+  };
+
+  const bullet = (cursor, value, x, width, color) => {
+    const content = cleanText(value);
+    if (!content) return;
+    setFont(pdf, style.body, 'normal', color, style.font);
+    const lines = pdf.splitTextToSize(content, width - 3.2);
+    lines.forEach((line, index) => {
+      if (cursor === right) ensureRightSpace(style.bodyLine);
+      text(`${index === 0 ? '- ' : '  '}${line}`, x, cursor.y, style.body, 'normal', color);
+      cursor.y += style.bodyLine;
+    });
+  };
+
+  const itemHeader = (cursor, x, width, leftValue, rightValue, url) => {
+    const leftText = cleanText(leftValue);
+    const rightText = cleanText(rightValue);
+    if (!leftText && !rightText) return;
+    setFont(pdf, style.small, 'bold', style.accent, style.font);
+    const rightTextWidth = rightText ? pdf.getTextWidth(rightText) : 0;
+    setFont(pdf, style.itemTitle, 'bold', style.text, style.font);
+    const leftLines = leftText
+      ? pdf.splitTextToSize(leftText, Math.max(30, width - rightTextWidth - 3))
+      : [];
+    const height = Math.max(style.bodyLine, leftLines.length * style.bodyLine);
+    if (cursor === right) ensureRightSpace(height + style.itemGap);
+    const headerY = cursor.y;
+    leftLines.forEach((line) => {
+      text(line, x, cursor.y, style.itemTitle, 'bold', style.text);
+      cursor.y += style.bodyLine;
+    });
+    if (!leftLines.length) cursor.y += style.bodyLine;
+    if (rightText) {
+      const linkX = x + width - rightTextWidth;
+      text(rightText, linkX, headerY, style.small, 'bold', style.accent);
+      if (!dryRun && url) {
+        pdf.link(linkX, headerY - style.small + 1, rightTextWidth, style.small + 1, { url });
+        linkCount += 1;
+      }
+    }
+  };
+
+  const renderLeft = () => {
+    const sidebarContentWidth = sidebarWidth - leftMargin * 2;
+    text(exportData.personal.name.toUpperCase(), sidebarWidth / 2, left.y, 12.8 * style.scale, 'bold', [255, 255, 255], { align: 'center' });
+    left.y += 5.6 * style.scale;
+    if (exportData.personal.title) {
+      wrapped(left, exportData.personal.title.toUpperCase(), leftMargin, sidebarContentWidth, style.title, style.smallLine, {
+        color: [226, 232, 240],
+        fontStyle: 'bold',
+        align: 'center'
+      });
+    }
+    left.y += 4 * style.scale;
+
+    const contacts = contactItems(exportData.personal);
+    if (contacts.length > 0) {
+      section(left, 'Contact', leftMargin, sidebarContentWidth, [255, 255, 255], () => {
+        contacts.forEach((item) => {
+          wrapped(left, item.label, leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+            color: [239, 246, 255]
+          });
+          if (!dryRun && item.url) {
+            const lineWidth = Math.min(sidebarContentWidth, pdf.getTextWidth(item.label));
+            pdf.link(leftMargin, left.y - style.smallLine - style.small + 1, lineWidth, style.small + 1, { url: item.url });
+            linkCount += 1;
+          }
+        });
+      }, true);
+    }
+
+    if (exportData.education?.length) {
+      section(left, getSectionTitle(exportData, style, 'education', 'Education'), leftMargin, sidebarContentWidth, [255, 255, 255], () => {
+        exportData.education.forEach((edu) => {
+          wrapped(left, edu.degree || edu.institution, leftMargin, sidebarContentWidth, style.body, style.bodyLine, {
+            color: [255, 255, 255],
+            fontStyle: 'bold'
+          });
+          wrapped(left, edu.institution, leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+            color: [226, 232, 240]
+          });
+          wrapped(left, [edu.startDate, edu.endDate].filter(Boolean).join(' - '), leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+            color: [219, 234, 254]
+          });
+          if (edu.gpa) {
+            wrapped(left, `GPA: ${edu.gpa}`, leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+              color: [219, 234, 254],
+              fontStyle: 'bold'
+            });
+          }
+          left.y += style.itemGap;
+        });
+      }, true);
+    }
+
+    const skills = Object.entries(exportData.skills || {});
+    if (skills.length) {
+      section(left, getSectionTitle(exportData, style, 'skills', 'Skills'), leftMargin, sidebarContentWidth, [255, 255, 255], () => {
+        skills.forEach(([category, skillList]) => {
+          wrapped(left, category.toUpperCase(), leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+            color: [219, 234, 254],
+            fontStyle: 'bold'
+          });
+          wrapped(left, (skillList || []).join(', '), leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+            color: [255, 255, 255]
+          });
+          left.y += style.itemGap * 0.4;
+        });
+      }, true);
+    }
+  };
+
+  const renderRight = () => {
+    if (exportData.summary) {
+      section(right, getSectionTitle(exportData, style, 'summary', 'Profile'), rightX, rightWidth, style.primary, () => {
+        wrapped(right, exportData.summary, rightX, rightWidth, style.body, style.bodyLine, { color: style.muted });
+      });
+    }
+
+    if (exportData.projects?.length) {
+      section(right, getSectionTitle(exportData, style, 'projects', 'Key Projects'), rightX, rightWidth, style.primary, () => {
+        exportData.projects.forEach((project) => {
+          const firstLink = project.links?.[0];
+          itemHeader(right, rightX, rightWidth, project.name, firstLink?.label, firstLink?.url);
+          wrapped(right, project.description, rightX, rightWidth, style.body, style.bodyLine, { color: style.muted, fontStyle: 'italic' });
+          (project.highlights || []).forEach((line) => bullet(right, line, rightX + 1.8, rightWidth - 1.8, style.muted));
+          right.y += style.itemGap;
+        });
+      });
+    }
+
+    if (exportData.experience?.length) {
+      section(right, getSectionTitle(exportData, style, 'experience', 'Experience'), rightX, rightWidth, style.primary, () => {
+        exportData.experience.forEach((exp) => {
+          itemHeader(right, rightX, rightWidth, [exp.position, exp.company].filter(Boolean).join(' at '), [exp.startDate, exp.endDate].filter(Boolean).join(' - '));
+          (exp.highlights || []).forEach((line) => bullet(right, line, rightX + 1.8, rightWidth - 1.8, style.muted));
+          right.y += style.itemGap;
+        });
+      });
+    }
+
+    if (exportData.certifications?.length) {
+      section(right, getSectionTitle(exportData, style, 'certifications', 'Certifications'), rightX, rightWidth, style.primary, () => {
+        exportData.certifications.forEach((cert) => {
+          itemHeader(right, rightX, rightWidth, [cert.name, cert.issuer, cert.date].filter(Boolean).join(' - '), cert.url ? (cert.linkLabel || 'Verify') : '', cert.url);
+        });
+      });
+    }
+
+    (exportData.customSections || []).forEach((customSection) => {
+      const items = customSection.content || [];
+      const entries = customSection.entries || [];
+      const links = customSection.links || [];
+      if (!items.length && !entries.length && !links.length) return;
+      section(right, customSection.title, rightX, rightWidth, style.primary, () => {
+        items.forEach((line) => bullet(right, line, rightX + 1.8, rightWidth - 1.8, style.muted));
+        entries.forEach((entry) => {
+          itemHeader(right, rightX, rightWidth, entry.title || entry.linkLabel || 'Profile', entry.url ? (entry.linkLabel || 'Profile') : '', entry.url);
+          wrapped(right, entry.description, rightX, rightWidth, style.body, style.bodyLine, { color: style.muted });
+        });
+        links.forEach((link) => itemHeader(right, rightX, rightWidth, link.label || 'Profile', 'Open', link.url));
+      });
+    });
+  };
+
+  const render = () => {
+    paintPage();
+    renderLeft();
+    renderRight();
+    return {
+      page,
+      height: Math.max(left.y, right.y) + pageBottom,
+      linkCount
+    };
+  };
+
+  return { render };
+}
+
 function createRenderer(pdf, exportData, style, options = {}) {
+  if (style.variant === 'sidebar') {
+    return createSidebarRenderer(pdf, exportData, style, options);
+  }
+
   const { dryRun = false, paginate = true } = options;
   const contentWidth = A4_WIDTH - style.marginX * 2;
   let y = style.marginTop;
@@ -113,27 +454,28 @@ function createRenderer(pdf, exportData, style, options = {}) {
     }
   };
 
-  const drawLine = (x1, y1, x2, y2, color = BLUE, width = 0.35) => {
+  const drawLine = (x1, y1, x2, y2, color = style.primary, width = 0.35) => {
     if (dryRun) return;
     pdf.setDrawColor(...color);
     pdf.setLineWidth(width);
     pdf.line(x1, y1, x2, y2);
   };
 
-  const text = (value, x, lineY, size, fontStyle = 'normal', color = TEXT, opts = {}) => {
+  const text = (value, x, lineY, size, fontStyle = 'normal', color = style.text, opts = {}) => {
     if (dryRun) return;
-    setFont(pdf, size, fontStyle, color);
+    setFont(pdf, size, fontStyle, color, style.font);
     pdf.text(value, x, lineY, opts);
   };
 
   const wrapped = (value, x, width, size = style.body, lineHeight = style.bodyLine, opts = {}) => {
     const content = cleanText(value);
     if (!content) return 0;
-    setFont(pdf, size, opts.fontStyle || 'normal', opts.color || TEXT);
+    setFont(pdf, size, opts.fontStyle || 'normal', opts.color || style.text, style.font);
     const lines = pdf.splitTextToSize(content, width);
     lines.forEach((line) => {
       ensureSpace(lineHeight);
-      text(line, x, y, size, opts.fontStyle || 'normal', opts.color || TEXT);
+      const lineX = opts.align === 'center' ? x + width / 2 : x;
+      text(line, lineX, y, size, opts.fontStyle || 'normal', opts.color || style.text, opts);
       y += lineHeight;
     });
     return lines.length * lineHeight;
@@ -142,12 +484,12 @@ function createRenderer(pdf, exportData, style, options = {}) {
   const bullet = (value, x, width) => {
     const content = cleanText(value);
     if (!content) return;
-    setFont(pdf, style.body, 'normal', MUTED);
+    setFont(pdf, style.body, 'normal', style.muted, style.font);
     const lines = pdf.splitTextToSize(content, width - 3.5);
     lines.forEach((line, index) => {
       ensureSpace(style.bodyLine);
       const prefix = index === 0 ? '- ' : '  ';
-      text(`${prefix}${line}`, x, y, style.body, 'normal', MUTED);
+      text(`${prefix}${line}`, x, y, style.body, 'normal', style.muted);
       y += style.bodyLine;
     });
   };
@@ -155,8 +497,24 @@ function createRenderer(pdf, exportData, style, options = {}) {
   const section = (title, renderContent) => {
     const before = y;
     ensureSpace(style.section + style.sectionGap + 3);
-    text(title.toUpperCase(), style.marginX, y, style.section, 'bold', BLUE);
-    drawLine(style.marginX, y + 1.2, A4_WIDTH - style.marginX, y + 1.2, BLUE, 0.25);
+    const label = `${style.sectionPrefix || ''}${title}`.toUpperCase();
+    if (style.variant === 'centered') {
+      drawLine(style.marginX, y - 1, style.marginX + 45 * style.scale, y - 1, LIGHT_GRAY, 0.25);
+      drawLine(A4_WIDTH - style.marginX - 45 * style.scale, y - 1, A4_WIDTH - style.marginX, y - 1, LIGHT_GRAY, 0.25);
+      text(label, A4_WIDTH / 2, y, style.section, 'bold', style.primary, { align: 'center' });
+    } else if (style.variant === 'navy') {
+      if (!dryRun) {
+        pdf.setFillColor(...style.primary);
+        pdf.rect(style.marginX, y - style.section + 1.2, 1.1 * style.scale, style.section + 1.5, 'F');
+      }
+      text(label, style.marginX + 2.6 * style.scale, y, style.section, 'bold', style.primary);
+      drawLine(style.marginX, y + 1.2, A4_WIDTH - style.marginX, y + 1.2, [194, 213, 232], 0.2);
+    } else {
+      text(label, style.marginX, y, style.section, 'bold', style.primary);
+      if (style.variant !== 'minimal' && style.variant !== 'code') {
+        drawLine(style.marginX, y + 1.2, A4_WIDTH - style.marginX, y + 1.2, style.primary, 0.25);
+      }
+    }
     y += style.section + 1.2;
     renderContent();
     if (y > before) y += style.sectionGap;
@@ -167,26 +525,26 @@ function createRenderer(pdf, exportData, style, options = {}) {
     const right = cleanText(rightValue);
     if (!left && !right) return;
 
-    setFont(pdf, style.small, 'bold', BLUE);
+    setFont(pdf, style.small, 'bold', style.accent, style.font);
     const rightWidth = right ? pdf.getTextWidth(right) : 0;
     const leftWidth = Math.max(35, contentWidth - rightWidth - (right ? 4 * style.scale : 0));
-    setFont(pdf, style.itemTitle, 'bold', TEXT);
+    setFont(pdf, style.itemTitle, 'bold', style.text, style.font);
     const leftLines = left ? pdf.splitTextToSize(left, leftWidth) : [];
     const headerHeight = Math.max(style.bodyLine, leftLines.length * style.bodyLine);
 
     ensureSpace(headerHeight + style.itemGap);
     const headerY = y;
     leftLines.forEach((line) => {
-      text(line, style.marginX, y, style.itemTitle, 'bold', TEXT);
+      text(line, style.marginX, y, style.itemTitle, 'bold', style.text);
       y += style.bodyLine;
     });
     if (!leftLines.length) y += style.bodyLine;
 
     if (right) {
-      setFont(pdf, style.small, 'bold', BLUE);
+      setFont(pdf, style.small, 'bold', style.accent, style.font);
       const labelWidth = pdf.getTextWidth(right);
       const x = A4_WIDTH - style.marginX - labelWidth;
-      text(right, x, headerY, style.small, 'bold', BLUE);
+      text(right, x, headerY, style.small, 'bold', style.accent);
       if (!dryRun && url) {
         pdf.link(x, headerY - style.small + 1, labelWidth, style.small + 1, { url });
         linkCount += 1;
@@ -196,12 +554,64 @@ function createRenderer(pdf, exportData, style, options = {}) {
 
   const renderHeader = () => {
     const { personal } = exportData;
-    text(personal.name.toUpperCase(), style.marginX, y, style.name, 'bold', BLUE);
+    if (style.variant === 'centered') {
+      if (!dryRun) {
+        pdf.setFillColor(...style.pale);
+        pdf.rect(0, 0, A4_WIDTH, 36 * style.scale, 'F');
+      }
+      text(personal.name.toUpperCase(), A4_WIDTH / 2, y + 1.5 * style.scale, style.name, 'bold', style.primary, { align: 'center' });
+      y += style.nameLine + 1.5 * style.scale;
+      if (personal.title) {
+        wrapped(personal.title.toUpperCase(), style.marginX + 18 * style.scale, contentWidth - 36 * style.scale, style.title, style.smallLine, {
+          fontStyle: 'bold',
+          color: style.muted
+        });
+      }
+      const contacts = contactItems(personal);
+      if (contacts.length > 0) {
+        wrapped(contacts.map((item) => item.label).join(' | '), style.marginX, contentWidth, style.small, style.smallLine, {
+          color: style.muted,
+          align: 'center'
+        });
+      }
+      y += 3 * style.scale;
+      return;
+    }
+
+    if (style.variant === 'navy') {
+      const headerHeight = 31 * style.scale;
+      if (!dryRun) {
+        pdf.setFillColor(...style.primary);
+        pdf.rect(0, 0, A4_WIDTH, headerHeight, 'F');
+        pdf.setFillColor(...style.accent);
+        pdf.rect(0, headerHeight, A4_WIDTH, 1.3 * style.scale, 'F');
+      }
+      text(personal.name.toUpperCase(), A4_WIDTH / 2, y + 4 * style.scale, style.name, 'bold', [255, 255, 255], { align: 'center' });
+      y += style.nameLine + 4 * style.scale;
+      if (personal.title) {
+        wrapped(personal.title.toUpperCase(), style.marginX, contentWidth, style.title, style.smallLine, {
+          fontStyle: 'bold',
+          color: [184, 201, 220],
+          align: 'center'
+        });
+      }
+      const contacts = contactItems(personal);
+      if (contacts.length > 0) {
+        wrapped(contacts.map((item) => item.label).join(' | '), style.marginX, contentWidth, style.small, style.smallLine, {
+          color: [184, 201, 220],
+          align: 'center'
+        });
+      }
+      y = headerHeight + 6 * style.scale;
+      return;
+    }
+
+    text(`${style.namePrefix || ''}${personal.name.toUpperCase()}`, style.marginX, y, style.name, 'bold', style.primary);
     y += style.nameLine;
     if (personal.title) {
       wrapped(personal.title.toUpperCase(), style.marginX, contentWidth, style.title, style.smallLine, {
         fontStyle: 'bold',
-        color: MUTED
+        color: style.muted
       });
     }
 
@@ -211,13 +621,13 @@ function createRenderer(pdf, exportData, style, options = {}) {
       const maxY = y;
       contacts.forEach((item, index) => {
         const label = `${index > 0 ? ' | ' : ''}${item.label}`;
-        setFont(pdf, style.small, 'normal', MUTED);
+        setFont(pdf, style.small, 'normal', style.muted, style.font);
         const labelWidth = pdf.getTextWidth(label);
         if (x + labelWidth > A4_WIDTH - style.marginX) {
           x = style.marginX;
           y += style.smallLine;
         }
-        text(label, x, y, style.small, 'normal', item.url ? BLUE : MUTED);
+        text(label, x, y, style.small, 'normal', item.url ? style.accent : style.muted);
         if (!dryRun && item.url) {
           pdf.link(x, y - style.small + 1, labelWidth, style.small + 1, { url: item.url });
           linkCount += 1;
@@ -227,24 +637,24 @@ function createRenderer(pdf, exportData, style, options = {}) {
       y = Math.max(y, maxY) + style.smallLine + 1.6;
     }
 
-    drawLine(style.marginX, y, A4_WIDTH - style.marginX, y, BLUE, 0.55);
+    drawLine(style.marginX, y, A4_WIDTH - style.marginX, y, style.variant === 'minimal' ? style.accent : style.primary, 0.55);
     y += 5 * style.scale;
   };
 
   const renderSummary = () => {
     if (!exportData.summary) return;
-    section(getTitle(exportData.sectionTitles, 'summary', 'Profile'), () => {
-      wrapped(exportData.summary, style.marginX, contentWidth, style.body, style.bodyLine, { color: MUTED });
+    section(getSectionTitle(exportData, style, 'summary', 'Profile'), () => {
+      wrapped(exportData.summary, style.marginX, contentWidth, style.body, style.bodyLine, { color: style.muted });
     });
   };
 
   const renderEducation = () => {
     if (!exportData.education?.length) return;
-    section(getTitle(exportData.sectionTitles, 'education', 'Education'), () => {
+    section(getSectionTitle(exportData, style, 'education', 'Education'), () => {
       exportData.education.forEach((edu) => {
         const date = [edu.startDate, edu.endDate].filter(Boolean).join(' - ');
         itemHeader(edu.degree || edu.institution, date);
-        wrapped([edu.institution, edu.location].filter(Boolean).join(', '), style.marginX, contentWidth, style.body, style.bodyLine, { color: MUTED });
+        wrapped([edu.institution, edu.location].filter(Boolean).join(', '), style.marginX, contentWidth, style.body, style.bodyLine, { color: style.muted });
         if (edu.gpa) wrapped(`GPA: ${edu.gpa}`, style.marginX, contentWidth, style.small, style.smallLine, { fontStyle: 'bold' });
         (edu.highlights || []).forEach((line) => bullet(line, style.marginX + 1.8, contentWidth - 1.8));
         y += style.itemGap;
@@ -254,19 +664,19 @@ function createRenderer(pdf, exportData, style, options = {}) {
 
   const renderProjects = () => {
     if (!exportData.projects?.length) return;
-    section(getTitle(exportData.sectionTitles, 'projects', 'Academic & Personal Projects'), () => {
+    section(getSectionTitle(exportData, style, 'projects', 'Academic & Personal Projects'), () => {
       exportData.projects.forEach((project) => {
         const firstLink = project.links?.[0];
         itemHeader(project.name, firstLink?.label, firstLink?.url);
         wrapped(project.description, style.marginX, contentWidth, style.body, style.bodyLine, {
           fontStyle: 'italic',
-          color: MUTED
+          color: style.muted
         });
         (project.highlights || []).forEach((line) => bullet(line, style.marginX + 1.8, contentWidth - 1.8));
         (project.links || []).slice(1).forEach((link) => {
           const url = normalizeUrl(link.url);
           if (url) {
-            wrapped(`${link.label}: ${url}`, style.marginX, contentWidth, style.small, style.smallLine, { color: BLUE });
+            wrapped(`${link.label}: ${url}`, style.marginX, contentWidth, style.small, style.smallLine, { color: style.accent });
           }
         });
         y += style.itemGap;
@@ -276,11 +686,11 @@ function createRenderer(pdf, exportData, style, options = {}) {
 
   const renderExperience = () => {
     if (!exportData.experience?.length) return;
-    section(getTitle(exportData.sectionTitles, 'experience', 'Experience'), () => {
+    section(getSectionTitle(exportData, style, 'experience', 'Experience'), () => {
       exportData.experience.forEach((exp) => {
         const date = [exp.startDate, exp.endDate].filter(Boolean).join(' - ');
         itemHeader([exp.position, exp.company].filter(Boolean).join(' at '), date);
-        if (exp.location) wrapped(exp.location, style.marginX, contentWidth, style.body, style.bodyLine, { color: MUTED });
+        if (exp.location) wrapped(exp.location, style.marginX, contentWidth, style.body, style.bodyLine, { color: style.muted });
         (exp.highlights || []).forEach((line) => bullet(line, style.marginX + 1.8, contentWidth - 1.8));
         y += style.itemGap;
       });
@@ -290,7 +700,7 @@ function createRenderer(pdf, exportData, style, options = {}) {
   const renderSkills = () => {
     const skills = Object.entries(exportData.skills || {});
     if (!skills.length) return;
-    section(getTitle(exportData.sectionTitles, 'skills', 'Technical Skills'), () => {
+    section(getSectionTitle(exportData, style, 'skills', 'Technical Skills'), () => {
       skills.forEach(([category, skillList]) => {
         wrapped(`${category}: ${(skillList || []).join(', ')}`, style.marginX, contentWidth, style.body, style.bodyLine);
       });
@@ -299,22 +709,22 @@ function createRenderer(pdf, exportData, style, options = {}) {
 
   const renderCertifications = () => {
     if (!exportData.certifications?.length) return;
-    section(getTitle(exportData.sectionTitles, 'certifications', 'Certifications'), () => {
+    section(getSectionTitle(exportData, style, 'certifications', 'Certifications'), () => {
       exportData.certifications.forEach((cert) => {
         const label = [cert.name, cert.issuer, cert.date].filter(Boolean).join(' - ');
         itemHeader(label, cert.url ? (cert.linkLabel || 'Verify') : '', cert.url);
-        if (cert.credentialId) wrapped(`Credential ID: ${cert.credentialId}`, style.marginX, contentWidth, style.small, style.smallLine, { color: MUTED });
-        if (cert.description) wrapped(cert.description, style.marginX, contentWidth, style.small, style.smallLine, { color: MUTED });
+        if (cert.credentialId) wrapped(`Credential ID: ${cert.credentialId}`, style.marginX, contentWidth, style.small, style.smallLine, { color: style.muted });
+        if (cert.description) wrapped(cert.description, style.marginX, contentWidth, style.small, style.smallLine, { color: style.muted });
       });
     });
   };
 
   const renderAchievements = () => {
     if (!exportData.achievements?.length) return;
-    section(getTitle(exportData.sectionTitles, 'achievements', 'Achievements'), () => {
+    section(getSectionTitle(exportData, style, 'achievements', 'Achievements'), () => {
       exportData.achievements.forEach((achievement) => {
         itemHeader([achievement.title, achievement.organization].filter(Boolean).join(' - '), achievement.date);
-        wrapped(achievement.description, style.marginX, contentWidth, style.body, style.bodyLine, { color: MUTED });
+        wrapped(achievement.description, style.marginX, contentWidth, style.body, style.bodyLine, { color: style.muted });
       });
     });
   };
@@ -330,7 +740,7 @@ function createRenderer(pdf, exportData, style, options = {}) {
         items.forEach((line) => bullet(line, style.marginX + 1.8, contentWidth - 1.8));
         entries.forEach((entry) => {
           itemHeader(entry.title || entry.linkLabel || 'Profile', entry.url ? (entry.linkLabel || 'Profile') : '', entry.url);
-          wrapped(entry.description, style.marginX, contentWidth, style.body, style.bodyLine, { color: MUTED });
+          wrapped(entry.description, style.marginX, contentWidth, style.body, style.bodyLine, { color: style.muted });
         });
         links.forEach((link) => {
           itemHeader(link.label || 'Profile', 'Open', link.url);
@@ -374,9 +784,9 @@ function createRenderer(pdf, exportData, style, options = {}) {
   return { render };
 }
 
-function pickLayoutScale(pdf, exportData) {
+function pickLayoutScale(pdf, exportData, templateId) {
   return FIT_SCALES.find((scale) => {
-    const renderer = createRenderer(pdf, exportData, makeStyle(scale), {
+    const renderer = createRenderer(pdf, exportData, makeStyle(scale, templateId), {
       dryRun: true,
       paginate: false
     });
@@ -384,11 +794,11 @@ function pickLayoutScale(pdf, exportData) {
   }) || 0.84;
 }
 
-async function generateResumePdf({ jsPDF, resumeData, customization }) {
+async function generateResumePdf({ jsPDF, resumeData, customization, templateId }) {
   const exportData = buildExportData(resumeData, customization);
   const measurementPdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const scale = pickLayoutScale(measurementPdf, exportData);
-  const dryRenderer = createRenderer(measurementPdf, exportData, makeStyle(scale), {
+  const scale = pickLayoutScale(measurementPdf, exportData, templateId);
+  const dryRenderer = createRenderer(measurementPdf, exportData, makeStyle(scale, templateId), {
     dryRun: true,
     paginate: false
   });
@@ -400,7 +810,7 @@ async function generateResumePdf({ jsPDF, resumeData, customization }) {
     format: 'a4',
     compress: true
   });
-  const renderer = createRenderer(pdf, exportData, makeStyle(scale), {
+  const renderer = createRenderer(pdf, exportData, makeStyle(scale, templateId), {
     dryRun: false,
     paginate: !fitsOnePage
   });
@@ -415,7 +825,10 @@ async function generateResumePdf({ jsPDF, resumeData, customization }) {
 }
 
 function Download() {
-  const { resumeData, customization } = useResume();
+  const location = useLocation();
+  const { resumeData, customization, selectedTemplate } = useResume();
+  const queryTemplate = new URLSearchParams(location.search).get('template');
+  const templateId = getTemplateId(queryTemplate || selectedTemplate);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -435,12 +848,13 @@ function Download() {
       const { pdf, pageCount, linkCount } = await generateResumePdf({
         jsPDF,
         resumeData,
-        customization
+        customization,
+        templateId
       });
 
       pdf.save(`${getDocumentTitle()}.pdf`);
       setDownloadMessage(
-        `Downloaded ${pageCount}-page A4 PDF${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
+        `Downloaded template ${templateId} as a ${pageCount}-page A4 PDF${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
       );
       setDownloadSuccess(true);
     } catch (error) {
@@ -460,15 +874,15 @@ function Download() {
             Download & Share
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Export your resume as a compact, selectable A4 PDF.
+            Export template {templateId} as a compact, selectable A4 PDF.
           </p>
         </div>
 
         <div className="card p-6 mb-8">
           <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-950 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
-            <p className="font-semibold">Professional A4 PDF export</p>
+            <p className="font-semibold">Selected-template A4 PDF export</p>
             <p className="mt-1">
-              The export uses a dedicated PDF layout engine, tries hard to fit one page, and adds page 2 only when needed.
+              The export uses the selected template, tries hard to fit one page, and adds page 2 only when needed.
             </p>
           </div>
 
