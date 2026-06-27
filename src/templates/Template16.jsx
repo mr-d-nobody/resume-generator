@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React from 'react';
 import ContactLinks from '../components/common/ContactLinks';
 import CustomSections from '../components/common/CustomSections';
 import DateRange from '../components/common/DateRange';
@@ -54,80 +54,16 @@ function BulletList({ items, maxItems = 2 }) {
   );
 }
 
-const TARGET_PAGE_FILL = 0.9;
-const MIN_QUALITY_SCALE = 0.84;
-const MAX_FILL_SCALE = 1.18;
-
-function FittedPageBody({ children, onPageModeChange, layout = {} }) {
-  const viewportRef = useRef(null);
-  const contentRef = useRef(null);
-  const [scale, setScale] = useState(1);
-  const itemGap = Math.max(0.2, Number(layout.itemGap) || 0.85) * 0.35;
+function FittedPageBody({ children, layout = {} }) {
   const sectionGap = Math.max(0.35, Number(layout.sectionGap) || 1.35) * 0.45;
   const density = Math.max(0.72, Math.min(1.18, Number(layout.density) || 1));
-
-  useLayoutEffect(() => {
-    const viewport = viewportRef.current;
-    const content = contentRef.current;
-    if (!viewport || !content) return undefined;
-
-    let frame;
-
-    const fit = () => {
-      const availableHeight = viewport.clientHeight;
-      const naturalHeight = content.scrollHeight;
-      if (!availableHeight || !naturalHeight) return;
-
-      const idealScale = (availableHeight * TARGET_PAGE_FILL) / naturalHeight;
-      const nextMode = idealScale < MIN_QUALITY_SCALE ? 'multi' : 'single';
-      const nextScale = nextMode === 'multi'
-        ? 1
-        : Math.max(MIN_QUALITY_SCALE, Math.min(MAX_FILL_SCALE, idealScale));
-
-      setScale(nextScale);
-      onPageModeChange(nextMode);
-
-      if (nextMode === 'single') {
-        frame = requestAnimationFrame(() => {
-          const renderedHeight = content.getBoundingClientRect().height;
-          const currentFill = renderedHeight / availableHeight;
-          if (currentFill > 0 && Math.abs(currentFill - TARGET_PAGE_FILL) > 0.01) {
-            setScale((current) => Math.max(
-              MIN_QUALITY_SCALE,
-              Math.min(MAX_FILL_SCALE, current * (TARGET_PAGE_FILL / currentFill))
-            ));
-          }
-        });
-      }
-    };
-
-    setScale(1);
-    frame = requestAnimationFrame(fit);
-    const observer = new MutationObserver(() => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(fit);
-    });
-    observer.observe(content, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [children, density, itemGap, onPageModeChange, sectionGap]);
-
-  const visualScale = Math.max(0.5, scale * density);
+  const visualScale = density;
 
   return (
     <div
-      ref={viewportRef}
       className="template16-multipage-body min-h-0 flex-1 overflow-visible"
     >
       <div
-        ref={contentRef}
         className="template16-content flex flex-col px-[14mm] pb-[3mm] pt-[3mm]"
         style={{
           width: `${100 / visualScale}%`,
@@ -145,7 +81,6 @@ function FittedPageBody({ children, onPageModeChange, layout = {} }) {
 
 export default function Template16({ data, config = {} }) {
   const { personal, summary, education, skills, projects, certifications, customSections, sectionTitles = {} } = data;
-  const [pageMode, setPageMode] = useState('single');
   const theme = config.theme || {};
   const layout = config.layout || {};
   const primaryColor = theme.primaryColor || navyDark;
@@ -158,7 +93,7 @@ export default function Template16({ data, config = {} }) {
   return (
     <div
       className="template16-page mx-auto flex min-h-[297mm] w-[210mm] flex-col overflow-visible bg-white shadow-lg"
-      data-page-mode={pageMode}
+      data-page-mode="multi"
       style={{ fontFamily: theme.fontFamily || 'Inter, Arial, sans-serif', color: pageTextColor }}
     >
       <header className="relative shrink-0 text-white" style={{ backgroundColor: primaryColor }}>
@@ -187,7 +122,7 @@ export default function Template16({ data, config = {} }) {
         <div className="h-[3px] w-full" style={{ backgroundColor: accentColor }} />
       </header>
 
-      <FittedPageBody onPageModeChange={setPageMode} layout={layout}>
+      <FittedPageBody layout={layout}>
         {summary && (
           <Section title={sectionTitles.summary || 'Summary'} titleColor={primaryColor}>
             <p className="text-[9px] leading-[1.3]" style={{ color: textMuted }}>{summary}</p>

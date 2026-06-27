@@ -6,6 +6,7 @@ import { Button } from '../components/ui';
 import { Download as DownloadIcon, Share2 as ShareIcon } from 'lucide-react';
 import { normalizeCustomSection } from '../utils/resumeSections';
 import { normalizeUrl, transformResumeData } from '../utils/resumeData';
+import { getA4PageHeightForWidth, getResumeContentBounds } from '../utils/resumePageBounds';
 import { DEFAULT_LAYOUT, getColorTheme, getLayoutSettings } from '../utils/templateStyle';
 
 const A4_WIDTH = 210;
@@ -188,25 +189,13 @@ function waitForPreviewRender() {
 
 function getVisualExportBounds(resumeElement) {
   const rootRect = resumeElement.getBoundingClientRect();
-  let bottom = rootRect.bottom;
-
-  resumeElement.querySelectorAll('*').forEach((element) => {
-    [...element.getClientRects()].forEach((rect) => {
-      if (rect.width > 0 && rect.height > 0) {
-        bottom = Math.max(bottom, rect.bottom);
-      }
-    });
-  });
-
-  return {
-    width: Math.ceil(rootRect.width),
-    height: Math.ceil(Math.max(rootRect.height, bottom - rootRect.top))
-  };
+  const pageHeightPx = getA4PageHeightForWidth(rootRect.width);
+  return getResumeContentBounds(resumeElement, pageHeightPx);
 }
 
 function getResumeLinks(resumeElement) {
   const rootRect = resumeElement.getBoundingClientRect();
-  const pageHeightPx = rootRect.width * (A4_HEIGHT / A4_WIDTH);
+  const pageHeightPx = getA4PageHeightForWidth(rootRect.width);
   return [...resumeElement.querySelectorAll('a[href]')]
     .map((anchor) => {
       const url = normalizeUrl(anchor.getAttribute('href'));
@@ -238,7 +227,7 @@ function addResumeLinks(pdf, links, pageCount) {
 }
 
 function addCanvasPagesToPdf(pdf, canvas) {
-  const pageHeightPx = Math.floor(canvas.width * (A4_HEIGHT / A4_WIDTH));
+  const pageHeightPx = Math.floor(getA4PageHeightForWidth(canvas.width));
   const pageOverflowTolerancePx = Math.max(4, Math.round(canvas.width * 0.003));
   const pageCanvas = document.createElement('canvas');
   const pageContext = pageCanvas.getContext('2d');

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useResume } from '../../contexts/ResumeContext';
 import { customSectionFromStandard, normalizeCustomSection } from '../../utils/resumeSections';
 import { transformResumeData } from '../../utils/resumeData';
+import { getA4PageHeightForWidth, getResumeContentBounds } from '../../utils/resumePageBounds';
 import { buildTemplateConfig } from '../../utils/templateStyle';
 
 import Template11 from '../../templates/Template11';
@@ -13,27 +14,10 @@ import Template15 from '../../templates/Template15';
 import Template16 from '../../templates/Template16';
 
 const A4_WIDTH = 794;
-const A4_RATIO = 297 / 210;
-const A4_HEIGHT = A4_WIDTH * A4_RATIO;
+const A4_HEIGHT = getA4PageHeightForWidth(A4_WIDTH);
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
-}
-
-function getVisualResumeHeight(resumeElement) {
-  if (!resumeElement) return A4_HEIGHT;
-  const rootRect = resumeElement.getBoundingClientRect();
-  let bottom = rootRect.bottom;
-
-  resumeElement.querySelectorAll('*').forEach((element) => {
-    [...element.getClientRects()].forEach((rect) => {
-      if (rect.width > 0 && rect.height > 0) {
-        bottom = Math.max(bottom, rect.bottom);
-      }
-    });
-  });
-
-  return Math.max(rootRect.height, bottom - rootRect.top);
 }
 
 export default function ResumePreview({ isPrintMode = false }) {
@@ -81,22 +65,37 @@ export default function ResumePreview({ isPrintMode = false }) {
     const measureElement = measureRef.current;
     if (!measureElement) return undefined;
 
-    let frame;
-    const updatePages = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const rect = measureElement.getBoundingClientRect();
-        const nextPageHeight = rect.width * A4_RATIO;
-        const visualHeight = getVisualResumeHeight(measureElement);
-        const tolerance = Math.max(2, rect.width * 0.003);
-        const nextPageCount = visualHeight <= nextPageHeight + tolerance
-          ? 1
-          : Math.ceil(visualHeight / nextPageHeight);
+    let frames = [];
+    const cancelMeasurements = () => {
+      frames.forEach((frame) => cancelAnimationFrame(frame));
+      frames = [];
+    };
+    const measurePages = () => {
+      const rect = measureElement.getBoundingClientRect();
+      const nextPageWidth = rect.width || A4_WIDTH;
+      const nextPageHeight = getA4PageHeightForWidth(nextPageWidth);
+      const contentBounds = getResumeContentBounds(measureElement, nextPageHeight);
+      const tolerance = Math.max(2, rect.width * 0.003);
+      const nextPageCount = contentBounds.contentHeight <= nextPageHeight + tolerance
+        ? 1
+        : Math.ceil(contentBounds.contentHeight / nextPageHeight);
 
-        setPageWidth(rect.width || A4_WIDTH);
-        setPageHeight(nextPageHeight || A4_HEIGHT);
-        setPageCount(Math.max(1, nextPageCount));
+      setPageWidth(nextPageWidth);
+      setPageHeight(nextPageHeight || A4_HEIGHT);
+      setPageCount(Math.max(1, nextPageCount));
+    };
+    const queueMeasure = (remainingPasses = 3) => {
+      const frame = requestAnimationFrame(() => {
+        measurePages();
+        if (remainingPasses > 0) {
+          queueMeasure(remainingPasses - 1);
+        }
       });
+      frames.push(frame);
+    };
+    const updatePages = () => {
+      cancelMeasurements();
+      queueMeasure();
     };
 
     const fontReady = document.fonts?.ready || Promise.resolve();
@@ -113,7 +112,7 @@ export default function ResumePreview({ isPrintMode = false }) {
     });
 
     return () => {
-      cancelAnimationFrame(frame);
+      cancelMeasurements();
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
@@ -167,19 +166,22 @@ export default function ResumePreview({ isPrintMode = false }) {
   return (
     <div 
       ref={containerRef} 
+      data-resume-preview-shell
+      data-resume-page-count={pageCount}
       className="relative w-full h-[calc(100vh-180px)] overflow-auto bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex justify-center py-8 custom-scrollbar"
     >
       <div
         ref={measureRef}
         data-resume-measure-root
-        className="pointer-events-none absolute left-0 top-0 -z-10 bg-white opacity-0"
-        style={{ width: '210mm' }}
+        className="pointer-events-none fixed top-0 bg-white"
+        style={{ width: '210mm', left: '-10000px', visibility: 'hidden' }}
       >
         {renderTemplate()}
       </div>
 
       <div
         className="flex shrink-0 flex-col items-center gap-6 transition-all duration-300"
+        data-resume-preview-stack
         style={{ width: pageWidth * scale }}
       >
         {Array.from({ length: pageCount }).map((_, pageIndex) => (
