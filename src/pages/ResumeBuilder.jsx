@@ -184,7 +184,7 @@ function ResumeBuilder() {
             <div className="text-sm font-semibold text-gray-950 dark:text-white">{template.name}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">{template.tone}</div>
           </div>
-          <span className="text-xs font-semibold text-blue-600">#{template.id}</span>
+            <span className="text-xs font-semibold text-blue-600">{selected ? 'Current' : 'Preview'}</span>
         </div>
       </button>
     );
@@ -204,7 +204,7 @@ function ResumeBuilder() {
               key={tab.id}
               type="button"
               onClick={() => setCustomizeTab(tab.id)}
-              className={`flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-semibold ${
+              className={`flex items-center justify-center gap-1 rounded px-2 py-2 text-xs font-semibold min-[390px]:gap-2 min-[390px]:text-sm sm:px-3 ${
                 customizeTab === tab.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-950 dark:text-white' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
@@ -365,7 +365,7 @@ function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="resume-studio-editor h-[calc(100svh-9rem)] overflow-y-auto px-5 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar sm:px-8 xl:h-[calc(100vh-18rem)] xl:pb-6">
+              <div className="resume-studio-editor h-[calc(100svh-9rem)] overflow-y-auto px-3 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar min-[390px]:px-5 sm:px-8 xl:h-[calc(100vh-18rem)] xl:pb-6">
                 {ActiveComponent && <ActiveComponent />}
               </div>
 
@@ -400,17 +400,17 @@ function ResumeBuilder() {
               </div>
             </>
           ) : (
-            <div className="h-[calc(100svh-9rem)] overflow-y-auto px-6 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar sm:px-8 xl:h-[calc(100vh-13rem)] xl:pb-6">
+            <div className="h-[calc(100svh-9rem)] overflow-y-auto px-3 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar min-[390px]:px-5 sm:px-8 xl:h-[calc(100vh-13rem)] xl:pb-6">
               {renderCustomizePanel()}
             </div>
           )}
         </section>
 
         <section className={`relative min-h-[calc(100svh-8rem)] bg-[#eef2f7] dark:bg-gray-950 xl:min-h-[calc(100vh-8rem)] ${mobileView !== 'preview' ? 'hidden xl:block' : ''}`}>
-          <div className="sticky top-16 z-10 flex items-center justify-between border-b border-gray-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+          <div className="sticky top-16 z-10 flex items-center justify-between gap-3 border-b border-gray-200 bg-white/90 px-3 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 sm:px-6">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300">
               <Eye className="h-4 w-4" />
-              Template {activeTemplate}
+              Preview
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -427,7 +427,7 @@ function ResumeBuilder() {
             </div>
           </div>
 
-          <div className="flex min-h-[calc(100svh-12rem)] items-start justify-center px-4 py-5 pb-[calc(7rem+env(safe-area-inset-bottom))] xl:min-h-[calc(100vh-12rem)] xl:py-8 xl:pb-8">
+          <div className="flex min-h-[calc(100svh-12rem)] items-start justify-center px-2 py-4 pb-[calc(7rem+env(safe-area-inset-bottom))] min-[390px]:px-4 xl:min-h-[calc(100vh-12rem)] xl:py-8 xl:pb-8">
             <div className="w-full max-w-[920px]">
               <ResumePreview />
             </div>
@@ -435,13 +435,13 @@ function ResumeBuilder() {
         </section>
       </div>
 
-      <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:hidden">
+      <div className="fixed inset-x-2 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-1.5 rounded-2xl border border-gray-200 bg-white/95 p-1.5 shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 min-[390px]:inset-x-3 min-[390px]:gap-2 min-[390px]:p-2 xl:hidden">
         {activeMobileMode === 'edit' && (
           <button
             type="button"
             disabled={!canGoPrevious}
             onClick={goPrevious}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 disabled:opacity-35 dark:border-gray-700 dark:text-gray-200"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 disabled:opacity-35 dark:border-gray-700 dark:text-gray-200 min-[390px]:h-11 min-[390px]:w-11"
             aria-label="Previous section"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -458,7 +458,7 @@ function ResumeBuilder() {
               key={item.id}
               type="button"
               onClick={item.action}
-              className={`rounded-lg px-2 py-2.5 text-xs font-semibold sm:text-sm ${
+              className={`rounded-lg px-1.5 py-2.5 text-xs font-semibold min-[390px]:px-2 sm:text-sm ${
                 activeMobileMode === item.id ? 'bg-white text-gray-950 shadow-sm dark:bg-gray-100 dark:text-gray-950' : 'text-gray-500 dark:text-gray-300'
               }`}
             >
@@ -472,7 +472,7 @@ function ResumeBuilder() {
             type="button"
             disabled={!canGoNext}
             onClick={goNext}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white disabled:opacity-35"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white disabled:opacity-35 min-[390px]:h-11 min-[390px]:w-11"
             aria-label="Next section"
           >
             <ChevronRight className="h-5 w-5" />

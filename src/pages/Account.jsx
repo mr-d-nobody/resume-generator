@@ -50,12 +50,12 @@ export default function Account() {
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` || user.email[0].toUpperCase();
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 dark:bg-gray-900">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-900 sm:py-12">
+      <div className="mx-auto max-w-5xl px-3 min-[390px]:px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Account settings</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">Your secure workspace</h1>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white min-[390px]:text-3xl">Your secure workspace</h1>
             <p className="mt-2 text-slate-600 dark:text-gray-400">Manage your identity and account password.</p>
           </div>
           <button onClick={handleLogout} className="btn-secondary inline-flex items-center justify-center gap-2">
@@ -65,7 +65,7 @@ export default function Account() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 min-[390px]:p-6 sm:rounded-2xl">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-xl font-semibold text-white shadow-lg shadow-blue-500/20">
               {initials}
             </div>
@@ -73,8 +73,8 @@ export default function Account() {
               {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'ResumeBuilder user'}
             </h2>
             <div className="mt-5 space-y-4 text-sm">
-              <div className="flex items-center gap-3 text-slate-600 dark:text-gray-300">
-                <Mail className="h-5 w-5 text-blue-600" />
+              <div className="mobile-safe-text flex items-center gap-3 text-slate-600 dark:text-gray-300">
+                <Mail className="h-5 w-5 shrink-0 text-blue-600" />
                 {user.email}
               </div>
               <div className="flex items-center gap-3 text-slate-600 dark:text-gray-300">
@@ -88,7 +88,7 @@ export default function Account() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-gray-700 dark:bg-gray-800">
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 min-[390px]:p-6 sm:rounded-2xl sm:p-8">
             <div className="flex items-start gap-4">
               <div className="rounded-xl bg-blue-50 p-3 text-blue-600 dark:bg-blue-950/50">
                 <KeyRound className="h-6 w-6" />

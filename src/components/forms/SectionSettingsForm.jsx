@@ -8,7 +8,7 @@ export default function SectionSettingsForm() {
   const titles = customization.sectionTitles || {};
 
   return (
-    <div className="card p-6 bg-white dark:bg-gray-900 shadow-sm rounded-lg">
+    <div className="card rounded-lg bg-white p-4 shadow-sm dark:bg-gray-900 min-[390px]:p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Section titles</h2>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
         Rename standard headings without changing how their content works.

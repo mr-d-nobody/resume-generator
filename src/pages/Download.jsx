@@ -1348,16 +1348,16 @@ function Download() {
   }, [pdfCache, preparePdfBlob, shareSupport.checked, shareSupport.mobileLike, shareSupport.webShare]);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-950">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-6 dark:bg-gray-950 sm:py-8">
+      <div className="mx-auto max-w-7xl px-3 min-[390px]:px-4 sm:px-6 lg:px-8">
         <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+          <div className="grid gap-5 p-4 min-[390px]:p-5 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                 <Sparkles className="h-3.5 w-3.5" />
                 Export center
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white min-[390px]:text-3xl">
                 Download your resume
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">
@@ -1365,7 +1365,7 @@ function Download() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-gray-800 dark:bg-gray-950 min-[390px]:p-4">
               <div className="mb-4 flex items-center gap-3 text-sm text-slate-600 dark:text-gray-300">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
                   <FileText className="h-5 w-5" />
@@ -1379,7 +1379,7 @@ function Download() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   onClick={handleExportPDF}
-                  className="flex min-h-11 items-center gap-2 px-5"
+                  className="flex min-h-11 w-full items-center gap-2 px-5 sm:w-auto"
                   disabled={isDownloading || isSharing}
                 >
                   {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadIcon size={18} />}
@@ -1389,7 +1389,7 @@ function Download() {
                 {shareSupport.checked && shareSupport.mobileLike ? (
                   <Button
                     variant="secondary"
-                    className="flex min-h-11 items-center gap-2 px-5"
+                    className="flex min-h-11 w-full items-center gap-2 px-5 sm:w-auto"
                     onClick={handleShareResume}
                     disabled={isDownloading || isSharing}
                   >
@@ -1418,7 +1418,7 @@ function Download() {
           </div>
 
           {downloadMessage && (
-            <div className={`mx-6 mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm lg:mx-8 ${
+            <div className={`mx-4 mb-5 flex items-start gap-3 rounded-lg border p-3 text-sm min-[390px]:mx-5 min-[390px]:p-4 lg:mx-8 ${
               downloadSuccess
                 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
                 : 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200'
@@ -1445,8 +1445,8 @@ function Download() {
             </span>
           </div>
 
-          <div className="bg-slate-100 p-3 dark:bg-gray-950 sm:p-5">
-            <div className="rounded-lg border border-slate-200 bg-slate-900 p-3 shadow-inner dark:border-gray-800 sm:p-5">
+          <div className="bg-slate-100 p-2 dark:bg-gray-950 min-[390px]:p-3 sm:p-5">
+            <div className="rounded-lg border border-slate-200 bg-slate-900 p-2 shadow-inner dark:border-gray-800 min-[390px]:p-3 sm:p-5">
               <div ref={previewRef} className="mx-auto w-full max-w-[1080px]">
                 <ResumePreview />
               </div>

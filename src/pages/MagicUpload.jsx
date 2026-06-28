@@ -135,16 +135,16 @@ export default function MagicUpload() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 py-12">
+    <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-gray-50 p-3 py-8 dark:bg-gray-900 min-[390px]:p-4 sm:py-12">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-3 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
             <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white min-[390px]:text-4xl">
             Magic Upload
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-base leading-7 text-gray-600 dark:text-gray-400 sm:text-lg">
             Drop your existing PDF resume here. Our secure AI will automatically extract your details and instantly format them into six fresher and intern templates.
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function MagicUpload() {
         <div 
           onClick={() => status === 'idle' || status === 'error' ? fileInputRef.current?.click() : null}
           className={`
-            bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed p-12 text-center transition-all duration-300
+            rounded-xl border-2 border-dashed bg-white p-6 text-center transition-all duration-300 dark:bg-gray-800 min-[390px]:p-8 sm:p-12
             ${status === 'idle' || status === 'error' ? 'cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-gray-300 dark:border-gray-600' : 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'}
           `}
         >
