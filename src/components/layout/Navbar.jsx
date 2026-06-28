@@ -71,13 +71,13 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+    <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" onClick={closeMenu} className="flex min-w-0 items-center gap-2 text-lg font-bold text-primary-600 dark:text-primary-400 sm:text-xl">
-            <img src={resumeLogo} alt="Resume Builder Logo" className="h-8 w-8 shrink-0" />
-            <span className="truncate max-[340px]:hidden">ResumeBuilder</span>
+          <Link to="/" onClick={closeMenu} className="flex items-center space-x-2 text-xl font-bold text-primary-600 dark:text-primary-400">
+            <img src={resumeLogo} alt="Resume Builder Logo" className="h-8 w-8" />
+            <span>ResumeBuilder</span>
           </Link>
 
           {/* Navigation Links (Desktop) */}
@@ -128,7 +128,7 @@ function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="xl:hidden flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="xl:hidden flex items-center gap-2">
             {cloudIndicator && (
               <span title={cloudIndicator.label} aria-label={cloudIndicator.label} className={cloudIndicator.className}>
                 <CloudIcon className={`h-5 w-5 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
@@ -141,21 +141,21 @@ function Navbar() {
                     <UserCircle className="h-4 w-4" />
                     {user.firstName || 'Account'}
                   </Link>
-                  <button onClick={handleLogout} disabled={isSigningOut} className="hidden items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 sm:inline-flex">
+                  <button onClick={handleLogout} disabled={isSigningOut} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
                     <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
+                    <span className="hidden sm:inline">Logout</span>
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="hidden rounded-lg px-2 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 min-[390px]:inline-flex dark:text-white">Login</Link>
-                  <Link to="/signup" className="hidden rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 min-[390px]:inline-flex">Sign up</Link>
+                  <Link to="/login" className="rounded-lg px-2 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-white">Login</Link>
+                  <Link to="/signup" className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Sign up</Link>
                 </>
               )
             )}
             <button
               onClick={toggleMenu}
-              className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
               aria-expanded={isMenuOpen}
               aria-label="Toggle menu"
             >

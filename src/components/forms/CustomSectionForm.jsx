@@ -126,22 +126,22 @@ function CustomSectionForm() {
         </label>
 
         <div>
-          <div className="mb-2 flex flex-col gap-3 min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between">
+          <div className="mb-2 flex items-center justify-between gap-3">
             <div>
               <div className="form-label">Section entries</div>
               <div className="text-xs text-gray-500">Each entry keeps its details and matching profile link together.</div>
             </div>
-            <button type="button" onClick={addEntry} className="btn-secondary flex w-full shrink-0 items-center justify-center min-[390px]:w-auto"><Plus className="mr-1 h-4 w-4" /> Add entry</button>
+            <button type="button" onClick={addEntry} className="btn-secondary flex shrink-0 items-center"><Plus className="mr-1 h-4 w-4" /> Add entry</button>
           </div>
           <div className="space-y-2">
             {section.entries.map((entry, index) => (
               <div key={entry.id || index} className="rounded-md border border-gray-200 p-3 dark:border-gray-700">
-                <div className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+                <div className="grid grid-cols-[1fr_2fr_auto] gap-2">
                   <input value={entry.title} onChange={(event) => updateEntry(index, 'title', event.target.value)} className="form-input" placeholder="LeetCode" aria-label={`Entry ${index + 1} title`} />
                   <input value={entry.description} onChange={(event) => updateEntry(index, 'description', event.target.value)} className="form-input" placeholder="100+ DSA problems solved" aria-label={`Entry ${index + 1} details`} />
-                  <button type="button" onClick={() => removeEntry(index)} className="flex min-h-10 items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-400 hover:text-red-500 dark:border-gray-700 sm:border-0" aria-label={`Delete entry ${index + 1}`}><Trash2 className="h-5 w-5" /></button>
+                  <button type="button" onClick={() => removeEntry(index)} className="p-2 text-gray-400 hover:text-red-500" aria-label={`Delete entry ${index + 1}`}><Trash2 className="h-5 w-5" /></button>
                 </div>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <div className="mt-2 grid grid-cols-2 gap-2">
                   <input value={entry.linkLabel} onChange={(event) => updateEntry(index, 'linkLabel', event.target.value)} className="form-input" placeholder="View Profile" aria-label={`Entry ${index + 1} link label`} />
                   <input value={entry.url} onChange={(event) => updateEntry(index, 'url', event.target.value)} className="form-input" placeholder="leetcode.com/username" aria-label={`Entry ${index + 1} URL`} />
                 </div>

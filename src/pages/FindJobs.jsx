@@ -467,12 +467,12 @@ export default function FindJobs() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 dark:bg-gray-900 sm:py-10">
-      <div className="mx-auto max-w-7xl px-3 min-[390px]:px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-10 dark:bg-gray-900">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Find Jobs</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight text-gray-950 dark:text-white min-[390px]:text-3xl">Jobs matched to your resume</h1>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950 dark:text-white">Jobs matched to your resume</h1>
             <p className="mt-2 max-w-2xl text-gray-600 dark:text-gray-400">
               Search remote and on-site roles from trusted job boards, then refine them here.
             </p>
@@ -483,7 +483,7 @@ export default function FindJobs() {
           </div>
         </div>
 
-        <form onSubmit={loadJobs} className="card mb-8 p-4 min-[390px]:p-5 sm:p-6">
+        <form onSubmit={loadJobs} className="card mb-8 p-5 sm:p-6">
           <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_0.8fr]">
             <div>
               <label htmlFor="job-keyword" className="form-label">Job role / keyword</label>
@@ -540,11 +540,11 @@ export default function FindJobs() {
                 />
                 Remote
               </label>
-              <button type="button" onClick={resetFilters} className="btn-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto">
+              <button type="button" onClick={resetFilters} className="btn-secondary inline-flex items-center justify-center gap-2">
                 <RotateCcw className="h-4 w-4" />
                 Reset
               </button>
-              <button type="submit" disabled={status === 'loading'} className="btn-primary inline-flex w-full items-center justify-center gap-2 disabled:opacity-70 sm:w-auto">
+              <button type="submit" disabled={status === 'loading'} className="btn-primary inline-flex items-center justify-center gap-2 disabled:opacity-70">
                 {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 Search Jobs
               </button>
@@ -593,12 +593,12 @@ export default function FindJobs() {
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Showing {visibleStart}-{visibleEnd} of {visibleJobs.length} jobs
               </p>
-              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                   disabled={activePage === 1}
-                  className="inline-flex min-h-9 flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300 min-[390px]:flex-none"
+                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -622,7 +622,7 @@ export default function FindJobs() {
                   type="button"
                   onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                   disabled={activePage === totalPages}
-                  className="inline-flex min-h-9 flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300 min-[390px]:flex-none"
+                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -632,7 +632,7 @@ export default function FindJobs() {
 
             <div className="grid gap-5 lg:grid-cols-2">
               {paginatedJobs.map((job) => (
-                <article key={job.id} className="card flex flex-col p-4 min-[390px]:p-5 sm:p-6">
+                <article key={job.id} className="card flex flex-col p-6">
                   <div className="mb-4 flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                       {job.source}
@@ -642,7 +642,7 @@ export default function FindJobs() {
                     </span>
                   </div>
 
-                  <h2 className="mobile-safe-text text-lg font-semibold text-gray-950 dark:text-white min-[390px]:text-xl">{job.title}</h2>
+                  <h2 className="text-xl font-semibold text-gray-950 dark:text-white">{job.title}</h2>
                   <p className="mt-1 font-medium text-gray-700 dark:text-gray-300">{job.company}</p>
 
                   <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
