@@ -12,6 +12,7 @@ import Download from './pages/Download';
 import PrintResume from './pages/PrintResume';
 import TemplateViewer from './pages/TemplateViewer';
 import MagicUpload from './pages/MagicUpload';
+import FindJobs from './pages/FindJobs';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import Account from './pages/Account';
@@ -33,6 +34,7 @@ function AppLayout() {
           <Route path="/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
           <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
           <Route path="/download" element={<ProtectedRoute><Download /></ProtectedRoute>} />
+          <Route path="/jobs" element={<ProtectedRoute><FindJobs /></ProtectedRoute>} />
           <Route path="/profile" element={<Navigate to="/builder" replace />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />

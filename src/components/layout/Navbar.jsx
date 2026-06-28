@@ -38,7 +38,8 @@ function Navbar() {
     { path: '/magic', label: 'Magic Upload ✨' },
     { path: '/builder', label: 'Manual Entry / Edit' },
     { path: '/templates', label: 'Templates' },
-    { path: '/download', label: 'Download' }
+    { path: '/download', label: 'Download' },
+    { path: '/jobs', label: 'Find Jobs' }
   ];
 
   const isActive = (path) => {
