@@ -645,15 +645,15 @@ export default function FindJobs() {
                   <h2 className="text-xl font-semibold text-gray-950 dark:text-white">{job.title}</h2>
                   <p className="mt-1 font-medium text-gray-700 dark:text-gray-300">{job.company}</p>
 
-                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                    {job.location}
+                  <div className="mt-3 flex min-w-0 items-start gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                    <span className="min-w-0 break-words">{job.location}</span>
                   </div>
 
                   {job.tags.length > 0 && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {job.tags.map((tag) => (
-                        <span key={`${job.id}-${tag}`} className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                        <span key={`${job.id}-${tag}`} className="max-w-full break-words rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-300">
                           {tag}
                         </span>
                       ))}

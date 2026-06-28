@@ -43,7 +43,7 @@ function AchievementForm() {
   };
 
   return (
-    <div className="card p-6 bg-white dark:bg-gray-900 shadow-sm rounded-lg">
+    <div className="card rounded-lg bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
         <span className="mr-2">Achievements</span>
       </h2>

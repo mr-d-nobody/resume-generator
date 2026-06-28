@@ -49,7 +49,7 @@ function ExperienceForm() {
   };
 
   return (
-    <div className="card p-6">
+    <div className="card p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
         Professional Experience
       </h2>

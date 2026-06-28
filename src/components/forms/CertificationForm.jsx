@@ -58,7 +58,7 @@ function CertificationForm() {
   };
 
   return (
-    <div className="card rounded-lg bg-white p-6 shadow-sm dark:bg-gray-900">
+    <div className="card rounded-lg bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-6">
       <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">Certificates</h2>
 
       {resumeData.certifications.length > 0 && (
@@ -120,7 +120,7 @@ function CertificationForm() {
         </label>
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <button type="button" onClick={save} className="btn-primary flex items-center">
           {editingIndex === null ? <Plus className="mr-2 h-4 w-4" /> : <Pencil className="mr-2 h-4 w-4" />}
           {editingIndex === null ? 'Add certificate' : 'Save changes'}

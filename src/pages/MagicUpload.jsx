@@ -135,16 +135,16 @@ export default function MagicUpload() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4 py-12">
+    <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-gray-50 p-4 py-8 dark:bg-gray-900 sm:py-12">
       <div className="max-w-2xl w-full">
-        <div className="text-center mb-8">
+        <div className="mb-6 text-center sm:mb-8">
           <div className="inline-flex items-center justify-center p-3 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
             <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white sm:mb-4 sm:text-4xl">
             Magic Upload
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-base leading-7 text-gray-600 dark:text-gray-400 sm:text-lg">
             Drop your existing PDF resume here. Our secure AI will automatically extract your details and instantly format them into six fresher and intern templates.
           </p>
         </div>
@@ -152,14 +152,14 @@ export default function MagicUpload() {
         {/* Template Category Selection */}
         <div className="mb-8 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 text-center">Choose your fresher / intern template category</p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
             {TEMPLATE_CATEGORIES.map((category) => (
               <button
                 key={category.id}
                 type="button"
                 onClick={() => setSelectedCategory(category.id)}
                 disabled={status !== 'idle' && status !== 'error'}
-                className={`text-left rounded-lg border p-4 transition ${
+                className={`text-left rounded-lg border p-3 transition sm:p-4 ${
                   selectedCategory === category.id
                     ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-sm dark:bg-blue-900/30 dark:text-blue-100'
                     : 'border-gray-200 bg-transparent text-gray-700 hover:border-blue-300 hover:bg-blue-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
@@ -179,7 +179,7 @@ export default function MagicUpload() {
         <div 
           onClick={() => status === 'idle' || status === 'error' ? fileInputRef.current?.click() : null}
           className={`
-            bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed p-12 text-center transition-all duration-300
+            rounded-xl border-2 border-dashed bg-white p-6 text-center transition-all duration-300 dark:bg-gray-800 sm:p-10 lg:p-12
             ${status === 'idle' || status === 'error' ? 'cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-gray-300 dark:border-gray-600' : 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'}
           `}
         >

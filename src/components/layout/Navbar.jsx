@@ -72,12 +72,12 @@ function Navbar() {
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" onClick={closeMenu} className="flex items-center space-x-2 text-xl font-bold text-primary-600 dark:text-primary-400">
-            <img src={resumeLogo} alt="Resume Builder Logo" className="h-8 w-8" />
-            <span>ResumeBuilder</span>
+          <Link to="/" onClick={closeMenu} className="flex min-w-0 max-w-[58vw] items-center space-x-2 text-xl font-bold text-primary-600 dark:text-primary-400 sm:max-w-none">
+            <img src={resumeLogo} alt="Resume Builder Logo" className="h-8 w-8 shrink-0" />
+            <span className="truncate">ResumeBuilder</span>
           </Link>
 
           {/* Navigation Links (Desktop) */}
@@ -128,7 +128,7 @@ function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="xl:hidden flex items-center gap-2">
+          <div className="xl:hidden flex items-center gap-1.5 sm:gap-2">
             {cloudIndicator && (
               <span title={cloudIndicator.label} aria-label={cloudIndicator.label} className={cloudIndicator.className}>
                 <CloudIcon className={`h-5 w-5 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
@@ -141,15 +141,15 @@ function Navbar() {
                     <UserCircle className="h-4 w-4" />
                     {user.firstName || 'Account'}
                   </Link>
-                  <button onClick={handleLogout} disabled={isSigningOut} className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                  <button onClick={handleLogout} disabled={isSigningOut} className="hidden items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 sm:inline-flex">
                     <LogOut className="h-4 w-4" />
                     <span className="hidden sm:inline">Logout</span>
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" className="rounded-lg px-2 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-white">Login</Link>
-                  <Link to="/signup" className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Sign up</Link>
+                  <Link to="/login" className="hidden rounded-lg px-2 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 dark:text-white sm:inline-flex">Login</Link>
+                  <Link to="/signup" className="hidden rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 sm:inline-flex">Sign up</Link>
                 </>
               )
             )}

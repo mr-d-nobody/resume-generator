@@ -64,7 +64,7 @@ function Home() {
               <img src={resumeLogo} alt="" className="h-5 w-5" />
               Resume builder for early-career job seekers
             </div>
-            <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
               Build a clean resume and find jobs from one workspace.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 dark:text-gray-300 sm:text-lg">

@@ -26,7 +26,7 @@ function PersonalInfoForm() {
   };
 
   return (
-    <div className="card p-6">
+    <div className="card p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
         <User className="h-5 w-5 mr-2" />
         Personal Information
@@ -39,19 +39,19 @@ function PersonalInfoForm() {
             <Camera className="h-4 w-4 inline mr-1" />
             Profile Photo (Optional)
           </label>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             {personalInfo.photo && (
               <img
                 src={personalInfo.photo}
                 alt="Profile"
-                className="h-20 w-20 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600"
+              className="h-20 w-20 shrink-0 rounded-full border-2 border-gray-300 object-cover dark:border-gray-600"
               />
             )}
             <input
               type="file"
               accept="image/*"
               onChange={handlePhotoUpload}
-              className="form-input"
+              className="form-input min-w-0"
             />
           </div>
         </div>

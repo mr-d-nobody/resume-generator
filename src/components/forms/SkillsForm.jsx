@@ -46,7 +46,7 @@ function SkillsForm() {
   }, {});
 
   return (
-    <div className="card p-6">
+    <div className="card p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
         Skills
       </h2>
@@ -63,9 +63,9 @@ function SkillsForm() {
                 {skills.map(skill => (
                   <div
                     key={skill.id}
-                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center dark:bg-gray-800"
+                    className="flex max-w-full items-center rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800"
                   >
-                    <span className="text-sm text-gray-800 mr-1 dark:text-gray-200">{skill.name}</span>
+                    <span className="min-w-0 break-words text-sm text-gray-800 mr-1 dark:text-gray-200">{skill.name}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">({skill.level})</span>
                     <button
                       onClick={() => handleRemoveSkill(skill.id)}

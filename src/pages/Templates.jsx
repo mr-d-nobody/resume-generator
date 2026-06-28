@@ -116,26 +116,26 @@ function Templates() {
   const filters = [{ id: 'All', label: 'All Freshers' }, ...TEMPLATE_CATEGORIES];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div className="min-h-screen bg-gray-50 py-8 dark:bg-gray-900 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Magic Upload CTA */}
         {!hasData && (
-          <div className="mb-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl overflow-hidden relative">
+          <div className="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl overflow-hidden relative sm:mb-12">
             <div className="absolute inset-0 bg-black opacity-10"></div>
-            <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-center justify-between">
+            <div className="relative flex flex-col items-center justify-between p-5 sm:p-8 md:flex-row lg:p-10">
               <div className="text-white mb-6 md:mb-0 md:mr-8 text-center md:text-left">
-                <h2 className="text-3xl font-bold mb-2 flex items-center justify-center md:justify-start">
-                  <UploadCloud className="mr-3 w-8 h-8" />
+                <h2 className="mb-2 flex items-center justify-center text-2xl font-bold sm:text-3xl md:justify-start">
+                  <UploadCloud className="mr-3 h-7 w-7 sm:h-8 sm:w-8" />
                   Try Magic Upload
                 </h2>
-                <p className="text-blue-100 text-lg max-w-xl">
+                <p className="max-w-xl text-sm leading-6 text-blue-100 sm:text-lg sm:leading-8">
                   Don't want to fill out forms manually? Upload your existing PDF resume and our AI will automatically populate all of these templates for you instantly!
                 </p>
               </div>
               <Link 
                 to="/magic"
-                className="whitespace-nowrap px-8 py-4 bg-white text-blue-600 font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg"
+                className="w-full rounded-full bg-white px-5 py-3 text-center text-base font-bold text-blue-600 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
               >
                 Upload Resume ✨
               </Link>
@@ -144,16 +144,16 @@ function Templates() {
         )}
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white sm:mb-4 sm:text-3xl">
             {hasData ? "Your Resume on Fresher Templates" : "Fresher & Intern Templates"}
           </h1>
-          <p className="max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-300">
+          <p className="mx-auto max-w-2xl text-base leading-7 text-gray-500 dark:text-gray-300 sm:text-lg">
             {hasData ? "Browse how your extracted data looks across fresher and intern templates." : "Choose from fresher and intern templates designed for early-career resumes."}
           </p>
         </div>
 
         {/* Filter Bar */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:mb-10 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0">
           {filters.map(cat => (
             <button
               key={cat.id}
@@ -161,7 +161,7 @@ function Templates() {
                 setFilter(cat.id);
                 if (cat.id !== 'All') setTemplateCategory(cat.id);
               }}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors sm:px-6 ${
                 filter === cat.id 
                   ? 'bg-blue-600 text-white shadow-md' 
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -182,35 +182,44 @@ function Templates() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 mb-12">
+          <div className="mb-12 grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
             {filteredTemplates.map((template) => (
-            <div key={template.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow flex flex-col">
+            <div key={template.id} className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md transition-shadow hover:shadow-xl dark:border-gray-700 dark:bg-gray-800">
               
               {/* Template Preview Area */}
-              <div className="h-96 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 relative overflow-hidden group">
+              <div className="group relative h-64 overflow-hidden border-b border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-900 sm:h-80 lg:h-96">
                 {hasData ? (
-                  // Live Render
-                  <div className="absolute top-0 left-0 w-full h-full flex justify-center custom-scrollbar overflow-hidden bg-gray-200 dark:bg-gray-800">
-                    <div className="transform scale-[0.45] origin-top pt-4">
-                      <div className="shadow-2xl bg-white min-h-[1123px] w-[794px] pointer-events-none">
-                        <TemplateErrorBoundary>
-                          {renderLiveTemplate(template.id)}
-                        </TemplateErrorBoundary>
+                  <>
+                    {/* Static thumbnail keeps phone cards readable and avoids desktop-style squeezing. */}
+                    <img
+                      src={template.image}
+                      alt={`${template.name} Template Preview`}
+                      className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105 md:hidden"
+                      onError={(e) => { e.target.src = 'https://via.placeholder.com/300x400?text=Preview+Missing'; }}
+                    />
+                    {/* Live render is reserved for larger screens where the full resume can breathe. */}
+                    <div className="absolute left-0 top-0 hidden h-full w-full justify-center overflow-hidden bg-gray-200 dark:bg-gray-800 md:flex">
+                      <div className="origin-top scale-[0.42] transform pt-4 lg:scale-[0.45]">
+                        <div className="pointer-events-none min-h-[1123px] w-[794px] bg-white shadow-2xl">
+                          <TemplateErrorBoundary>
+                            {renderLiveTemplate(template.id)}
+                          </TemplateErrorBoundary>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </>
                 ) : (
                   // Static Image Fallback
                   <img 
                     src={template.image} 
                     alt={`${template.name} Template Preview`} 
-                    className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     onError={(e) => { e.target.src = 'https://via.placeholder.com/300x400?text=Preview+Missing'; }}
                   />
                 )}
                 
                 {/* Overlay Action */}
-                <div className="absolute inset-0 bg-blue-900/0 group-hover:bg-blue-900/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="absolute inset-0 hidden items-center justify-center bg-blue-900/0 opacity-0 transition-colors group-hover:bg-blue-900/10 group-hover:opacity-100 md:flex">
                   <Link 
                     to={`/builder?template=${template.id}`}
                     onClick={() => setTemplate(template.id)}
@@ -221,9 +230,9 @@ function Templates() {
                 </div>
               </div>
               
-              <div className="p-6 flex-1 flex flex-col">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{template.name}</h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4 flex-1">{template.description}</p>
+              <div className="flex flex-1 flex-col p-5 sm:p-6">
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white sm:text-xl">{template.name}</h3>
+                <p className="mb-4 flex-1 text-sm leading-6 text-gray-500 dark:text-gray-400 sm:text-base">{template.description}</p>
                 
                 <div className="mb-6">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Features:</h4>
@@ -240,7 +249,7 @@ function Templates() {
                 <Link 
                   to={`/builder?template=${template.id}`}
                   onClick={() => setTemplate(template.id)}
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Use This Template
                 </Link>

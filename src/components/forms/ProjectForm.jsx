@@ -114,19 +114,19 @@ function ProjectForm() {
         </label>
 
         <div>
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Project links</div>
               <div className="text-xs text-gray-500">Use labels such as Live Demo, GitHub, Case Study, or Documentation.</div>
             </div>
-            <button type="button" onClick={addLink} className="btn-secondary flex items-center"><Plus className="mr-1 h-4 w-4" /> Add link</button>
+            <button type="button" onClick={addLink} className="btn-secondary flex items-center justify-center sm:shrink-0"><Plus className="mr-1 h-4 w-4" /> Add link</button>
           </div>
           <div className="space-y-2">
             {draft.links.map((link, index) => (
-              <div key={link.id || index} className="grid grid-cols-[1fr_2fr_auto] gap-2">
+              <div key={link.id || index} className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
                 <input value={link.label} onChange={(event) => updateLink(index, 'label', event.target.value)} className="form-input" placeholder="Live Demo" aria-label={`Project link ${index + 1} label`} />
                 <input value={link.url} onChange={(event) => updateLink(index, 'url', event.target.value)} className="form-input" placeholder="example.com/project" aria-label={`Project link ${index + 1} URL`} />
-                <button type="button" onClick={() => removeLink(index)} className="p-2 text-gray-400 hover:text-red-500" aria-label={`Delete project link ${index + 1}`}><Trash2 className="h-5 w-5" /></button>
+                <button type="button" onClick={() => removeLink(index)} className="flex min-h-11 items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-400 hover:text-red-500 sm:border-0" aria-label={`Delete project link ${index + 1}`}><Trash2 className="h-5 w-5" /></button>
               </div>
             ))}
           </div>
@@ -137,7 +137,7 @@ function ProjectForm() {
           <textarea rows="4" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} className="form-input mt-1" placeholder="Add each highlight on a new line" />
         </label>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button type="button" onClick={save} className="btn-primary flex flex-1 items-center justify-center">
             {editingIndex === null ? <Plus className="mr-2 h-4 w-4" /> : <Edit2 className="mr-2 h-4 w-4" />}
             {editingIndex === null ? 'Add project' : 'Save project'}

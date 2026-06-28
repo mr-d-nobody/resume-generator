@@ -35,15 +35,15 @@ function EducationForm() {
   };
 
   return (
-    <div className="card p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="card p-5 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
           <GraduationCap className="h-5 w-5 mr-2" /> Education
         </h2>
         {!showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="btn-primary flex items-center"
+            className="btn-primary flex items-center justify-center"
           >
             <Plus className="h-4 w-4 mr-1" /> Add Education
           </button>
@@ -53,8 +53,8 @@ function EducationForm() {
       {/* Existing Education */}
       {education.map((edu, index) => (
         <div key={edu.id || index} className="border border-gray-200 p-4 rounded-lg mb-4 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-          <div className="flex justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
               <p className="font-semibold">{edu.degree}</p>
               <p className="text-gray-600 dark:text-gray-300">{edu.institution}</p>
             </div>
@@ -111,7 +111,7 @@ function EducationForm() {
             placeholder="Additional details"
             className="form-input w-full h-24"
           />
-          <div className="flex justify-end space-x-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
               onClick={() => setShowAddForm(false)}
               className="btn-secondary"

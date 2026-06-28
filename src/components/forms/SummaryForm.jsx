@@ -11,7 +11,7 @@ function SummaryForm() {
   };
 
   return (
-    <div className="card p-6 bg-white dark:bg-gray-900 shadow-sm rounded-lg">
+    <div className="card rounded-lg bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
         <FileText className="h-5 w-5 mr-2" />
         Professional Summary
