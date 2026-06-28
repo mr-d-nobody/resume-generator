@@ -1,9 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, BriefcaseBusiness, ExternalLink, Loader2, MapPin, RotateCcw, Search } from 'lucide-react';
+import {
+  AlertCircle,
+  BriefcaseBusiness,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Loader2,
+  MapPin,
+  RotateCcw,
+  Search
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useResume } from '../contexts/ResumeContext';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
+const JOBS_PER_PAGE = 8;
 const DIRECT_SOURCE_NAMES = ['Remotive', 'Jobicy', 'Himalayas', 'Arbeitnow', 'Jooble', 'Adzuna'];
 const LEVER_COMPANY_SLUGS = ['gohighlevel'];
 const GREENHOUSE_BOARDS = [
@@ -354,6 +365,20 @@ function jobMatchesFilters(job, filters) {
   return matchesKeyword && matchesLocation && matchesRemote && matchesType && matchesSkills;
 }
 
+function buildPageNumbers(currentPage, totalPages) {
+  const visiblePageCount = 5;
+  const halfWindow = Math.floor(visiblePageCount / 2);
+  let startPage = Math.max(1, currentPage - halfWindow);
+  const endPage = Math.min(totalPages, startPage + visiblePageCount - 1);
+
+  startPage = Math.max(1, endPage - visiblePageCount + 1);
+
+  return Array.from(
+    { length: endPage - startPage + 1 },
+    (_, index) => startPage + index
+  );
+}
+
 export default function FindJobs() {
   const { resumeData } = useResume();
   const { user } = useAuth();
@@ -371,11 +396,25 @@ export default function FindJobs() {
   const [failedSources, setFailedSources] = useState([]);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const visibleJobs = useMemo(
     () => jobs.filter((job) => jobMatchesFilters(job, filters)),
     [jobs, filters]
   );
+  const totalPages = Math.max(1, Math.ceil(visibleJobs.length / JOBS_PER_PAGE));
+  const activePage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (activePage - 1) * JOBS_PER_PAGE;
+  const paginatedJobs = useMemo(
+    () => visibleJobs.slice(pageStartIndex, pageStartIndex + JOBS_PER_PAGE),
+    [visibleJobs, pageStartIndex]
+  );
+  const pageNumbers = useMemo(
+    () => buildPageNumbers(activePage, totalPages),
+    [activePage, totalPages]
+  );
+  const visibleStart = visibleJobs.length === 0 ? 0 : pageStartIndex + 1;
+  const visibleEnd = Math.min(pageStartIndex + JOBS_PER_PAGE, visibleJobs.length);
 
   const updateFilter = (event) => {
     const { name, type, checked, value } = event.target;
@@ -395,6 +434,7 @@ export default function FindJobs() {
       const result = await fetchJobs(filters);
       setJobs(result.jobs);
       setFailedSources(result.failedSources);
+      setCurrentPage(1);
       setStatus('success');
     } catch (fetchError) {
       setJobs([]);
@@ -405,11 +445,20 @@ export default function FindJobs() {
 
   const resetFilters = () => {
     setFilters(defaultFilters);
+    setCurrentPage(1);
   };
 
   useEffect(() => {
     setFilters(defaultFilters);
   }, [defaultFilters]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, jobs]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   useEffect(() => {
     loadJobs();
@@ -539,50 +588,93 @@ export default function FindJobs() {
         )}
 
         {status === 'success' && visibleJobs.length > 0 && (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {visibleJobs.map((job) => (
-              <article key={job.id} className="card flex flex-col p-6">
-                <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-                    {job.source}
-                  </span>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-                    {job.jobType}
-                  </span>
-                </div>
-
-                <h2 className="text-xl font-semibold text-gray-950 dark:text-white">{job.title}</h2>
-                <p className="mt-1 font-medium text-gray-700 dark:text-gray-300">{job.company}</p>
-
-                <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                  <MapPin className="h-4 w-4 text-blue-600" />
-                  {job.location}
-                </div>
-
-                {job.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {job.tags.map((tag) => (
-                      <span key={`${job.id}-${tag}`} className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <p className="mt-4 flex-1 text-sm leading-6 text-gray-600 dark:text-gray-400">{job.description || 'Open the original post to read the full job description.'}</p>
-
-                <a
-                  href={job.applyUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-primary mt-5 inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+          <>
+            <div className="mb-4 flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                Showing {visibleStart}-{visibleEnd} of {visibleJobs.length} jobs
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={activePage === 1}
+                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
                 >
-                  Apply Now
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </article>
-            ))}
-          </div>
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
+                {pageNumbers.map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    onClick={() => setCurrentPage(pageNumber)}
+                    aria-current={activePage === pageNumber ? 'page' : undefined}
+                    className={`min-h-9 min-w-9 rounded-lg px-3 text-sm font-semibold transition ${
+                      activePage === pageNumber
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/25'
+                        : 'border border-gray-200 text-gray-700 hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={activePage === totalPages}
+                  className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              {paginatedJobs.map((job) => (
+                <article key={job.id} className="card flex flex-col p-6">
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                      {job.source}
+                    </span>
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                      {job.jobType}
+                    </span>
+                  </div>
+
+                  <h2 className="text-xl font-semibold text-gray-950 dark:text-white">{job.title}</h2>
+                  <p className="mt-1 font-medium text-gray-700 dark:text-gray-300">{job.company}</p>
+
+                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <MapPin className="h-4 w-4 text-blue-600" />
+                    {job.location}
+                  </div>
+
+                  {job.tags.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {job.tags.map((tag) => (
+                        <span key={`${job.id}-${tag}`} className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="mt-4 flex-1 text-sm leading-6 text-gray-600 dark:text-gray-400">{job.description || 'Open the original post to read the full job description.'}</p>
+
+                  <a
+                    href={job.applyUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-primary mt-5 inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                  >
+                    Apply Now
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </article>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
