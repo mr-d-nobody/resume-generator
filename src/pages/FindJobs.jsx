@@ -3,7 +3,7 @@ import { AlertCircle, BriefcaseBusiness, ExternalLink, Loader2, MapPin, RotateCc
 import { useResume } from '../contexts/ResumeContext';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
-const DIRECT_SOURCE_NAMES = ['Remotive', 'Jobicy', 'Himalayas', 'Arbeitnow'];
+const DIRECT_SOURCE_NAMES = ['Remotive', 'Jobicy', 'Himalayas', 'Arbeitnow', 'Jooble', 'Adzuna'];
 const LEVER_COMPANY_SLUGS = ['gohighlevel'];
 const GREENHOUSE_BOARDS = [
   { token: 'figma', company: 'Figma' },
@@ -74,6 +74,19 @@ function splitSkills(value = '') {
     .split(',')
     .map((skill) => skill.trim().toLowerCase())
     .filter(Boolean);
+}
+
+function inferAdzunaCountry(location = '') {
+  const normalized = location.toLowerCase();
+
+  if (normalized.includes('india')) return 'in';
+  if (normalized.includes('united kingdom') || normalized.includes('uk') || normalized.includes('england')) return 'gb';
+  if (normalized.includes('canada')) return 'ca';
+  if (normalized.includes('australia')) return 'au';
+  if (normalized.includes('germany')) return 'de';
+  if (normalized.includes('france')) return 'fr';
+  if (normalized.includes('united states') || normalized.includes('usa') || normalized.includes('us')) return 'us';
+  return '';
 }
 
 function normalizeRemotiveJob(job) {
@@ -180,6 +193,42 @@ function normalizeGreenhouseJob(job, companyName) {
   };
 }
 
+function normalizeJoobleJob(job) {
+  const description = job.snippet || job.description;
+
+  return {
+    id: `jooble-${job.id || job.link || job.title}`,
+    source: 'Jooble',
+    title: job.title || 'Untitled role',
+    company: job.company || 'Unknown company',
+    location: job.location || 'Not specified',
+    jobType: normalizeJobType(job.type || description),
+    tags: [job.source, job.salary].filter(Boolean).slice(0, 8),
+    description: shortText(description),
+    applyUrl: job.link,
+    remote: isRemoteJob(job.location, job.title, description)
+  };
+}
+
+function normalizeAdzunaJob(job) {
+  const location = job.location?.display_name || 'Not specified';
+  const company = job.company?.display_name || 'Unknown company';
+  const typeText = [job.contract_time, job.contract_type].filter(Boolean).join(' ');
+
+  return {
+    id: `adzuna-${job.id}`,
+    source: 'Adzuna',
+    title: job.title || 'Untitled role',
+    company,
+    location,
+    jobType: normalizeJobType(typeText),
+    tags: [job.category?.label, job.contract_type].filter(Boolean).slice(0, 8),
+    description: shortText(job.description),
+    applyUrl: job.redirect_url,
+    remote: isRemoteJob(location, job.title, job.description)
+  };
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -237,11 +286,19 @@ async function fetchJobs(filters) {
   if (keyword) himalayasParams.set('q', keyword);
   const himalayasUrl = `/api/himalayas-jobs?${himalayasParams}`;
 
+  const credentialedParams = new URLSearchParams();
+  if (keyword) credentialedParams.set('keywords', keyword);
+  if (location) credentialedParams.set('location', location);
+  const adzunaCountry = inferAdzunaCountry(location);
+  if (adzunaCountry) credentialedParams.set('country', adzunaCountry);
+
   const sourceRequests = [
     makeSettledSource('Remotive', fetchJson(remotiveUrl).then((data) => (data.jobs || []).map(normalizeRemotiveJob))),
     makeSettledSource('Jobicy', fetchJson(jobicyUrl).then((data) => (data.jobs || []).map(normalizeJobicyJob))),
     makeSettledSource('Himalayas', fetchJson(himalayasUrl).then((data) => (data.jobs || []).map(normalizeHimalayasJob))),
     makeSettledSource('Arbeitnow', fetchJson('https://www.arbeitnow.com/api/job-board-api').then((data) => (data.data || []).map(normalizeArbeitnowJob))),
+    makeSettledSource('Jooble', fetchJson(`/api/jooble-jobs?${credentialedParams}`).then((data) => (data.jobs || []).map(normalizeJoobleJob))),
+    makeSettledSource('Adzuna', fetchJson(`/api/adzuna-jobs?${credentialedParams}`).then((data) => (data.results || []).map(normalizeAdzunaJob))),
     makeSettledSource('Lever', fetchLeverJobs()),
     makeSettledSource('Greenhouse', fetchGreenhouseJobs())
   ];
@@ -360,7 +417,7 @@ export default function FindJobs() {
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Find Jobs</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950 dark:text-white">Remote roles matched to your resume</h1>
             <p className="mt-2 max-w-2xl text-gray-600 dark:text-gray-400">
-              Search live roles from Remotive, Jobicy, Himalayas, Arbeitnow, Lever, and Greenhouse, then refine them here.
+              Search live roles from Remotive, Jobicy, Himalayas, Arbeitnow, Jooble, Adzuna, Lever, and Greenhouse, then refine them here.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
