@@ -3,6 +3,14 @@ import { AlertCircle, BriefcaseBusiness, ExternalLink, Loader2, MapPin, RotateCc
 import { useResume } from '../contexts/ResumeContext';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
+const DIRECT_SOURCE_NAMES = ['Remotive', 'Jobicy', 'Himalayas', 'Arbeitnow'];
+const LEVER_COMPANY_SLUGS = ['gohighlevel'];
+const GREENHOUSE_BOARDS = [
+  { token: 'figma', company: 'Figma' },
+  { token: 'discord', company: 'Discord' },
+  { token: 'reddit', company: 'Reddit' },
+  { token: 'duolingo', company: 'Duolingo' }
+];
 
 function cleanText(value = '') {
   const html = String(value);
@@ -10,7 +18,15 @@ function cleanText(value = '') {
   // API descriptions come as HTML, so convert them into readable plain text for cards.
   if (typeof window !== 'undefined' && window.DOMParser) {
     const parsed = new window.DOMParser().parseFromString(html, 'text/html');
-    return parsed.body.textContent.replace(/\s+/g, ' ').trim();
+    const firstPass = parsed.body.textContent.replace(/\s+/g, ' ').trim();
+
+    // Some APIs send HTML that is encoded inside HTML. Decode one extra pass.
+    if (firstPass.includes('<') && firstPass.includes('>')) {
+      const decoded = new window.DOMParser().parseFromString(firstPass, 'text/html');
+      return decoded.body.textContent.replace(/\s+/g, ' ').trim();
+    }
+
+    return firstPass;
   }
 
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -30,6 +46,20 @@ function normalizeJobType(value) {
   if (normalized.includes('contract') || normalized.includes('freelance')) return 'Contract';
   if (normalized.includes('full')) return 'Full-time';
   return rawValue || 'Not specified';
+}
+
+function inferJobTypeFromText(value) {
+  const text = String(value || '').toLowerCase();
+
+  if (text.includes('part-time') || text.includes('part time')) return 'Part-time';
+  if (text.includes('internship') || text.includes('intern ')) return 'Internship';
+  if (text.includes('contract')) return 'Contract';
+  if (text.includes('full-time') || text.includes('full time')) return 'Full-time';
+  return 'Not specified';
+}
+
+function isRemoteJob(...values) {
+  return values.some((value) => String(value || '').toLowerCase().includes('remote'));
 }
 
 function extractSkillNames(skills = []) {
@@ -76,12 +106,116 @@ function normalizeJobicyJob(job) {
   };
 }
 
+function normalizeHimalayasJob(job) {
+  const locations = Array.isArray(job.locationRestrictions) && job.locationRestrictions.length > 0
+    ? job.locationRestrictions.join(', ')
+    : 'Remote';
+
+  return {
+    id: `himalayas-${job.guid || job.applicationLink || job.title}`,
+    source: 'Himalayas',
+    title: job.title || 'Untitled role',
+    company: job.companyName || 'Unknown company',
+    location: locations,
+    jobType: normalizeJobType(job.employmentType),
+    tags: [...(job.categories || []), ...(job.seniority || [])].slice(0, 8),
+    description: shortText(job.excerpt || job.description),
+    applyUrl: job.applicationLink || job.guid,
+    remote: true
+  };
+}
+
+function normalizeArbeitnowJob(job) {
+  return {
+    id: `arbeitnow-${job.slug}`,
+    source: 'Arbeitnow',
+    title: job.title || 'Untitled role',
+    company: job.company_name || 'Unknown company',
+    location: job.location || 'Not specified',
+    jobType: normalizeJobType(job.job_types),
+    tags: Array.isArray(job.tags) ? job.tags.slice(0, 8) : [],
+    description: shortText(job.description),
+    applyUrl: job.url,
+    remote: Boolean(job.remote)
+  };
+}
+
+function normalizeLeverJob(job, companySlug) {
+  const category = job.categories || {};
+  const location = category.location || category.allLocations?.join(', ') || job.country || 'Not specified';
+  const description = job.descriptionPlain || job.openingPlain || job.description || job.opening;
+
+  return {
+    id: `lever-${job.id}`,
+    source: 'Lever',
+    title: job.text || 'Untitled role',
+    company: companySlug,
+    location,
+    jobType: normalizeJobType(category.commitment),
+    tags: [category.department, category.team, job.workplaceType].filter(Boolean).slice(0, 8),
+    description: shortText(description),
+    applyUrl: job.hostedUrl || job.applyUrl,
+    remote: isRemoteJob(job.workplaceType, location, job.additionalPlain, description)
+  };
+}
+
+function normalizeGreenhouseJob(job, companyName) {
+  const departmentNames = Array.isArray(job.departments)
+    ? job.departments.map((department) => department.name).filter(Boolean)
+    : [];
+  const location = job.location?.name || 'Not specified';
+  const description = cleanText(job.content);
+
+  return {
+    id: `greenhouse-${job.id}`,
+    source: 'Greenhouse',
+    title: job.title || 'Untitled role',
+    company: job.company_name || companyName,
+    location,
+    jobType: inferJobTypeFromText(description),
+    tags: departmentNames.slice(0, 8),
+    description: shortText(description),
+    applyUrl: job.absolute_url,
+    remote: isRemoteJob(location, description)
+  };
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}`);
   }
   return response.json();
+}
+
+function makeSettledSource(name, promise) {
+  return promise.then((jobs) => ({ name, jobs }));
+}
+
+async function fetchLeverJobs() {
+  const results = await Promise.allSettled(
+    LEVER_COMPANY_SLUGS.map((companySlug) =>
+      fetchJson(`https://api.lever.co/v0/postings/${companySlug}?mode=json`)
+        .then((jobs) => (jobs || []).map((job) => normalizeLeverJob(job, companySlug)))
+    )
+  );
+
+  return results
+    .filter((result) => result.status === 'fulfilled')
+    .flatMap((result) => result.value);
+}
+
+async function fetchGreenhouseJobs() {
+  const results = await Promise.allSettled(
+    GREENHOUSE_BOARDS.map((board) =>
+      fetchJson(`https://boards-api.greenhouse.io/v1/boards/${board.token}/jobs?content=true`)
+        .then((response) => (response.jobs || []).map((job) => normalizeGreenhouseJob(job, board.company)))
+    )
+  );
+
+  return results
+    .filter((result) => result.status === 'fulfilled')
+    .flatMap((result) => result.value);
 }
 
 async function fetchJobs(filters) {
@@ -99,28 +233,35 @@ async function fetchJobs(filters) {
   if (primaryTag) jobicyParams.set('tag', primaryTag);
   const jobicyUrl = `https://jobicy.com/api/v2/remote-jobs?${jobicyParams}`;
 
-  const [remotiveResult, jobicyResult] = await Promise.allSettled([
-    fetchJson(remotiveUrl),
-    fetchJson(jobicyUrl)
-  ]);
+  const himalayasParams = new URLSearchParams({ limit: '50' });
+  if (keyword) himalayasParams.set('q', keyword);
+  const himalayasUrl = `/api/himalayas-jobs?${himalayasParams}`;
+
+  const sourceRequests = [
+    makeSettledSource('Remotive', fetchJson(remotiveUrl).then((data) => (data.jobs || []).map(normalizeRemotiveJob))),
+    makeSettledSource('Jobicy', fetchJson(jobicyUrl).then((data) => (data.jobs || []).map(normalizeJobicyJob))),
+    makeSettledSource('Himalayas', fetchJson(himalayasUrl).then((data) => (data.jobs || []).map(normalizeHimalayasJob))),
+    makeSettledSource('Arbeitnow', fetchJson('https://www.arbeitnow.com/api/job-board-api').then((data) => (data.data || []).map(normalizeArbeitnowJob))),
+    makeSettledSource('Lever', fetchLeverJobs()),
+    makeSettledSource('Greenhouse', fetchGreenhouseJobs())
+  ];
+
+  const results = await Promise.allSettled(sourceRequests);
 
   const jobs = [];
   const failedSources = [];
 
-  if (remotiveResult.status === 'fulfilled') {
-    jobs.push(...(remotiveResult.value.jobs || []).map(normalizeRemotiveJob));
-  } else {
-    failedSources.push('Remotive');
-  }
+  results.forEach((result, index) => {
+    const sourceName = [...DIRECT_SOURCE_NAMES, 'Lever', 'Greenhouse'][index];
+    if (result.status === 'fulfilled') {
+      jobs.push(...result.value.jobs);
+    } else {
+      failedSources.push(sourceName);
+    }
+  });
 
-  if (jobicyResult.status === 'fulfilled') {
-    jobs.push(...(jobicyResult.value.jobs || []).map(normalizeJobicyJob));
-  } else {
-    failedSources.push('Jobicy');
-  }
-
-  if (failedSources.length === 2) {
-    throw new Error('Both job sources are unavailable right now. Please try again.');
+  if (failedSources.length === sourceRequests.length) {
+    throw new Error('All job sources are unavailable right now. Please try again.');
   }
 
   return { jobs, failedSources };
@@ -219,7 +360,7 @@ export default function FindJobs() {
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Find Jobs</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950 dark:text-white">Remote roles matched to your resume</h1>
             <p className="mt-2 max-w-2xl text-gray-600 dark:text-gray-400">
-              Search live roles from Remotive and Jobicy, then refine them with filters on this page.
+              Search live roles from Remotive, Jobicy, Himalayas, Arbeitnow, Lever, and Greenhouse, then refine them here.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">

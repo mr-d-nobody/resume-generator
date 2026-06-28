@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_BASE_PATH || '/',
     server: {
       proxy: {
+        '/api/himalayas-jobs': {
+          target: 'https://himalayas.app',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/himalayas-jobs/, '/jobs/api/search'),
+        },
         '/api': {
           target: apiTarget,
           changeOrigin: true,
