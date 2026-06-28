@@ -1161,86 +1161,6 @@ async function generatePreviewPdf({ jsPDF, html2canvas, resumeElement }) {
   }
 }
 
-async function waitForResumePreviewReady(previewRoot) {
-  const shell = previewRoot?.querySelector('[data-resume-preview-shell]');
-  if (!shell || shell.dataset.resumeReady === 'true') {
-    await waitForPreviewRender();
-    return;
-  }
-
-  await new Promise((resolve) => {
-    const timeout = window.setTimeout(resolve, 2500);
-    const observer = new MutationObserver(() => {
-      if (shell.dataset.resumeReady === 'true') {
-        window.clearTimeout(timeout);
-        observer.disconnect();
-        resolve();
-      }
-    });
-
-    observer.observe(shell, { attributes: true, attributeFilter: ['data-resume-ready'] });
-  });
-  await waitForPreviewRender();
-}
-
-async function generateVisiblePreviewPdf({ jsPDF, html2canvas, previewRoot }) {
-  await waitForResumePreviewReady(previewRoot);
-
-  const pageElements = [...previewRoot.querySelectorAll('[data-resume-preview-page]')];
-  if (pageElements.length === 0) {
-    throw new Error('Resume preview is not ready yet.');
-  }
-
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-    compress: true
-  });
-
-  for (let pageIndex = 0; pageIndex < pageElements.length; pageIndex += 1) {
-    const pageElement = pageElements[pageIndex];
-    const pageRect = pageElement.getBoundingClientRect();
-
-    if (pageIndex > 0) {
-      pdf.addPage('a4', 'portrait');
-    }
-
-    const canvas = await html2canvas(pageElement, {
-      backgroundColor: '#ffffff',
-      height: pageRect.height,
-      width: pageRect.width,
-      logging: false,
-      scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
-      scrollX: -window.scrollX,
-      scrollY: -window.scrollY,
-      useCORS: true
-    });
-
-    pdf.addImage(
-      canvas.toDataURL('image/png'),
-      'PNG',
-      0,
-      0,
-      A4_WIDTH,
-      A4_HEIGHT,
-      undefined,
-      'FAST'
-    );
-  }
-
-  const resumeElement = previewRoot.querySelector('[data-resume-measure-root]');
-  const linkCount = resumeElement
-    ? addResumeLinks(pdf, getResumeLinks(resumeElement), pageElements.length)
-    : 0;
-
-  return {
-    pdf,
-    pageCount: pageElements.length,
-    linkCount
-  };
-}
-
 function Download() {
   const location = useLocation();
   const { resumeData, customization, selectedTemplate } = useResume();
@@ -1279,17 +1199,15 @@ function Download() {
       let exportResult;
 
       try {
-        const { jsPDF } = await import('jspdf');
-        const { default: html2canvas } = await import('html2canvas');
-        exportResult = await generateVisiblePreviewPdf({
-          jsPDF,
-          html2canvas,
-          previewRoot: previewRef.current
+        exportResult = await generateServerPdf({
+          resumeData,
+          customization,
+          templateId
         });
-      } catch (previewError) {
-        console.warn('Visible preview PDF export failed, falling back to server export:', previewError);
+      } catch (serverError) {
+        console.warn('Server PDF export failed, falling back to client renderer:', serverError);
+        const { jsPDF } = await import('jspdf');
         try {
-          const { jsPDF } = await import('jspdf');
           const { default: html2canvas } = await import('html2canvas');
           const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
           if (!resumeElement) {
@@ -1297,34 +1215,14 @@ function Download() {
           }
           exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
         } catch (captureError) {
-          console.warn('Client preview PDF export failed, falling back to server export:', captureError);
-          try {
-            exportResult = await generateServerPdf({
-              resumeData,
-              customization,
-              templateId
-            });
-          } catch (serverError) {
-            console.warn('Server PDF export failed, falling back to vector renderer:', serverError);
-            const { jsPDF } = await import('jspdf');
-            exportResult = await generateResumePdf({
-              jsPDF,
-              resumeData,
-              customization,
-              templateId
-            });
-          }
-        }
-      }
-
-      if (!exportResult) {
-        const { jsPDF } = await import('jspdf');
-        exportResult = await generateResumePdf({
+          console.warn('Client preview PDF export failed, falling back to vector renderer:', captureError);
+          exportResult = await generateResumePdf({
             jsPDF,
             resumeData,
             customization,
             templateId
-        });
+          });
+        }
       }
 
       const preparedPdf = {
