@@ -31,6 +31,9 @@ const NAVY = [11, 32, 56];
 const ACCENT_BLUE = [74, 143, 193];
 const PALE_BLUE = [234, 240, 248];
 const UNSUPPORTED_CANVAS_COLOR = /(oklch|oklab|color-mix|lab|lch)\(/i;
+const SHARE_SITE_LINK = 'https://resume-generator-8m6r.vercel.app/';
+const SHARE_PROMO_TEXT = 'Check out my professional resume created with ResumeBuilder. You can create your own resume easily using AI-powered templates.';
+const SHARE_FALLBACK_TEXT = 'Create your professional resume easily with ResumeBuilder.';
 
 const PDF_TEMPLATE_PROFILES = {
   '11': {
@@ -291,7 +294,51 @@ function saveBlobAsFile(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
-async function generateServerPdf({ resumeData, customization, templateId, fileName }) {
+function makeSafeFileName(value, fallback = 'resume') {
+  return String(value || fallback)
+    .trim()
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || fallback;
+}
+
+function makeResumePdfFile(blob, candidateName) {
+  const namePart = makeSafeFileName(candidateName);
+  const fileName = namePart === 'resume' ? 'resume.pdf' : `${namePart}-resume.pdf`;
+
+  return new File([blob], fileName, { type: 'application/pdf' });
+}
+
+function isShareCancel(error) {
+  return error?.name === 'AbortError'
+    || /cancel|abort|dismiss/i.test(error?.message || '');
+}
+
+async function shareResumePDF(pdfBlob, candidateName) {
+  if (typeof navigator === 'undefined' || !navigator.share) {
+    throw new Error('Native sharing is not supported on this browser. Please download the PDF and share it manually.');
+  }
+
+  const resumePdfFile = makeResumePdfFile(pdfBlob, candidateName);
+  const fileSharePayload = {
+    title: 'My Resume',
+    text: `${SHARE_PROMO_TEXT}\n\n${SHARE_SITE_LINK}`,
+    files: [resumePdfFile]
+  };
+
+  if (navigator.canShare?.({ files: [resumePdfFile] })) {
+    await navigator.share(fileSharePayload);
+    return;
+  }
+
+  await navigator.share({
+    title: 'ResumeBuilder',
+    text: SHARE_FALLBACK_TEXT,
+    url: SHARE_SITE_LINK
+  });
+}
+
+async function generateServerPdf({ resumeData, customization, templateId }) {
   const response = await fetch('/api/export-pdf', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -310,9 +357,9 @@ async function generateServerPdf({ resumeData, customization, templateId, fileNa
   }
 
   const blob = await response.blob();
-  saveBlobAsFile(blob, `${fileName}.pdf`);
 
   return {
+    blob,
     pageCount: Number(response.headers.get('X-Resume-Page-Count')) || 1,
     linkCount: 0
   };
@@ -1105,57 +1152,77 @@ function Download() {
   const previewRef = useRef(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState('');
-  const [shareMessage, setShareMessage] = useState('');
+  const [shareNotice, setShareNotice] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [pdfCache, setPdfCache] = useState(null);
+  const [shareSupport, setShareSupport] = useState({
+    checked: false,
+    mobileLike: false,
+    webShare: false
+  });
 
-  const getDocumentTitle = () => `Resume_${[
+  const candidateName = [
     resumeData?.personalInfo?.firstName,
     resumeData?.personalInfo?.lastName
-  ].filter(Boolean).join('_') || 'Export'}`;
+  ].filter(Boolean).join(' ').trim();
+  const getDocumentTitle = () => `Resume_${candidateName.replace(/\s+/g, '_') || 'Export'}`;
+
+  const preparePdfBlob = async () => {
+    if (pdfCache?.blob) {
+      return pdfCache;
+    }
+
+    let exportResult;
+    const documentTitle = getDocumentTitle();
+
+    try {
+      exportResult = await generateServerPdf({
+        resumeData,
+        customization,
+        templateId
+      });
+    } catch (serverError) {
+      console.warn('Server PDF export failed, falling back to client renderer:', serverError);
+      const { jsPDF } = await import('jspdf');
+      try {
+        const { default: html2canvas } = await import('html2canvas');
+        const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
+        if (!resumeElement) {
+          throw new Error('Resume preview is not ready yet.');
+        }
+        exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
+      } catch (captureError) {
+        console.warn('Client preview PDF export failed, falling back to vector renderer:', captureError);
+        exportResult = await generateResumePdf({
+          jsPDF,
+          resumeData,
+          customization,
+          templateId
+        });
+      }
+    }
+
+    const preparedPdf = {
+      ...exportResult,
+      blob: exportResult.blob || exportResult.pdf.output('blob'),
+      fileName: `${documentTitle}.pdf`
+    };
+
+    setPdfCache(preparedPdf);
+    return preparedPdf;
+  };
 
   const handleExportPDF = async () => {
     try {
       setIsDownloading(true);
       setDownloadSuccess(false);
       setDownloadMessage('');
-      setShareMessage('');
+      setShareNotice(null);
 
-      let exportResult;
-      const documentTitle = getDocumentTitle();
+      const { blob, fileName, pageCount, linkCount } = await preparePdfBlob();
 
-      try {
-        exportResult = await generateServerPdf({
-          resumeData,
-          customization,
-          templateId,
-          fileName: documentTitle
-        });
-      } catch (serverError) {
-        console.warn('Server PDF export failed, falling back to client renderer:', serverError);
-        const { jsPDF } = await import('jspdf');
-        try {
-          const { default: html2canvas } = await import('html2canvas');
-          const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
-          if (!resumeElement) {
-            throw new Error('Resume preview is not ready yet.');
-          }
-          exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
-        } catch (captureError) {
-          console.warn('Client preview PDF export failed, falling back to vector renderer:', captureError);
-          exportResult = await generateResumePdf({
-            jsPDF,
-            resumeData,
-            customization,
-            templateId
-          });
-        }
-      }
-
-      const { pdf, pageCount, linkCount } = exportResult;
-
-      if (pdf) {
-        pdf.save(`${documentTitle}.pdf`);
-      }
+      saveBlobAsFile(blob, fileName);
       setDownloadMessage(
         `Your ${pageCount}-page PDF is ready${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
       );
@@ -1169,9 +1236,60 @@ function Download() {
     }
   };
 
-  const handleShareResume = () => {
-    setShareMessage('Sharing is coming soon. For now, download the PDF and send it directly.');
+  const handleShareResume = async () => {
+    setShareNotice(null);
+
+    if (!shareSupport.webShare) {
+      setShareNotice({
+        type: 'error',
+        message: 'Native sharing is not supported on this browser. Please download the PDF and share it manually.'
+      });
+      return;
+    }
+
+    try {
+      setIsSharing(true);
+      const { blob } = await preparePdfBlob();
+      await shareResumePDF(blob, candidateName);
+      setShareNotice({
+        type: 'success',
+        message: 'Your resume is ready to share.'
+      });
+    } catch (error) {
+      if (!isShareCancel(error)) {
+        setShareNotice({
+          type: 'error',
+          message: error?.message || 'Could not open sharing. Please download the PDF and share it manually.'
+        });
+      }
+    } finally {
+      setIsSharing(false);
+    }
   };
+
+  React.useEffect(() => {
+    const detectShareSupport = () => {
+      const hasWindow = typeof window !== 'undefined';
+      const hasNavigator = typeof navigator !== 'undefined';
+      const mobileViewport = hasWindow && window.matchMedia('(max-width: 1024px)').matches;
+      const touchDevice = hasNavigator && navigator.maxTouchPoints > 0;
+
+      setShareSupport({
+        checked: true,
+        mobileLike: Boolean(mobileViewport || touchDevice),
+        webShare: hasNavigator && Boolean(navigator.share)
+      });
+    };
+
+    detectShareSupport();
+    window.addEventListener('resize', detectShareSupport);
+
+    return () => window.removeEventListener('resize', detectShareSupport);
+  }, []);
+
+  React.useEffect(() => {
+    setPdfCache(null);
+  }, [resumeData, customization, templateId]);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-950">
@@ -1206,26 +1324,38 @@ function Download() {
                 <Button
                   onClick={handleExportPDF}
                   className="flex min-h-11 items-center gap-2 px-5"
-                  disabled={isDownloading}
+                  disabled={isDownloading || isSharing}
                 >
                   {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadIcon size={18} />}
                   {isDownloading ? 'Preparing PDF' : 'Download PDF'}
                 </Button>
 
-                <Button
-                  variant="secondary"
-                  className="flex min-h-11 items-center gap-2 px-5"
-                  onClick={handleShareResume}
-                  disabled={isDownloading}
-                >
-                  <ShareIcon size={18} />
-                  Share
-                </Button>
+                {shareSupport.checked && shareSupport.mobileLike ? (
+                  <Button
+                    variant="secondary"
+                    className="flex min-h-11 items-center gap-2 px-5"
+                    onClick={handleShareResume}
+                    disabled={isDownloading || isSharing}
+                  >
+                    {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShareIcon size={18} />}
+                    {isSharing ? 'Preparing share...' : 'Share'}
+                  </Button>
+                ) : (
+                  <div className="flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                    Sharing is available on mobile devices.
+                  </div>
+                )}
               </div>
 
-              {shareMessage && (
-                <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
-                  {shareMessage}
+              {shareNotice && (
+                <div className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
+                  shareNotice.type === 'error'
+                    ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200'
+                    : shareNotice.type === 'success'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+                      : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200'
+                }`}>
+                  {shareNotice.message}
                 </div>
               )}
             </div>
