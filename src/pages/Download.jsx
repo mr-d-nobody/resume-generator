@@ -32,8 +32,8 @@ const ACCENT_BLUE = [74, 143, 193];
 const PALE_BLUE = [234, 240, 248];
 const UNSUPPORTED_CANVAS_COLOR = /(oklch|oklab|color-mix|lab|lch)\(/i;
 const SHARE_SITE_LINK = 'https://resume-generator-8m6r.vercel.app/';
-const SHARE_PROMO_TEXT = 'Check out my professional resume created with ResumeBuilder. You can create your own resume easily using AI-powered templates.';
-const SHARE_FALLBACK_TEXT = 'Create your professional resume easily with ResumeBuilder.';
+const SHARE_PROMO_TEXT = 'Here is my polished resume, created with ResumeBuilder. Build your own job-ready resume in minutes with AI-powered templates, clean designs, and one-click PDF export.';
+const SHARE_FALLBACK_TEXT = 'Build a polished, job-ready resume in minutes with ResumeBuilder. Use AI-powered templates, clean designs, and simple PDF export.';
 
 const PDF_TEMPLATE_PROFILES = {
   '11': {
@@ -1150,6 +1150,7 @@ function Download() {
   const queryTemplate = new URLSearchParams(location.search).get('template');
   const templateId = getTemplateId(queryTemplate || selectedTemplate);
   const previewRef = useRef(null);
+  const pdfPreparationRef = useRef(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState('');
   const [shareNotice, setShareNotice] = useState(null);
@@ -1166,52 +1167,65 @@ function Download() {
     resumeData?.personalInfo?.firstName,
     resumeData?.personalInfo?.lastName
   ].filter(Boolean).join(' ').trim();
-  const getDocumentTitle = () => `Resume_${candidateName.replace(/\s+/g, '_') || 'Export'}`;
+  const documentTitle = `Resume_${candidateName.replace(/\s+/g, '_') || 'Export'}`;
 
-  const preparePdfBlob = async () => {
+  const preparePdfBlob = React.useCallback(async () => {
     if (pdfCache?.blob) {
       return pdfCache;
     }
 
-    let exportResult;
-    const documentTitle = getDocumentTitle();
+    if (pdfPreparationRef.current) {
+      return pdfPreparationRef.current;
+    }
 
-    try {
-      exportResult = await generateServerPdf({
-        resumeData,
-        customization,
-        templateId
-      });
-    } catch (serverError) {
-      console.warn('Server PDF export failed, falling back to client renderer:', serverError);
-      const { jsPDF } = await import('jspdf');
+    const preparation = (async () => {
+      let exportResult;
+
       try {
-        const { default: html2canvas } = await import('html2canvas');
-        const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
-        if (!resumeElement) {
-          throw new Error('Resume preview is not ready yet.');
-        }
-        exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
-      } catch (captureError) {
-        console.warn('Client preview PDF export failed, falling back to vector renderer:', captureError);
-        exportResult = await generateResumePdf({
-          jsPDF,
+        exportResult = await generateServerPdf({
           resumeData,
           customization,
           templateId
         });
+      } catch (serverError) {
+        console.warn('Server PDF export failed, falling back to client renderer:', serverError);
+        const { jsPDF } = await import('jspdf');
+        try {
+          const { default: html2canvas } = await import('html2canvas');
+          const resumeElement = previewRef.current?.querySelector('[data-resume-measure-root]');
+          if (!resumeElement) {
+            throw new Error('Resume preview is not ready yet.');
+          }
+          exportResult = await generatePreviewPdf({ jsPDF, html2canvas, resumeElement });
+        } catch (captureError) {
+          console.warn('Client preview PDF export failed, falling back to vector renderer:', captureError);
+          exportResult = await generateResumePdf({
+            jsPDF,
+            resumeData,
+            customization,
+            templateId
+          });
+        }
       }
+
+      const preparedPdf = {
+        ...exportResult,
+        blob: exportResult.blob || exportResult.pdf.output('blob'),
+        fileName: `${documentTitle}.pdf`
+      };
+
+      setPdfCache(preparedPdf);
+      return preparedPdf;
+    })();
+
+    pdfPreparationRef.current = preparation;
+
+    try {
+      return await preparation;
+    } finally {
+      pdfPreparationRef.current = null;
     }
-
-    const preparedPdf = {
-      ...exportResult,
-      blob: exportResult.blob || exportResult.pdf.output('blob'),
-      fileName: `${documentTitle}.pdf`
-    };
-
-    setPdfCache(preparedPdf);
-    return preparedPdf;
-  };
+  }, [customization, documentTitle, pdfCache, resumeData, templateId]);
 
   const handleExportPDF = async () => {
     try {
@@ -1249,8 +1263,17 @@ function Download() {
 
     try {
       setIsSharing(true);
-      const { blob } = await preparePdfBlob();
-      await shareResumePDF(blob, candidateName);
+      if (pdfCache?.blob) {
+        await shareResumePDF(pdfCache.blob, candidateName);
+      } else {
+        await preparePdfBlob();
+        setShareNotice({
+          type: 'info',
+          message: 'Your resume is ready. Tap Share again to open your phone sharing options.'
+        });
+        return;
+      }
+
       setShareNotice({
         type: 'success',
         message: 'Your resume is ready to share.'
@@ -1289,7 +1312,22 @@ function Download() {
 
   React.useEffect(() => {
     setPdfCache(null);
+    pdfPreparationRef.current = null;
   }, [resumeData, customization, templateId]);
+
+  React.useEffect(() => {
+    if (!shareSupport.checked || !shareSupport.mobileLike || !shareSupport.webShare || pdfCache?.blob) {
+      return undefined;
+    }
+
+    const prepareTimer = window.setTimeout(() => {
+      preparePdfBlob().catch((error) => {
+        console.warn('Mobile share PDF pre-cache failed:', error);
+      });
+    }, 700);
+
+    return () => window.clearTimeout(prepareTimer);
+  }, [pdfCache, preparePdfBlob, shareSupport.checked, shareSupport.mobileLike, shareSupport.webShare]);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-950">
