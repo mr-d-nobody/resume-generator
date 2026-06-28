@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
 import ResumePreview from '../components/preview/ResumePreview';
 import { Button } from '../components/ui';
-import { Download as DownloadIcon, Share2 as ShareIcon } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download as DownloadIcon, Eye, FileText, Loader2, Share2 as ShareIcon, Sparkles } from 'lucide-react';
 import { normalizeCustomSection } from '../utils/resumeSections';
 import { normalizeUrl, transformResumeData } from '../utils/resumeData';
 import { getA4PageHeightForWidth, getResumeContentBounds } from '../utils/resumePageBounds';
@@ -1119,7 +1119,6 @@ function Download() {
       setDownloadMessage('');
 
       let exportResult;
-      let usedFallback = false;
       const documentTitle = getDocumentTitle();
 
       try {
@@ -1131,7 +1130,6 @@ function Download() {
         });
       } catch (serverError) {
         console.warn('Server PDF export failed, falling back to client renderer:', serverError);
-        usedFallback = true;
         const { jsPDF } = await import('jspdf');
         try {
           const { default: html2canvas } = await import('html2canvas');
@@ -1157,7 +1155,7 @@ function Download() {
         pdf.save(`${documentTitle}.pdf`);
       }
       setDownloadMessage(
-        `Downloaded template ${templateId} as a ${pageCount}-page A4 PDF${usedFallback ? ' with the backup renderer' : ' from the browser print engine'}${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
+        `Your ${pageCount}-page PDF is ready${linkCount > 0 ? ` with ${linkCount} clickable link${linkCount === 1 ? '' : 's'}` : ''}.`
       );
       setDownloadSuccess(true);
     } catch (error) {
@@ -1170,65 +1168,90 @@ function Download() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Download & Share
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Export template {templateId} as an exact A4 PDF from the preview.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-950">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
+            <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                <Sparkles className="h-3.5 w-3.5" />
+                Export center
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
+                Download your resume
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">
+                Review template {templateId}, then export a polished A4 PDF that keeps your selected layout, spacing, and links.
+              </p>
+            </div>
 
-        <div className="card p-6 mb-8">
-          <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-950 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
-            <p className="font-semibold">Exact selected-template A4 PDF export</p>
-            <p className="mt-1">
-              The PDF is generated from the same preview, so font, layout, density, and spacing stay aligned.
-            </p>
-          </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="mb-4 flex items-center gap-3 text-sm text-slate-600 dark:text-gray-300">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-950 dark:text-white">Template {templateId}</p>
+                  <p>Ready for PDF export</p>
+                </div>
+              </div>
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button
-              onClick={handleExportPDF}
-              className="flex items-center gap-2"
-              disabled={isDownloading}
-            >
-              <DownloadIcon size={18} />
-              {isDownloading ? 'Generating...' : 'Download PDF'}
-            </Button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                  onClick={handleExportPDF}
+                  className="flex min-h-11 items-center gap-2 px-5"
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadIcon size={18} />}
+                  {isDownloading ? 'Preparing PDF' : 'Download PDF'}
+                </Button>
 
-            <Button
-              variant="secondary"
-              className="flex items-center gap-2"
-              onClick={() => alert('Sharing functionality will be implemented in a future update.')}
-              disabled={isDownloading}
-            >
-              <ShareIcon size={18} />
-              Share Resume
-            </Button>
+                <Button
+                  variant="secondary"
+                  className="flex min-h-11 items-center gap-2 px-5"
+                  onClick={() => alert('Sharing functionality will be implemented in a future update.')}
+                  disabled={isDownloading}
+                >
+                  <ShareIcon size={18} />
+                  Share
+                </Button>
+              </div>
+            </div>
           </div>
 
           {downloadMessage && (
-            <div className={`mt-4 rounded-md border p-3 text-center ${
+            <div className={`mx-6 mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm lg:mx-8 ${
               downloadSuccess
-                ? 'border-blue-200 bg-blue-50 text-blue-800'
-                : 'border-red-200 bg-red-50 text-red-700'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+                : 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200'
             }`}>
+              {downloadSuccess ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" /> : <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />}
               <p className="font-medium">{downloadMessage}</p>
             </div>
           )}
         </div>
 
-        <div className="mb-8 bg-white p-2 shadow-lg rounded-lg no-print">
-          <div className="text-center mb-4 p-2 bg-gray-100 rounded">
-            <p className="text-sm text-gray-600">Current template preview</p>
+        <div className="mb-8 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm no-print dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex flex-col justify-between gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-gray-800 dark:bg-gray-950 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm ring-1 ring-slate-200 dark:bg-gray-900 dark:ring-gray-800">
+                <Eye className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-950 dark:text-white">Preview before downloading</p>
+                <p className="text-xs text-slate-500 dark:text-gray-400">Scroll inside the preview to review the full resume.</p>
+              </div>
+            </div>
+            <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+              A4 PDF preview
+            </span>
           </div>
 
-          <div className="overflow-x-auto pb-4">
-            <div ref={previewRef} className="mx-auto w-full max-w-[980px]">
-              <ResumePreview />
+          <div className="bg-slate-100 p-3 dark:bg-gray-950 sm:p-5">
+            <div className="rounded-lg border border-slate-200 bg-slate-900 p-3 shadow-inner dark:border-gray-800 sm:p-5">
+              <div ref={previewRef} className="mx-auto w-full max-w-[1080px]">
+                <ResumePreview />
+              </div>
             </div>
           </div>
         </div>

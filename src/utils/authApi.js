@@ -62,7 +62,7 @@ export async function authRequest(path, options = {}) {
   }
 }
 
-export function getSafeNextPath(value, fallback = '/account') {
+export function getSafeNextPath(value, fallback = '/') {
   return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
     ? value
     : fallback;
