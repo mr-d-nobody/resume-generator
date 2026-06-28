@@ -1,21 +1,5 @@
 export const TEMPLATE_CATEGORIES = [
   {
-    id: 'starter-photo-experience',
-    label: 'Photo Internship',
-    description: 'For freshers or interns who want a photo layout and have internship or work experience.',
-    parserType: 'experienced',
-    hasPhoto: true,
-    hasExperience: true
-  },
-  {
-    id: 'starter-photo-no-experience',
-    label: 'Photo First Step',
-    description: 'For freshers or interns who want a photo layout and do not have work experience yet.',
-    parserType: 'fresher',
-    hasPhoto: true,
-    hasExperience: false
-  },
-  {
     id: 'starter-no-photo-no-experience',
     label: 'Campus Starter',
     description: 'For freshers or interns without a photo and without work experience.',

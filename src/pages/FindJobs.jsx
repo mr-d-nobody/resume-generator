@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, BriefcaseBusiness, ExternalLink, Loader2, MapPin, RotateCcw, Search } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { useResume } from '../contexts/ResumeContext';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
@@ -62,18 +63,24 @@ function isRemoteJob(...values) {
   return values.some((value) => String(value || '').toLowerCase().includes('remote'));
 }
 
-function extractSkillNames(skills = []) {
-  return skills
-    .map((skill) => (typeof skill === 'string' ? skill : skill?.name))
-    .filter(Boolean)
-    .slice(0, 8);
-}
-
 function splitSkills(value = '') {
   return value
     .split(',')
     .map((skill) => skill.trim().toLowerCase())
     .filter(Boolean);
+}
+
+function extractPrimaryJobRole(title = '') {
+  const cleanTitle = String(title).trim();
+  if (!cleanTitle) return '';
+
+  // Resumes often store several target roles together. Use the first readable role.
+  const [firstRole] = cleanTitle
+    .split(/\s*(?:[\u2022|,;]|\n|\r|\s+-\s+|\s+\/\s+)\s*/)
+    .map((role) => role.trim())
+    .filter(Boolean);
+
+  return firstRole || cleanTitle;
 }
 
 function inferAdzunaCountry(location = '') {
@@ -349,14 +356,15 @@ function jobMatchesFilters(job, filters) {
 
 export default function FindJobs() {
   const { resumeData } = useResume();
-  const resumeSkills = useMemo(() => extractSkillNames(resumeData?.skills), [resumeData?.skills]);
+  const { user } = useAuth();
+  const canViewSourceDiagnostics = String(user?.id || '') === '3';
   const defaultFilters = useMemo(() => ({
-    keyword: resumeData?.personalInfo?.title || '',
+    keyword: extractPrimaryJobRole(resumeData?.personalInfo?.title),
     location: '',
     remoteOnly: true,
     jobType: '',
-    skills: resumeSkills.join(', ')
-  }), [resumeData?.personalInfo?.title, resumeSkills]);
+    skills: ''
+  }), [resumeData?.personalInfo?.title]);
 
   const [filters, setFilters] = useState(defaultFilters);
   const [jobs, setJobs] = useState([]);
@@ -415,9 +423,9 @@ export default function FindJobs() {
         <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Find Jobs</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950 dark:text-white">Remote roles matched to your resume</h1>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-950 dark:text-white">Jobs matched to your resume</h1>
             <p className="mt-2 max-w-2xl text-gray-600 dark:text-gray-400">
-              Search live roles from Remotive, Jobicy, Himalayas, Arbeitnow, Jooble, Adzuna, Lever, and Greenhouse, then refine them here.
+              Search remote and on-site roles from trusted job boards, then refine them here.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
@@ -498,7 +506,7 @@ export default function FindJobs() {
         {status === 'loading' && (
           <div className="card flex items-center justify-center gap-3 p-10 text-blue-600 dark:text-blue-400">
             <Loader2 className="h-6 w-6 animate-spin" />
-            Fetching fresh jobs...
+            Finding jobs for you...
           </div>
         )}
 
@@ -514,9 +522,9 @@ export default function FindJobs() {
           </div>
         )}
 
-        {status === 'success' && failedSources.length > 0 && (
+        {canViewSourceDiagnostics && status === 'success' && failedSources.length > 0 && (
           <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-            {failedSources.join(' and ')} could not be reached, so these results are from the remaining source.
+            Source check for user 3: {failedSources.join(', ')} did not respond.
           </div>
         )}
 
