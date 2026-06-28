@@ -112,7 +112,7 @@ function ResumeBuilder() {
 
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
   const currentStepIndex = tabs.findIndex((tab) => tab.id === activeTab);
-  const downloadPath = `/download?template=${activeTemplate}`;
+  const downloadPath = '/download';
   const canGoPrevious = currentStepIndex > 0;
   const canGoNext = currentStepIndex < tabs.length - 1;
   const showCustomizePanel = workspaceMode === 'customize' || mobileView === 'adjust';

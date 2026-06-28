@@ -1105,6 +1105,7 @@ function Download() {
   const previewRef = useRef(null);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
 
   const getDocumentTitle = () => `Resume_${[
@@ -1117,6 +1118,7 @@ function Download() {
       setIsDownloading(true);
       setDownloadSuccess(false);
       setDownloadMessage('');
+      setShareMessage('');
 
       let exportResult;
       const documentTitle = getDocumentTitle();
@@ -1167,6 +1169,10 @@ function Download() {
     }
   };
 
+  const handleShareResume = () => {
+    setShareMessage('Sharing is coming soon. For now, download the PDF and send it directly.');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1181,7 +1187,7 @@ function Download() {
                 Download your resume
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-400">
-                Review template {templateId}, then export a polished A4 PDF that keeps your selected layout, spacing, and links.
+                Review your selected resume design, then export a polished A4 PDF that keeps your layout, spacing, and links.
               </p>
             </div>
 
@@ -1191,7 +1197,7 @@ function Download() {
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-950 dark:text-white">Template {templateId}</p>
+                  <p className="font-semibold text-slate-950 dark:text-white">Selected design</p>
                   <p>Ready for PDF export</p>
                 </div>
               </div>
@@ -1209,13 +1215,19 @@ function Download() {
                 <Button
                   variant="secondary"
                   className="flex min-h-11 items-center gap-2 px-5"
-                  onClick={() => alert('Sharing functionality will be implemented in a future update.')}
+                  onClick={handleShareResume}
                   disabled={isDownloading}
                 >
                   <ShareIcon size={18} />
                   Share
                 </Button>
               </div>
+
+              {shareMessage && (
+                <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+                  {shareMessage}
+                </div>
+              )}
             </div>
           </div>
 
