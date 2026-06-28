@@ -32,8 +32,9 @@ const ACCENT_BLUE = [74, 143, 193];
 const PALE_BLUE = [234, 240, 248];
 const UNSUPPORTED_CANVAS_COLOR = /(oklch|oklab|color-mix|lab|lch)\(/i;
 const SHARE_SITE_LINK = 'https://resume-generator-8m6r.vercel.app/';
-const SHARE_PROMO_TEXT = 'Here is my polished resume, created with ResumeBuilder. Build your own job-ready resume in minutes with AI-powered templates, clean designs, and one-click PDF export.';
-const SHARE_FALLBACK_TEXT = 'Build a polished, job-ready resume in minutes with ResumeBuilder. Use AI-powered templates, clean designs, and simple PDF export.';
+const SHARE_PROMO_TEXT = 'Here is my polished resume, created with ResumeBuilder. ResumeBuilder helps job seekers turn their experience into a clean, professional resume with AI-powered writing, modern templates, smart sections, job search tools, and one-click PDF export. You can build your own resume in minutes here:';
+const SHARE_FULL_TEXT = `${SHARE_PROMO_TEXT}\n${SHARE_SITE_LINK}`;
+const SHARE_FALLBACK_TEXT = 'Build a polished, job-ready resume in minutes with ResumeBuilder. Use AI-powered writing, modern templates, smart sections, job search tools, and simple PDF export.';
 
 const PDF_TEMPLATE_PROFILES = {
   '11': {
@@ -314,6 +315,19 @@ function isShareCancel(error) {
     || /cancel|abort|dismiss/i.test(error?.message || '');
 }
 
+async function copyShareCaption() {
+  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(SHARE_FULL_TEXT);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function shareResumePDF(pdfBlob, candidateName) {
   if (typeof navigator === 'undefined' || !navigator.share) {
     throw new Error('Native sharing is not supported on this browser. Please download the PDF and share it manually.');
@@ -322,13 +336,15 @@ async function shareResumePDF(pdfBlob, candidateName) {
   const resumePdfFile = makeResumePdfFile(pdfBlob, candidateName);
   const fileSharePayload = {
     title: 'My Resume',
-    text: `${SHARE_PROMO_TEXT}\n\n${SHARE_SITE_LINK}`,
+    text: SHARE_FULL_TEXT,
+    url: SHARE_SITE_LINK,
     files: [resumePdfFile]
   };
+  const captionCopied = await copyShareCaption();
 
   if (navigator.canShare?.({ files: [resumePdfFile] })) {
     await navigator.share(fileSharePayload);
-    return;
+    return { captionCopied };
   }
 
   await navigator.share({
@@ -336,6 +352,7 @@ async function shareResumePDF(pdfBlob, candidateName) {
     text: SHARE_FALLBACK_TEXT,
     url: SHARE_SITE_LINK
   });
+  return { captionCopied: false };
 }
 
 async function generateServerPdf({ resumeData, customization, templateId }) {
@@ -1264,7 +1281,13 @@ function Download() {
     try {
       setIsSharing(true);
       if (pdfCache?.blob) {
-        await shareResumePDF(pdfCache.blob, candidateName);
+        const shareResult = await shareResumePDF(pdfCache.blob, candidateName);
+        setShareNotice({
+          type: 'success',
+          message: shareResult?.captionCopied
+            ? 'Your resume is ready to share. The caption was also copied in case the selected app only receives the PDF.'
+            : 'Your resume is ready to share.'
+        });
       } else {
         await preparePdfBlob();
         setShareNotice({
@@ -1273,11 +1296,6 @@ function Download() {
         });
         return;
       }
-
-      setShareNotice({
-        type: 'success',
-        message: 'Your resume is ready to share.'
-      });
     } catch (error) {
       if (!isShareCancel(error)) {
         setShareNotice({
