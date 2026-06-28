@@ -1,6 +1,6 @@
 import React from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ResumeProvider } from './contexts/ResumeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/layout/Navbar';
@@ -12,7 +12,6 @@ import Download from './pages/Download';
 import PrintResume from './pages/PrintResume';
 import TemplateViewer from './pages/TemplateViewer';
 import MagicUpload from './pages/MagicUpload';
-import Profile from './pages/Profile';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import Account from './pages/Account';
@@ -34,7 +33,7 @@ function AppLayout() {
           <Route path="/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
           <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
           <Route path="/download" element={<ProtectedRoute><Download /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile" element={<Navigate to="/builder" replace />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
