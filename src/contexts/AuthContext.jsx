@@ -53,6 +53,17 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  const deleteAccount = useCallback(async (formData) => {
+    const data = await authRequest('/api/auth/delete-account', {
+      method: 'POST',
+      body: JSON.stringify(formData)
+    });
+    setUser(null);
+    return data;
+  }, []);
+
+  const exportAccountData = useCallback(() => authRequest('/api/auth/data-export'), []);
+
   const value = useMemo(() => ({
     user,
     isAuthenticated: Boolean(user),
@@ -61,8 +72,10 @@ export function AuthProvider({ children }) {
     login,
     logout,
     changePassword,
+    deleteAccount,
+    exportAccountData,
     refreshUser
-  }), [user, isLoading, signup, login, logout, changePassword, refreshUser]);
+  }), [user, isLoading, signup, login, logout, changePassword, deleteAccount, exportAccountData, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

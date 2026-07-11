@@ -24,14 +24,14 @@ export default async function handler(req, res) {
     results_per_page: '50',
     'content-type': 'application/json'
   });
-  const keywords = String(req.query.keywords || '').trim();
-  const location = String(req.query.location || '').trim();
+  const keywords = String(req.query.keywords || '').trim().slice(0, 120);
+  const location = String(req.query.location || '').trim().slice(0, 120);
 
   if (keywords) params.set('what', keywords);
   if (location) params.set('where', location);
 
   try {
-    const response = await fetch(`${ADZUNA_API_URL}/${country}/search/1?${params}`);
+    const response = await fetch(`${ADZUNA_API_URL}/${country}/search/1?${params}`, { signal: AbortSignal.timeout(10000) });
     const data = await response.json();
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');

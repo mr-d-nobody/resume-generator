@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
 import ResumePreview from '../components/preview/ResumePreview';
 import { Button } from '../components/ui';
@@ -8,6 +8,8 @@ import { normalizeCustomSection } from '../utils/resumeSections';
 import { normalizeUrl, transformResumeData } from '../utils/resumeData';
 import { getA4PageHeightForWidth, getResumeContentBounds } from '../utils/resumePageBounds';
 import { DEFAULT_LAYOUT, getColorTheme, getLayoutSettings } from '../utils/templateStyle';
+import { validateResumeData } from '../utils/resumeValidation';
+import { ensureCsrfCookie, getCsrfToken } from '../utils/authApi';
 
 const A4_WIDTH = 210;
 const A4_HEIGHT = 297;
@@ -356,10 +358,12 @@ async function shareResumePDF(pdfBlob, candidateName) {
 }
 
 async function generateServerPdf({ resumeData, customization, templateId }) {
+  if (!getCsrfToken()) await ensureCsrfCookie();
   const response = await fetch('/api/export-pdf', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
     credentials: 'include',
+    signal: AbortSignal.timeout(50000),
     body: JSON.stringify({
       resumeData,
       customization,
@@ -1179,6 +1183,7 @@ function Download() {
     mobileLike: false,
     webShare: false
   });
+  const resumeValidation = React.useMemo(() => validateResumeData(resumeData), [resumeData]);
 
   const candidateName = [
     resumeData?.personalInfo?.firstName,
@@ -1245,6 +1250,11 @@ function Download() {
   }, [customization, documentTitle, pdfCache, resumeData, templateId]);
 
   const handleExportPDF = async () => {
+    if (!resumeValidation.isValid) {
+      setDownloadMessage('Correct the highlighted resume fields before exporting.');
+      setDownloadSuccess(false);
+      return;
+    }
     try {
       setIsDownloading(true);
       setDownloadSuccess(false);
@@ -1269,6 +1279,11 @@ function Download() {
 
   const handleShareResume = async () => {
     setShareNotice(null);
+
+    if (!resumeValidation.isValid) {
+      setShareNotice({ type: 'error', message: 'Correct the invalid resume fields before sharing.' });
+      return;
+    }
 
     if (!shareSupport.webShare) {
       setShareNotice({
@@ -1350,6 +1365,21 @@ function Download() {
   return (
     <div className="min-h-screen bg-slate-50 py-8 dark:bg-gray-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {!resumeValidation.isValid && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-5 text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200" role="alert">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div>
+                <h2 className="font-semibold">Your resume is not ready to export</h2>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                  {resumeValidation.errors.slice(0, 8).map((error) => <li key={`${error.path}-${error.message}`}>{error.message}</li>)}
+                </ul>
+                {resumeValidation.errors.length > 8 && <p className="mt-2 text-sm">And {resumeValidation.errors.length - 8} more issue(s).</p>}
+                <Link to="/builder" className="mt-3 inline-flex rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Return to editor</Link>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
             <div>
@@ -1380,7 +1410,7 @@ function Download() {
                 <Button
                   onClick={handleExportPDF}
                   className="flex min-h-11 items-center gap-2 px-5"
-                  disabled={isDownloading || isSharing}
+                  disabled={isDownloading || isSharing || !resumeValidation.isValid}
                 >
                   {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadIcon size={18} />}
                   {isDownloading ? 'Preparing PDF' : 'Download PDF'}
@@ -1391,7 +1421,7 @@ function Download() {
                     variant="secondary"
                     className="flex min-h-11 items-center gap-2 px-5"
                     onClick={handleShareResume}
-                    disabled={isDownloading || isSharing}
+                    disabled={isDownloading || isSharing || !resumeValidation.isValid}
                   >
                     {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShareIcon size={18} />}
                     {isSharing ? 'Preparing share...' : 'Share'}

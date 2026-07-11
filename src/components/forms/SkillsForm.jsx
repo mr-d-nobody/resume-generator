@@ -9,6 +9,7 @@ function SkillsForm() {
     level: 'Intermediate',
     category: 'Technical'
   });
+  const [error, setError] = useState('');
 
   const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
   const skillCategories = ['Technical', 'Soft Skills', 'Languages', 'Tools', 'Other'];
@@ -19,11 +20,12 @@ function SkillsForm() {
       ...prev,
       [name]: value
     }));
+    if (name === 'name') setError('');
   };
 
   const handleAddSkill = () => {
     if (!newSkill.name.trim()) {
-      alert('Please enter a skill name');
+      setError('Skill name is required.');
       return;
     }
 
@@ -85,25 +87,31 @@ function SkillsForm() {
       {/* Add New Skill */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="skill-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Skill Name *
           </label>
           <input
             type="text"
+            id="skill-name"
             name="name"
             value={newSkill.name}
             onChange={handleChange}
             className="form-input"
             placeholder="e.g. JavaScript, Project Management"
+            maxLength="120"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'skill-name-error' : undefined}
           />
+          {error && <p id="skill-name-error" className="mt-1 text-sm text-red-600" role="alert">{error}</p>}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="skill-level" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Proficiency Level
             </label>
             <select
+              id="skill-level"
               name="level"
               value={newSkill.level}
               onChange={handleChange}
@@ -116,10 +124,11 @@ function SkillsForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="skill-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category
             </label>
             <select
+              id="skill-category"
               name="category"
               value={newSkill.category}
               onChange={handleChange}

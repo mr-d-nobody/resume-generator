@@ -4,10 +4,15 @@ from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth import password_validation
 from django.contrib.auth import update_session_auth_hash
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
+
+from .models import SavedResume
+from .rate_limits import client_ip, consume_rate_limit
 
 
 User = get_user_model()
@@ -116,6 +121,18 @@ def login_user(request):
 
     email = User.objects.normalize_email(str(data.get("email", "")).strip()).lower()
     password = str(data.get("password", ""))
+    identities = [
+        ("login-ip", client_ip(request)),
+        ("login-account", email or "missing-email"),
+    ]
+    for scope, identity in identities:
+        allowed, retry_after = consume_rate_limit(
+            scope, identity, settings.LOGIN_RATE_LIMIT, settings.LOGIN_RATE_WINDOW_SECONDS
+        )
+        if not allowed:
+            response = _error("Too many login attempts. Wait before trying again.", status=429)
+            response["Retry-After"] = str(retry_after)
+            return response
     user_record = User.objects.filter(email__iexact=email).first()
     user = authenticate(
         request,
@@ -171,3 +188,36 @@ def change_password(request):
     request.user.save(update_fields=["password"])
     update_session_auth_hash(request, request.user)
     return JsonResponse({"detail": "Password changed successfully."})
+
+
+@require_GET
+def export_account_data(request):
+    if not request.user.is_authenticated:
+        return _error("Authentication required.", status=401)
+    saved_resume = SavedResume.objects.filter(user=request.user).first()
+    return JsonResponse({
+        "exportedAt": timezone.now().isoformat(),
+        "account": _user_payload(request.user),
+        "resume": {
+            "data": saved_resume.data if saved_resume else None,
+            "revision": saved_resume.revision if saved_resume else 0,
+            "updatedAt": saved_resume.updated_at.isoformat() if saved_resume else None,
+        },
+    })
+
+
+@require_POST
+@csrf_protect
+def delete_account(request):
+    if not request.user.is_authenticated:
+        return _error("Authentication required.", status=401)
+    data = _read_json(request)
+    if data is None:
+        return _error("Invalid JSON request.")
+    password = str(data.get("password", ""))
+    if not request.user.check_password(password):
+        return _error("Password is incorrect.", status=400, field_errors={"password": "Enter your current password to delete the account."})
+    user = request.user
+    logout(request)
+    user.delete()
+    return JsonResponse({"detail": "Account and saved resume deleted."})

@@ -10,3 +10,7 @@ export function saveResume(data, expectedRevision = 0) {
     body: JSON.stringify({ data, expectedRevision })
   });
 }
+
+export function deleteSavedResume() {
+  return authRequest('/api/resume', { method: 'DELETE', body: '{}' });
+}

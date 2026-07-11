@@ -10,6 +10,7 @@ function AchievementForm() {
     organization: '',
     description: ''
   });
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -17,11 +18,12 @@ function AchievementForm() {
       ...prev,
       [name]: value
     }));
+    if (name === 'title') setError('');
   };
 
   const handleAddAchievement = () => {
     if (!newAchievement.title) {
-      alert('Please fill in achievement title');
+      setError('Achievement title is required.');
       return;
     }
 
@@ -89,7 +91,11 @@ function AchievementForm() {
             onChange={handleChange}
             className="form-input"
             placeholder="e.g. Employee of the Year"
+            maxLength="120"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'achievement-title-error' : undefined}
           />
+          {error && <p id="achievement-title-error" className="mt-1 text-sm text-red-600" role="alert">{error}</p>}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -104,7 +110,8 @@ function AchievementForm() {
               value={newAchievement.organization}
               onChange={handleChange}
               className="form-input"
-              placeholder="e.g. ABC Company"
+            placeholder="e.g. ABC Company"
+            maxLength="120"
             />
           </div>
 
@@ -135,6 +142,7 @@ function AchievementForm() {
             onChange={handleChange}
             className="form-input"
             placeholder="Describe your achievement and its significance"
+            maxLength="3000"
           ></textarea>
         </div>
 

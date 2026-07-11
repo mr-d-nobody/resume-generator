@@ -12,11 +12,13 @@ function CustomSectionForm() {
   } = useResume();
   const [editingIndex, setEditingIndex] = useState(null);
   const [section, setSection] = useState(emptySection);
+  const [error, setError] = useState('');
   const customSections = resumeData.customSections || [];
 
   const resetForm = () => {
     setEditingIndex(null);
     setSection(emptySection());
+    setError('');
   };
 
   const addEntry = () => setSection((current) => ({
@@ -42,7 +44,7 @@ function CustomSectionForm() {
 
   const save = () => {
     if (!section.title.trim()) {
-      alert('Please add a custom section heading');
+      setError('Custom section heading is required.');
       return;
     }
     const current = editingIndex === null ? null : customSections[editingIndex];
@@ -118,7 +120,8 @@ function CustomSectionForm() {
       <div className="space-y-4">
         <label className="form-label">
           Heading *
-          <input value={section.title} onChange={(event) => setSection({ ...section, title: event.target.value })} className="form-input mt-1" placeholder="Competitive Programming Profiles" />
+          <input value={section.title} onChange={(event) => { setSection({ ...section, title: event.target.value }); setError(''); }} className="form-input mt-1" placeholder="Competitive Programming Profiles" maxLength="120" aria-invalid={Boolean(error)} />
+          {error && <span className="mt-1 block text-sm text-red-600" role="alert">{error}</span>}
         </label>
         <label className="form-label">
           Content

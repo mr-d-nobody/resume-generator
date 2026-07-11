@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from urllib.parse import parse_qsl, unquote, urlparse
 
+from django.core.exceptions import ImproperlyConfigured
+
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,7 +42,29 @@ DEBUG = os.environ.get(
 ).lower() in {'1', 'true', 'yes'}
 IS_PRODUCTION = os.environ.get('VERCEL') == '1' or not DEBUG
 
-ALLOWED_HOSTS = ['*']
+def env_list(name, default=''):
+    return [value.strip() for value in os.environ.get(name, default).split(',') if value.strip()]
+
+
+ALLOWED_HOSTS = env_list('APP_ALLOWED_HOSTS', 'localhost,127.0.0.1' if not IS_PRODUCTION else '')
+
+if IS_PRODUCTION:
+    required_production_values = {
+        'DJANGO_SECRET_KEY': os.environ.get('DJANGO_SECRET_KEY', ''),
+        'DATABASE_URL': os.environ.get('DATABASE_URL', ''),
+        'APP_ALLOWED_HOSTS': os.environ.get('APP_ALLOWED_HOSTS', ''),
+        'CORS_ALLOWED_ORIGINS': os.environ.get('CORS_ALLOWED_ORIGINS', ''),
+        'CSRF_TRUSTED_ORIGINS': os.environ.get('CSRF_TRUSTED_ORIGINS', ''),
+        'PDF_RENDER_ORIGIN': os.environ.get('PDF_RENDER_ORIGIN', ''),
+        'PDF_RENDER_ALLOWED_ORIGINS': os.environ.get('PDF_RENDER_ALLOWED_ORIGINS', ''),
+    }
+    missing = [name for name, value in required_production_values.items() if not value.strip()]
+    if missing:
+        raise ImproperlyConfigured(f"Missing required production environment variables: {', '.join(missing)}")
+    if any('://' in host or '/' in host for host in ALLOWED_HOSTS):
+        raise ImproperlyConfigured('APP_ALLOWED_HOSTS must contain hostnames only, without schemes or paths.')
+    if SECRET_KEY.startswith('django-insecure-') or len(SECRET_KEY) < 40:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be a unique value of at least 40 characters in production.')
 
 
 # Application definition
@@ -196,6 +220,14 @@ X_FRAME_OPTIONS = 'DENY'
 APPEND_SLASH = False
 
 REST_FRAMEWORK = {}
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get('MAX_REQUEST_BYTES', str(2 * 1024 * 1024)))
+LOGIN_RATE_LIMIT = int(os.environ.get('LOGIN_RATE_LIMIT', '10'))
+LOGIN_RATE_WINDOW_SECONDS = int(os.environ.get('LOGIN_RATE_WINDOW_SECONDS', '900'))
+AI_USER_RATE_LIMIT = int(os.environ.get('AI_USER_RATE_LIMIT', '10'))
+AI_IP_RATE_LIMIT = int(os.environ.get('AI_IP_RATE_LIMIT', '30'))
+AI_RATE_WINDOW_SECONDS = int(os.environ.get('AI_RATE_WINDOW_SECONDS', '86400'))
+AI_MAX_REQUEST_BYTES = int(os.environ.get('AI_MAX_REQUEST_BYTES', str(250 * 1024)))
+AI_MAX_TEXT_CHARS = int(os.environ.get('AI_MAX_TEXT_CHARS', '100000'))
 
 # Keep local development unrestricted. Vercel sets VERCEL=1 automatically;
 # other production hosts should set DEBUG=False. Production defaults to five

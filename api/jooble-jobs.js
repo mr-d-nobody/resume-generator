@@ -15,8 +15,8 @@ export default async function handler(req, res) {
   }
 
   const payload = {
-    keywords: String(req.query.keywords || '').trim(),
-    location: String(req.query.location || '').trim(),
+    keywords: String(req.query.keywords || '').trim().slice(0, 120),
+    location: String(req.query.location || '').trim().slice(0, 120),
     page: 1
   };
 
@@ -24,7 +24,8 @@ export default async function handler(req, res) {
     const response = await fetch(`${JOOBLE_API_URL}/${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000)
     });
     const data = await response.json();
 

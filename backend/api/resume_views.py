@@ -6,20 +6,28 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 from .models import SavedResume
+from .resume_validation import validate_resume_data
 
 
 MAX_RESUME_BYTES = 1024 * 1024
 
 
-def _error(message, status=400):
-    return JsonResponse({"error": message}, status=status)
+def _error(message, status=400, field_errors=None):
+    payload = {"error": message}
+    if field_errors:
+        payload["fieldErrors"] = field_errors
+    return JsonResponse(payload, status=status)
 
 
-@require_http_methods(["GET", "PUT"])
+@require_http_methods(["GET", "PUT", "DELETE"])
 @csrf_protect
 def saved_resume(request):
     if not request.user.is_authenticated:
         return _error("Authentication required.", status=401)
+
+    if request.method == "DELETE":
+        deleted, _ = SavedResume.objects.filter(user=request.user).delete()
+        return JsonResponse({"deleted": bool(deleted), "detail": "Saved resume deleted."})
 
     if request.method == "GET":
         record = SavedResume.objects.filter(user=request.user).first()
@@ -48,6 +56,14 @@ def saved_resume(request):
     data = payload.get("data")
     if not isinstance(data, dict):
         return _error("Resume data must be a JSON object.")
+    resume_data = data.get("resumeData")
+    field_errors = validate_resume_data(resume_data, require_core=True)
+    if field_errors:
+        return _error(
+            "Correct the invalid resume fields before saving.",
+            status=422,
+            field_errors=field_errors,
+        )
     expected_revision = payload.get("expectedRevision", 0)
     if not isinstance(expected_revision, int) or expected_revision < 0:
         return _error("expectedRevision must be a non-negative integer.")

@@ -4,6 +4,7 @@ import { buildUnifiedSections, normalizeCustomSection } from '../utils/resumeSec
 import { normalizeResumeData } from '../utils/resumeData';
 import { useAuth } from './AuthContext';
 import { fetchSavedResume, saveResume } from '../utils/resumeApi';
+import { validateResumeData } from '../utils/resumeValidation';
 
 // Initial resume data structure
 const initialResumeData = {
@@ -496,6 +497,7 @@ export function ResumeProvider({ children }) {
   }), [state.resumeData, state.selectedTemplate, state.templateCategory, state.customization]);
 
   const currentPayloadHash = useMemo(() => payloadHash(cloudPayload), [cloudPayload]);
+  const cloudValidation = useMemo(() => validateResumeData(state.resumeData), [state.resumeData]);
   const currentPayloadRef = useRef(cloudPayload);
   currentPayloadRef.current = cloudPayload;
 
@@ -668,14 +670,17 @@ export function ResumeProvider({ children }) {
       lastSavedHashRef.current
     );
 
-    if (
-      !user ||
-      hydratedUserRef.current !== user.id ||
-      cloudConflict ||
-      currentPayloadHash === lastSavedHashRef.current
-    ) {
+    if (!user || hydratedUserRef.current !== user.id || cloudConflict) {
       return undefined;
     }
+
+    if (!cloudValidation.isValid) {
+      setCloudError('Complete the required resume fields before saving to the cloud. Your draft is still saved on this device.');
+      setCloudStatus('validation');
+      return undefined;
+    }
+
+    if (currentPayloadHash === lastSavedHashRef.current) return undefined;
 
     setCloudStatus('saving');
     setCloudError('');
@@ -701,7 +706,7 @@ export function ResumeProvider({ children }) {
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [cloudPayload, currentPayloadHash, user, isAuthLoading, cloudConflict, cloudUpdatedAt, syncEpoch]);
+  }, [cloudPayload, cloudValidation.isValid, currentPayloadHash, user, isAuthLoading, cloudConflict, cloudUpdatedAt, syncEpoch]);
 
   const saveResumeNow = useCallback(async (payload) => {
     const nextPayload = {
@@ -711,6 +716,16 @@ export function ResumeProvider({ children }) {
       customization: payload.customization || state.customization
     };
     dispatch({ type: ACTIONS.LOAD_RESUME, payload: nextPayload });
+
+    const validation = validateResumeData(nextPayload.resumeData);
+    if (!validation.isValid) {
+      const error = new Error('Correct the invalid resume fields before saving. Your imported information is preserved on this device.');
+      error.status = 422;
+      error.fieldErrors = validation.byPath;
+      setCloudError(error.message);
+      setCloudStatus('validation');
+      throw error;
+    }
 
     if (!user) return null;
     setCloudStatus('saving');
@@ -776,6 +791,12 @@ export function ResumeProvider({ children }) {
     }
   }, [cloudConflict]);
 
+  const retryCloudSave = useCallback(() => {
+    setCloudError('');
+    setCloudStatus('idle');
+    setSyncEpoch((value) => value + 1);
+  }, []);
+
   // Action creators
   const actions = {
     updatePersonalInfo: (data) => dispatch({ type: ACTIONS.UPDATE_PERSONAL_INFO, payload: data }),
@@ -822,6 +843,7 @@ export function ResumeProvider({ children }) {
       saveResumeNow,
       useCloudVersion,
       keepLocalVersion,
+      retryCloudSave,
       sections: buildUnifiedSections(state.resumeData, state.customization),
       ...actions
     }}>

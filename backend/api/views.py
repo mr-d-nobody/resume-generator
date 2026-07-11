@@ -1,13 +1,16 @@
-from rest_framework.decorators import api_view, throttle_classes
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 from rest_framework import status
+from django.conf import settings
 from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types as genai_types
 import os
 import json
 import time
+
+from .rate_limits import client_ip, consume_rate_limit
 
 STANDARD_SECTION_NAMES = (
     "Personal Info",
@@ -184,20 +187,41 @@ def normalize_parsed_resume(parsed_data):
 
 
 @api_view(['POST'])
-@throttle_classes([AnonRateThrottle])
+@permission_classes([IsAuthenticated])
 def parse_resume(request):
+    content_length = int(request.META.get('CONTENT_LENGTH') or 0)
+    if content_length > settings.AI_MAX_REQUEST_BYTES:
+        return Response({"error": "Resume parsing request is too large."}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+
+    for scope, identity, limit in (
+        ('ai-user', request.user.pk, settings.AI_USER_RATE_LIMIT),
+        ('ai-ip', client_ip(request), settings.AI_IP_RATE_LIMIT),
+    ):
+        allowed, retry_after = consume_rate_limit(scope, identity, limit, settings.AI_RATE_WINDOW_SECONDS)
+        if not allowed:
+            return Response(
+                {"error": "Resume parsing limit reached. Use manual entry or try again after the limit resets.", "code": "ai_rate_limited"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={"Retry-After": str(retry_after)},
+            )
+
     raw_text = request.data.get('raw_text', '')
     resume_type = request.data.get('resume_type', 'experienced')
     
     if not raw_text:
         return Response({"error": "No raw_text provided"}, status=status.HTTP_400_BAD_REQUEST)
+    if not isinstance(raw_text, str) or len(raw_text) > settings.AI_MAX_TEXT_CHARS:
+        return Response({"error": "Extracted resume text is too large."}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
 
     api_key = os.environ.get('GEMINI_API_KEY')
     if not api_key:
         return Response({"error": "Gemini API key is not configured on the server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     try:
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(
+            api_key=api_key,
+            http_options=genai_types.HttpOptions(timeout=int(os.environ.get('GEMINI_TIMEOUT_MS', '20000'))),
+        )
         
         fresher_rules = ""
         if resume_type == 'fresher':

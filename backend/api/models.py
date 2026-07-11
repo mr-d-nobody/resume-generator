@@ -16,3 +16,12 @@ class SavedResume(models.Model):
         return f"Resume for {self.user}"
 
 
+class RateLimitBucket(models.Model):
+    key = models.CharField(max_length=64, unique=True)
+    window_start = models.DateTimeField()
+    count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Rate limit {self.key[:10]}… ({self.count})"
+

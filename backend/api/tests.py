@@ -2,9 +2,11 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.test import Client, SimpleTestCase, TestCase
+from django.test import override_settings
 
 from .views import is_transient_gemini_error, normalize_parsed_resume
 from .models import SavedResume
+from .resume_validation import validate_resume_data
 
 
 class NormalizeParsedResumeTests(SimpleTestCase):
@@ -143,6 +145,54 @@ class NormalizeParsedResumeTests(SimpleTestCase):
             "description": "Led the robotics club\nOrganized a hackathon",
         }])
 
+
+class ResumeValidationTests(SimpleTestCase):
+    def test_rejects_missing_and_invalid_core_fields(self):
+        errors = validate_resume_data({
+            "personalInfo": {
+                "firstName": "",
+                "lastName": "User",
+                "email": "invalid",
+                "phone": "letters",
+            }
+        })
+        self.assertIn("personalInfo.firstName", errors)
+        self.assertIn("personalInfo.email", errors)
+        self.assertIn("personalInfo.phone", errors)
+
+    def test_rejects_reversed_dates_and_invalid_grade(self):
+        errors = validate_resume_data({
+            "personalInfo": {
+                "firstName": "Ada",
+                "lastName": "Lovelace",
+                "email": "ada@example.com",
+                "phone": "+44 20 7946 0958",
+            },
+            "experience": [{
+                "company": "Example",
+                "position": "Engineer",
+                "startDate": "2025-05",
+                "endDate": "2024-05",
+            }],
+            "education": [{
+                "degree": "BSc",
+                "institution": "Example University",
+                "cgpa": "12/10",
+            }],
+        })
+        self.assertIn("experience.0.endDate", errors)
+        self.assertIn("education.0.cgpa", errors)
+
+    def test_rejects_nested_unsafe_links_and_certificate_dates(self):
+        errors = validate_resume_data({
+            "personalInfo": {"firstName": "Ada", "lastName": "Lovelace", "email": "ada@example.com", "phone": "+44 20 7946 0958"},
+            "certifications": [{"name": "Cloud", "date": "2025-01", "expirationDate": "2024-01", "url": "javascript:bad"}],
+            "customSections": [{"title": "Profiles", "entries": [{"title": "Profile", "url": "data:text/html,bad"}]}],
+        })
+        self.assertIn("certifications.0.expirationDate", errors)
+        self.assertIn("certifications.0.url", errors)
+        self.assertIn("customSections.0.entries.0.url", errors)
+
     def test_uses_fallback_title_without_reclassifying_content(self):
         result = normalize_parsed_resume({
             "achievements": [],
@@ -171,6 +221,16 @@ class AuthenticationApiTests(TestCase):
             content_type="application/json",
             HTTP_X_CSRFTOKEN=self.client.cookies["csrftoken"].value,
         )
+
+    def valid_resume(self, first_name="Ada"):
+        return {
+            "personalInfo": {
+                "firstName": first_name,
+                "lastName": "Lovelace",
+                "email": "ada@example.com",
+                "phone": "+44 20 7946 0958",
+            }
+        }
 
     def test_signup_hashes_password_and_creates_session(self):
         response = self.post_json("/api/auth/signup", {
@@ -221,6 +281,30 @@ class AuthenticationApiTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(LOGIN_RATE_LIMIT=2, LOGIN_RATE_WINDOW_SECONDS=60)
+    def test_login_attempts_are_throttled_by_database_bucket(self):
+        for _ in range(2):
+            response = self.post_json("/api/auth/login", {"email": "limited@example.com", "password": "wrong"})
+            self.assertEqual(response.status_code, 401)
+        limited = self.post_json("/api/auth/login", {"email": "limited@example.com", "password": "wrong"})
+        self.assertEqual(limited.status_code, 429)
+        self.assertIn("Retry-After", limited)
+
+    def test_resume_parser_requires_authentication(self):
+        response = self.post_json("/api/parse-resume", {"raw_text": "example"})
+        self.assertIn(response.status_code, (401, 403))
+
+    @override_settings(AI_USER_RATE_LIMIT=1, AI_IP_RATE_LIMIT=2, AI_RATE_WINDOW_SECONDS=60)
+    def test_resume_parser_rate_limit_applies_to_authenticated_user(self):
+        user = get_user_model().objects.create_user(
+            username="ai-limit@example.com", email="ai-limit@example.com", password="A-secure-passphrase-1843"
+        )
+        self.client.force_login(user)
+        first = self.post_json("/api/parse-resume", {"raw_text": ""})
+        self.assertEqual(first.status_code, 400)
+        second = self.post_json("/api/parse-resume", {"raw_text": ""})
+        self.assertEqual(second.status_code, 429)
+
     def test_user_can_save_replace_and_load_resume_json(self):
         user = get_user_model().objects.create_user(
             username="resume@example.com",
@@ -231,7 +315,7 @@ class AuthenticationApiTests(TestCase):
 
         first_payload = {
             "data": {
-                "resumeData": {"personalInfo": {"firstName": "Ada"}},
+                "resumeData": self.valid_resume("Ada"),
                 "selectedTemplate": "16",
             },
             "expectedRevision": 0,
@@ -243,7 +327,7 @@ class AuthenticationApiTests(TestCase):
 
         replacement = {
             "data": {
-                "resumeData": {"personalInfo": {"firstName": "Grace"}},
+                "resumeData": self.valid_resume("Grace"),
                 "selectedTemplate": "12",
             },
             "expectedRevision": 1,
@@ -270,15 +354,15 @@ class AuthenticationApiTests(TestCase):
         self.client.force_login(user)
 
         first = self.post_json_with_method("/api/resume", {
-            "data": {"resumeData": {"personalInfo": {"firstName": "First"}}},
+            "data": {"resumeData": self.valid_resume("First")},
             "expectedRevision": 0,
         }, "put")
         second = self.post_json_with_method("/api/resume", {
-            "data": {"resumeData": {"personalInfo": {"firstName": "Second"}}},
+            "data": {"resumeData": self.valid_resume("Second")},
             "expectedRevision": first.json()["revision"],
         }, "put")
         stale = self.post_json_with_method("/api/resume", {
-            "data": {"resumeData": {"personalInfo": {"firstName": "Stale"}}},
+            "data": {"resumeData": self.valid_resume("Stale")},
             "expectedRevision": first.json()["revision"],
         }, "put")
 
@@ -290,6 +374,21 @@ class AuthenticationApiTests(TestCase):
             SavedResume.objects.get(user=user).data["resumeData"]["personalInfo"]["firstName"],
             "Second",
         )
+
+    def test_resume_api_rejects_invalid_data(self):
+        user = get_user_model().objects.create_user(
+            username="invalid-resume@example.com",
+            email="invalid-resume@example.com",
+            password="A-secure-passphrase-1843",
+        )
+        self.client.force_login(user)
+        response = self.post_json_with_method("/api/resume", {
+            "data": {"resumeData": {"personalInfo": {"email": "bad"}}},
+            "expectedRevision": 0,
+        }, "put")
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("personalInfo.firstName", response.json()["fieldErrors"])
+        self.assertFalse(SavedResume.objects.filter(user=user).exists())
 
     def post_json_with_method(self, path, payload, method):
         return getattr(self.client, method)(
@@ -304,3 +403,31 @@ class AuthenticationApiTests(TestCase):
         client.get("/api/auth/csrf")
         response = client.get("/api/resume")
         self.assertEqual(response.status_code, 401)
+
+    def test_user_can_export_and_delete_resume_data(self):
+        user = get_user_model().objects.create_user(
+            username="data@example.com", email="data@example.com", password="A-secure-passphrase-1843"
+        )
+        self.client.force_login(user)
+        save = self.post_json_with_method("/api/resume", {
+            "data": {"resumeData": self.valid_resume()}, "expectedRevision": 0,
+        }, "put")
+        self.assertEqual(save.status_code, 200)
+        exported = self.client.get("/api/auth/data-export")
+        self.assertEqual(exported.status_code, 200)
+        self.assertEqual(exported.json()["account"]["email"], "data@example.com")
+        deleted = self.post_json_with_method("/api/resume", {}, "delete")
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(SavedResume.objects.filter(user=user).exists())
+
+    def test_delete_account_requires_password_and_removes_user(self):
+        user = get_user_model().objects.create_user(
+            username="delete@example.com", email="delete@example.com", password="A-secure-passphrase-1843"
+        )
+        self.client.force_login(user)
+        wrong = self.post_json("/api/auth/delete-account", {"password": "wrong"})
+        self.assertEqual(wrong.status_code, 400)
+        self.assertTrue(get_user_model().objects.filter(pk=user.pk).exists())
+        deleted = self.post_json("/api/auth/delete-account", {"password": "A-secure-passphrase-1843"})
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(get_user_model().objects.filter(pk=user.pk).exists())

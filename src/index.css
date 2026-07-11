@@ -156,6 +156,26 @@
   display: none;
 }
 
+.horizontal-scroll-cue {
+  scrollbar-width: thin;
+  scrollbar-color: #60a5fa transparent;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline proximity;
+}
+
+.horizontal-scroll-cue > * {
+  scroll-snap-align: center;
+}
+
+.horizontal-scroll-cue::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-scroll-cue::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #60a5fa;
+}
+
 .resume-print-document {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
