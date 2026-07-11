@@ -1,7 +1,7 @@
 /* global process */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getAppOrigin, normalizePayload } from './export-pdf.js';
+import { getAppOrigin, normalizePayload } from '../api/export-pdf.js';
 
 test('PDF rendering requires a fixed allowlisted origin', () => {
   const previousOrigin = process.env.PDF_RENDER_ORIGIN;
