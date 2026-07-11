@@ -85,8 +85,6 @@ export function validateResumeData(resumeData, { requireCore = true } = {}) {
   addTextError(errors, personal.location, 'personalInfo.location', 'Location', RESUME_LIMITS.short, { section: 'personal' });
   ['linkedin', 'website', 'github'].forEach((field) => addUrlError(errors, personal[field], `personalInfo.${field}`, field === 'github' ? 'GitHub URL' : `${field[0].toUpperCase()}${field.slice(1)} URL`, 'personal'));
   addTextError(errors, personal.summary, 'personalInfo.summary', 'Professional summary', RESUME_LIMITS.summary, { section: 'summary' });
-  if (personal.photo && (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(personal.photo) || personal.photo.length > 700000)) errors.push({ path: 'personalInfo.photo', section: 'personal', message: 'Profile photo data is invalid or too large.' });
-
   if ((data.experience || []).length > RESUME_LIMITS.listItems) errors.push({ path: 'experience', section: 'experience', message: `Experience is limited to ${RESUME_LIMITS.listItems} entries.` });
   (data.experience || []).forEach((item, index) => {
     const base = `experience.${index}`;

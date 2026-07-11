@@ -36,6 +36,16 @@ class NormalizeParsedResumeTests(SimpleTestCase):
         self.assertEqual(result["certifications"][0]["url"], "example.com/verify")
         self.assertEqual(result["certifications"][0]["credentialId"], "ABC-123")
 
+    def test_removes_legacy_profile_photo(self):
+        result = normalize_parsed_resume({
+            "personalInfo": {
+                "firstName": "Ada",
+                "photo": "data:image/png;base64,legacy-photo",
+            },
+        })
+
+        self.assertNotIn("photo", result["personalInfo"])
+
     def test_removes_empty_placeholders_from_optional_fields(self):
         result = normalize_parsed_resume({
             "certifications": [

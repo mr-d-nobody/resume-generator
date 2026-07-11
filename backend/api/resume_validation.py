@@ -98,10 +98,6 @@ def validate_resume_data(data, require_core=True):
     for field in ("linkedin", "website", "github"):
         if not _valid_url(personal.get(field)):
             add(f"personalInfo.{field}", f"{field.title()} must be a valid HTTP or HTTPS URL.")
-    photo = _text(personal.get("photo"))
-    if photo and (len(photo) > 700000 or not re.match(r"^data:image/(?:jpeg|png|webp);base64,", photo, re.I)):
-        add("personalInfo.photo", "Profile photo data is invalid or too large.")
-
     experience = resume.get("experience") if isinstance(resume.get("experience"), list) else []
     if len(experience) > LIMITS["list_items"]:
         add("experience", f"Experience is limited to {LIMITS['list_items']} entries.")

@@ -1,3 +1,4 @@
+import copy
 import json
 
 from django.db import transaction
@@ -10,6 +11,19 @@ from .resume_validation import validate_resume_data
 
 
 MAX_RESUME_BYTES = 1024 * 1024
+
+
+def without_legacy_photo(data):
+    sanitized = copy.deepcopy(data)
+    if not isinstance(sanitized, dict):
+        return sanitized
+    resume_data = sanitized.get("resumeData")
+    if not isinstance(resume_data, dict):
+        return sanitized
+    personal_info = resume_data.get("personalInfo")
+    if isinstance(personal_info, dict):
+        personal_info.pop("photo", None)
+    return sanitized
 
 
 def _error(message, status=400, field_errors=None):
@@ -40,7 +54,7 @@ def saved_resume(request):
             })
         return JsonResponse({
             "exists": True,
-            "data": record.data,
+            "data": without_legacy_photo(record.data),
             "revision": record.revision,
             "updatedAt": record.updated_at.isoformat(),
         })
@@ -56,6 +70,7 @@ def saved_resume(request):
     data = payload.get("data")
     if not isinstance(data, dict):
         return _error("Resume data must be a JSON object.")
+    data = without_legacy_photo(data)
     resume_data = data.get("resumeData")
     field_errors = validate_resume_data(resume_data, require_core=True)
     if field_errors:

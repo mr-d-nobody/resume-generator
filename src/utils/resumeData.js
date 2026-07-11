@@ -132,6 +132,7 @@ export function normalizeResumeData(resumeData = {}) {
     ...(resumeData.personalInfo || {}),
     links: normalizeCustomLinks(resumeData.personalInfo?.links)
   };
+  delete personalInfo.photo;
 
   return {
     ...resumeData,
@@ -178,8 +179,7 @@ export function transformResumeData(resumeData = {}, customization = {}) {
       email: asString(personalInfo.email),
       phone: asString(personalInfo.phone),
       location: asString(personalInfo.location),
-      links: normalizeResumeLinks(personalInfo),
-      photo: personalInfo.photo || null
+      links: normalizeResumeLinks(personalInfo)
     },
     summary: visibility.summary === false ? '' : asString(personalInfo.summary),
     experience: visibility.experience === false ? [] : experience.filter((item) => [

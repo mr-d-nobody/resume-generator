@@ -58,6 +58,7 @@ def normalize_parsed_resume(parsed_data):
     }
 
     personal_info = normalized["personalInfo"]
+    personal_info.pop("photo", None)
     links = personal_info.get("links")
     if not isinstance(links, list):
         links = []

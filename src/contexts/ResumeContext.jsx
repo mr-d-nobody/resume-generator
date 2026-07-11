@@ -19,8 +19,7 @@ const initialResumeData = {
     website: '',
     links: [],
     title: '',
-    summary: '',
-    photo: null
+    summary: ''
   },
   experience: [],
   education: [],
