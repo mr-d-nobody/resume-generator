@@ -91,12 +91,12 @@ function Navbar() {
         <button
           type="button"
           onClick={showValidationErrors}
-          className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:hover:bg-amber-950/40 ${cloudIndicator.className}`}
+          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:hover:bg-amber-950/40 ${cloudIndicator.className}`}
           title={cloudError || cloudIndicator.label}
           aria-label="Complete required resume fields and show the first error"
         >
           {icon}
-          <span>{mobile ? 'Complete fields' : 'Complete required fields'}</span>
+          <span>{mobile ? 'Fix fields' : 'Complete required fields'}</span>
         </button>
       );
     }
