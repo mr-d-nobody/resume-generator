@@ -1,8 +1,6 @@
-import React from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { User, Mail, Phone, MapPin, Linkedin, Globe, Camera, BriefcaseBusiness } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Linkedin, Globe, BriefcaseBusiness } from 'lucide-react';
 import { RESUME_LIMITS } from '../../utils/resumeValidation';
-import { prepareProfilePhoto } from '../../utils/imageUpload';
 
 function FieldError({ id, message }) {
   if (!message) return null;
@@ -12,24 +10,7 @@ function FieldError({ id, message }) {
 function PersonalInfoForm({ validationErrors = {} }) {
   const { resumeData, updatePersonalInfo } = useResume();
   const { personalInfo } = resumeData;
-  const [photoError, setPhotoError] = React.useState('');
-  const [isProcessingPhoto, setIsProcessingPhoto] = React.useState(false);
   const update = (field, value) => updatePersonalInfo({ [field]: value });
-
-  const handlePhotoUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    setPhotoError('');
-    setIsProcessingPhoto(true);
-    try {
-      update('photo', await prepareProfilePhoto(file));
-    } catch (error) {
-      setPhotoError(error.message);
-      event.target.value = '';
-    } finally {
-      setIsProcessingPhoto(false);
-    }
-  };
 
   const errorProps = (path, id) => ({
     'aria-invalid': Boolean(validationErrors[path]),
@@ -43,17 +24,6 @@ function PersonalInfoForm({ validationErrors = {} }) {
       </h2>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <label htmlFor="profile-photo" className="form-label"><Camera className="mr-1 inline h-4 w-4" /> Profile Photo (Optional)</label>
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            {personalInfo.photo && <img src={personalInfo.photo} alt="Profile preview" className="h-20 w-20 shrink-0 rounded-full border-2 border-gray-300 object-cover dark:border-gray-600" />}
-            <input id="profile-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} className="form-input min-w-0" />
-          </div>
-          <p className="mt-2 text-xs text-gray-500">JPEG, PNG, or WebP; maximum 5MB. Large photos are resized locally in your browser.</p>
-          {isProcessingPhoto && <p className="mt-1 text-sm text-blue-600" role="status">Optimizing photo…</p>}
-          {photoError && <p className="mt-1 text-sm text-red-600" role="alert">{photoError}</p>}
-        </div>
-
         <div>
           <label htmlFor="resume-first-name" className="form-label">First Name *</label>
           <input id="resume-first-name" type="text" value={personalInfo.firstName} onChange={(event) => update('firstName', event.target.value)} className="form-input" placeholder="John" required maxLength={RESUME_LIMITS.name} {...errorProps('personalInfo.firstName', 'resume-first-name')} />
