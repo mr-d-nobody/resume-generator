@@ -72,6 +72,47 @@ function Navbar() {
     }
   };
 
+  const showValidationErrors = () => {
+    closeMenu();
+    navigate('/builder', {
+      state: {
+        focusValidation: true,
+        requestedAt: Date.now()
+      }
+    });
+  };
+
+  const renderCloudIndicator = (mobile = false) => {
+    if (!cloudIndicator) return null;
+    const icon = <CloudIcon className={`${mobile ? 'h-5 w-5' : 'h-4 w-4'} ${cloudIndicator.spin ? 'animate-spin' : ''}`} aria-hidden="true" />;
+
+    if (cloudStatus === 'validation') {
+      return (
+        <button
+          type="button"
+          onClick={showValidationErrors}
+          className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:hover:bg-amber-950/40 ${cloudIndicator.className}`}
+          title={cloudError || cloudIndicator.label}
+          aria-label="Complete required resume fields and show the first error"
+        >
+          {icon}
+          <span>{mobile ? 'Complete fields' : 'Complete required fields'}</span>
+        </button>
+      );
+    }
+
+    return (
+      <div
+        className={`flex items-center gap-1.5 text-xs font-medium ${cloudIndicator.className}`}
+        title={cloudIndicator.label}
+        aria-label={cloudIndicator.label}
+      >
+        {icon}
+        {!mobile && <span>{cloudIndicator.label === 'Saving to cloud' ? 'Saving…' : cloudIndicator.label === 'Saved to cloud' ? 'Saved' : ''}</span>}
+      </div>
+    );
+  };
+
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -97,16 +138,7 @@ function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {cloudIndicator && (
-              <div
-                className={`flex items-center gap-1.5 text-xs font-medium ${cloudIndicator.className}`}
-                title={cloudIndicator.label}
-                aria-label={cloudIndicator.label}
-              >
-                <CloudIcon className={`h-4 w-4 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
-                <span>{cloudIndicator.label === 'Saving to cloud' ? 'Saving…' : cloudIndicator.label === 'Saved to cloud' ? 'Saved' : ''}</span>
-              </div>
-            )}
+            {renderCloudIndicator()}
             {cloudStatus === 'error' && (
               <button type="button" onClick={retryCloudSave} className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Retry save</button>
             )}
@@ -134,11 +166,7 @@ function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="xl:hidden flex items-center gap-1.5 sm:gap-2">
-            {cloudIndicator && (
-              <span title={cloudIndicator.label} aria-label={cloudIndicator.label} className={cloudIndicator.className}>
-                <CloudIcon className={`h-5 w-5 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
-              </span>
-            )}
+            {renderCloudIndicator(true)}
             {cloudStatus === 'error' && (
               <button type="button" onClick={retryCloudSave} className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-600" aria-label="Retry cloud save">Retry</button>
             )}

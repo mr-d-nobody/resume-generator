@@ -12,7 +12,7 @@ import SummaryForm from '../components/forms/SummaryForm';
 import SectionSettingsForm from '../components/forms/SectionSettingsForm';
 import ResumePreview from '../components/preview/ResumePreview';
 import { useResume } from '../contexts/ResumeContext';
-import { calculateValidatedResumeScore, validateResumeSection } from '../utils/resumeValidation';
+import { calculateValidatedResumeScore, validateResumeData, validateResumeSection } from '../utils/resumeValidation';
 import {
   COLOR_THEMES,
   DEFAULT_LAYOUT,
@@ -76,6 +76,8 @@ function ResumeBuilder() {
   const [customizeTab, setCustomizeTab] = useState('template');
   const [validationSection, setValidationSection] = useState('');
   const tabRefs = useRef({});
+  const pendingValidationFocus = useRef(false);
+  const handledValidationRequest = useRef(null);
 
   useEffect(() => {
     if (requestedTemplate && requestedTemplate !== selectedTemplate) {
@@ -86,6 +88,21 @@ function ResumeBuilder() {
   useEffect(() => {
     tabRefs.current[activeTab]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }, [activeTab]);
+
+  useEffect(() => {
+    const requestId = location.state?.focusValidation ? location.state.requestedAt : null;
+    if (!requestId || handledValidationRequest.current === requestId) return;
+    handledValidationRequest.current = requestId;
+
+    const firstError = validateResumeData(resumeData).errors[0];
+    if (!firstError) return;
+
+    setWorkspaceMode('edit');
+    setMobileView('edit');
+    setActiveTab(firstError.section);
+    setValidationSection(firstError.section);
+    pendingValidationFocus.current = true;
+  }, [location.state, resumeData]);
 
   const layout = getLayoutSettings(customization.layout);
 
@@ -106,6 +123,20 @@ function ResumeBuilder() {
   const activeValidation = validationSection === activeTab
     ? validateResumeSection(resumeData, activeTab)
     : { errors: [], byPath: {} };
+
+  useEffect(() => {
+    if (!pendingValidationFocus.current || validationSection !== activeTab || !activeValidation.errors.length) return undefined;
+
+    const frame = window.requestAnimationFrame(() => {
+      const firstInvalidField = document.querySelector('[aria-invalid="true"]');
+      if (!firstInvalidField) return;
+      firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstInvalidField.focus({ preventScroll: true });
+      pendingValidationFocus.current = false;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, activeValidation.errors.length, validationSection]);
 
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
   const currentStepIndex = tabs.findIndex((tab) => tab.id === activeTab);
