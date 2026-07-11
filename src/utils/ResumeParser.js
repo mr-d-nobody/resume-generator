@@ -1,10 +1,19 @@
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
-import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.js?url';
 import { ensureCsrfCookie } from './authApi';
 
-// Use the Web Worker again, as version 3.x ships standard JS workers
-// that are fully compatible with older mobile devices and iOS WebKit
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+let pdfLibraryPromise;
+
+async function getPdfLibrary() {
+  if (!pdfLibraryPromise) {
+    pdfLibraryPromise = Promise.all([
+      import('pdfjs-dist/legacy/build/pdf.js'),
+      import('pdfjs-dist/legacy/build/pdf.worker.min.js?url'),
+    ]).then(([pdfModule, workerModule]) => {
+      pdfModule.GlobalWorkerOptions.workerSrc = workerModule.default;
+      return pdfModule;
+    });
+  }
+  return pdfLibraryPromise;
+}
 
 function getCookie(name) {
   const prefix = `${name}=`;
@@ -20,6 +29,7 @@ function getCookie(name) {
  */
 export async function extractTextFromPDF(file) {
   try {
+    const pdfjsLib = await getPdfLibrary();
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     
@@ -68,6 +78,7 @@ export async function parseResumeWithAI(rawText, resumeType = 'experienced') {
         'X-CSRFToken': getCookie('csrftoken'),
       },
       credentials: 'include',
+      signal: AbortSignal.timeout(35000),
       body: JSON.stringify({ 
         raw_text: rawText,
         resume_type: resumeType

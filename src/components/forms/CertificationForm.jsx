@@ -20,20 +20,23 @@ function CertificationForm() {
   } = useResume();
   const [draft, setDraft] = useState(EMPTY_CERTIFICATION);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [error, setError] = useState('');
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setDraft((current) => ({ ...current, [name]: value }));
+    if (name === 'name') setError('');
   };
 
   const reset = () => {
     setDraft(EMPTY_CERTIFICATION);
     setEditingIndex(null);
+    setError('');
   };
 
   const save = () => {
     if (!draft.name.trim()) {
-      alert('Please enter a certificate name.');
+      setError('Certificate name is required.');
       return;
     }
     const value = {
@@ -89,6 +92,7 @@ function CertificationForm() {
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Certificate name *
           <input name="name" value={draft.name} onChange={handleChange} className="form-input mt-1" placeholder="AWS Certified Solutions Architect" />
+          {error && <span className="mt-1 block text-sm text-red-600" role="alert">{error}</span>}
         </label>
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Issuer

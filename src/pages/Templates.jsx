@@ -153,10 +153,12 @@ function Templates() {
         </div>
 
         {/* Filter Bar */}
-        <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:mb-10 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0">
+        <div className="horizontal-scroll-cue -mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-3 sm:mx-0 sm:mb-10 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0" aria-label="Template categories">
           {filters.map(cat => (
             <button
               key={cat.id}
+              type="button"
+              aria-pressed={filter === cat.id}
               onClick={() => {
                 setFilter(cat.id);
                 if (cat.id !== 'All') setTemplateCategory(cat.id);

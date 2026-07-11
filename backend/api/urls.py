@@ -12,5 +12,7 @@ urlpatterns = [
     path('auth/login', auth_views.login_user, name='auth-login'),
     path('auth/logout', auth_views.logout_user, name='auth-logout'),
     path('auth/change-password', auth_views.change_password, name='auth-change-password'),
+    path('auth/data-export', auth_views.export_account_data, name='auth-data-export'),
+    path('auth/delete-account', auth_views.delete_account, name='auth-delete-account'),
     path('resume', resume_views.saved_resume, name='saved-resume'),
 ]

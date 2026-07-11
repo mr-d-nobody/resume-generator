@@ -20,7 +20,8 @@ function Navbar() {
     cloudError,
     cloudConflict,
     useCloudVersion,
-    keepLocalVersion
+    keepLocalVersion,
+    retryCloudSave
   } = useResume();
 
   const cloudIndicator = isAuthenticated ? {
@@ -28,6 +29,7 @@ function Navbar() {
     saving: { icon: CloudUpload, label: 'Saving to cloud', className: 'text-blue-500', spin: false },
     saved: { icon: Check, label: 'Saved to cloud', className: 'text-emerald-500', spin: false },
     conflict: { icon: AlertCircle, label: 'Save conflict', className: 'text-amber-500', spin: false },
+    validation: { icon: AlertCircle, label: cloudError || 'Complete required fields to save', className: 'text-amber-500', spin: false },
     error: { icon: AlertCircle, label: cloudError || 'Cloud save failed', className: 'text-red-500', spin: false },
     idle: { icon: Cloud, label: 'Cloud ready', className: 'text-gray-400', spin: false }
   }[cloudStatus] : null;
@@ -105,6 +107,9 @@ function Navbar() {
                 <span>{cloudIndicator.label === 'Saving to cloud' ? 'Saving…' : cloudIndicator.label === 'Saved to cloud' ? 'Saved' : ''}</span>
               </div>
             )}
+            {cloudStatus === 'error' && (
+              <button type="button" onClick={retryCloudSave} className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Retry save</button>
+            )}
             {!isLoading && (
               isAuthenticated ? (
                 <div className="flex items-center gap-2">
@@ -133,6 +138,9 @@ function Navbar() {
               <span title={cloudIndicator.label} aria-label={cloudIndicator.label} className={cloudIndicator.className}>
                 <CloudIcon className={`h-5 w-5 ${cloudIndicator.spin ? 'animate-spin' : ''}`} />
               </span>
+            )}
+            {cloudStatus === 'error' && (
+              <button type="button" onClick={retryCloudSave} className="rounded-md border border-red-300 px-2 py-1 text-xs font-semibold text-red-600" aria-label="Retry cloud save">Retry</button>
             )}
             {!isLoading && (
               isAuthenticated ? (

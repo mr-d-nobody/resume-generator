@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   BriefcaseBusiness,
@@ -10,7 +10,6 @@ import {
   RotateCcw,
   Search
 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 import { useResume } from '../contexts/ResumeContext';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
@@ -247,45 +246,58 @@ function normalizeAdzunaJob(job) {
   };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
+async function fetchJson(url, { signal, timeoutMs = 12000 } = {}) {
+  const controller = new AbortController();
+  const abortFromParent = () => controller.abort(signal?.reason);
+  signal?.addEventListener('abort', abortFromParent, { once: true });
+  const timer = setTimeout(() => controller.abort(new DOMException('Request timed out', 'TimeoutError')), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    if (signal?.aborted) throw new DOMException('Search cancelled', 'AbortError');
+    if (controller.signal.aborted) throw new Error('Request timed out.');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abortFromParent);
   }
-  return response.json();
 }
 
 function makeSettledSource(name, promise) {
   return promise.then((jobs) => ({ name, jobs }));
 }
 
-async function fetchLeverJobs() {
+async function fetchLeverJobs(signal) {
   const results = await Promise.allSettled(
     LEVER_COMPANY_SLUGS.map((companySlug) =>
-      fetchJson(`https://api.lever.co/v0/postings/${companySlug}?mode=json`)
+      fetchJson(`https://api.lever.co/v0/postings/${companySlug}?mode=json`, { signal })
         .then((jobs) => (jobs || []).map((job) => normalizeLeverJob(job, companySlug)))
     )
   );
 
-  return results
-    .filter((result) => result.status === 'fulfilled')
+  const fulfilled = results.filter((result) => result.status === 'fulfilled');
+  if (!fulfilled.length) throw new Error('Lever is unavailable.');
+  return fulfilled
     .flatMap((result) => result.value);
 }
 
-async function fetchGreenhouseJobs() {
+async function fetchGreenhouseJobs(signal) {
   const results = await Promise.allSettled(
     GREENHOUSE_BOARDS.map((board) =>
-      fetchJson(`https://boards-api.greenhouse.io/v1/boards/${board.token}/jobs?content=true`)
+      fetchJson(`https://boards-api.greenhouse.io/v1/boards/${board.token}/jobs?content=true`, { signal })
         .then((response) => (response.jobs || []).map((job) => normalizeGreenhouseJob(job, board.company)))
     )
   );
 
-  return results
-    .filter((result) => result.status === 'fulfilled')
+  const fulfilled = results.filter((result) => result.status === 'fulfilled');
+  if (!fulfilled.length) throw new Error('Greenhouse is unavailable.');
+  return fulfilled
     .flatMap((result) => result.value);
 }
 
-async function fetchJobs(filters) {
+async function fetchJobs(filters, signal) {
   const keyword = filters.keyword.trim();
   const location = filters.location.trim();
   const skills = splitSkills(filters.skills);
@@ -311,14 +323,14 @@ async function fetchJobs(filters) {
   if (adzunaCountry) credentialedParams.set('country', adzunaCountry);
 
   const sourceRequests = [
-    makeSettledSource('Remotive', fetchJson(remotiveUrl).then((data) => (data.jobs || []).map(normalizeRemotiveJob))),
-    makeSettledSource('Jobicy', fetchJson(jobicyUrl).then((data) => (data.jobs || []).map(normalizeJobicyJob))),
-    makeSettledSource('Himalayas', fetchJson(himalayasUrl).then((data) => (data.jobs || []).map(normalizeHimalayasJob))),
-    makeSettledSource('Arbeitnow', fetchJson('https://www.arbeitnow.com/api/job-board-api').then((data) => (data.data || []).map(normalizeArbeitnowJob))),
-    makeSettledSource('Jooble', fetchJson(`/api/jooble-jobs?${credentialedParams}`).then((data) => (data.jobs || []).map(normalizeJoobleJob))),
-    makeSettledSource('Adzuna', fetchJson(`/api/adzuna-jobs?${credentialedParams}`).then((data) => (data.results || []).map(normalizeAdzunaJob))),
-    makeSettledSource('Lever', fetchLeverJobs()),
-    makeSettledSource('Greenhouse', fetchGreenhouseJobs())
+    makeSettledSource('Remotive', fetchJson(remotiveUrl, { signal }).then((data) => (data.jobs || []).map(normalizeRemotiveJob))),
+    makeSettledSource('Jobicy', fetchJson(jobicyUrl, { signal }).then((data) => (data.jobs || []).map(normalizeJobicyJob))),
+    makeSettledSource('Himalayas', fetchJson(himalayasUrl, { signal }).then((data) => (data.jobs || []).map(normalizeHimalayasJob))),
+    makeSettledSource('Arbeitnow', fetchJson('https://www.arbeitnow.com/api/job-board-api', { signal }).then((data) => (data.data || []).map(normalizeArbeitnowJob))),
+    makeSettledSource('Jooble', fetchJson(`/api/jooble-jobs?${credentialedParams}`, { signal }).then((data) => (data.jobs || []).map(normalizeJoobleJob))),
+    makeSettledSource('Adzuna', fetchJson(`/api/adzuna-jobs?${credentialedParams}`, { signal }).then((data) => (data.results || []).map(normalizeAdzunaJob))),
+    makeSettledSource('Lever', fetchLeverJobs(signal)),
+    makeSettledSource('Greenhouse', fetchGreenhouseJobs(signal))
   ];
 
   const results = await Promise.allSettled(sourceRequests);
@@ -381,8 +393,6 @@ function buildPageNumbers(currentPage, totalPages) {
 
 export default function FindJobs() {
   const { resumeData } = useResume();
-  const { user } = useAuth();
-  const canViewSourceDiagnostics = String(user?.id || '') === '3';
   const defaultFilters = useMemo(() => ({
     keyword: extractPrimaryJobRole(resumeData?.personalInfo?.title),
     location: '',
@@ -397,6 +407,7 @@ export default function FindJobs() {
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const requestControllerRef = useRef(null);
 
   const visibleJobs = useMemo(
     () => jobs.filter((job) => jobMatchesFilters(job, filters)),
@@ -426,20 +437,26 @@ export default function FindJobs() {
 
   const loadJobs = async (event) => {
     event?.preventDefault();
+    requestControllerRef.current?.abort();
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
     setStatus('loading');
     setError('');
     setFailedSources([]);
 
     try {
-      const result = await fetchJobs(filters);
+      const result = await fetchJobs(filters, controller.signal);
+      if (controller.signal.aborted) return;
       setJobs(result.jobs);
       setFailedSources(result.failedSources);
       setCurrentPage(1);
       setStatus('success');
     } catch (fetchError) {
-      setJobs([]);
+      if (fetchError.name === 'AbortError') return;
       setError(fetchError.message || 'Unable to fetch jobs right now.');
       setStatus('error');
+    } finally {
+      if (requestControllerRef.current === controller) requestControllerRef.current = null;
     }
   };
 
@@ -465,6 +482,8 @@ export default function FindJobs() {
     // The first search should use the resume-powered defaults once the page opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => () => requestControllerRef.current?.abort(), []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 dark:bg-gray-900">
@@ -566,23 +585,27 @@ export default function FindJobs() {
               <div>
                 <h2 className="font-semibold">Could not load jobs</h2>
                 <p className="mt-1 text-sm">{error}</p>
+                <button type="button" onClick={() => loadJobs()} className="mt-3 rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Retry search</button>
               </div>
             </div>
           </div>
         )}
 
-        {canViewSourceDiagnostics && status === 'success' && failedSources.length > 0 && (
+        {status === 'success' && failedSources.length > 0 && (
           <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-            Source check for user 3: {failedSources.join(', ')} did not respond.
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>Partial results: {failedSources.join(', ')} did not respond. Results from the other providers are still shown.</span>
+              <button type="button" onClick={() => loadJobs()} className="shrink-0 rounded-md bg-amber-700 px-3 py-2 font-semibold text-white hover:bg-amber-800">Retry providers</button>
+            </div>
           </div>
         )}
 
         {status === 'success' && visibleJobs.length === 0 && (
           <div className="card p-10 text-center">
             <BriefcaseBusiness className="mx-auto h-12 w-12 text-gray-400" />
-            <h2 className="mt-4 text-xl font-semibold text-gray-950 dark:text-white">No jobs found</h2>
+            <h2 className="mt-4 text-xl font-semibold text-gray-950 dark:text-white">{failedSources.length ? 'No jobs from the responding providers' : 'No jobs found'}</h2>
             <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
-              Try a broader keyword, fewer skills, or a wider location.
+              {failedSources.length ? 'Some providers are unavailable. Retry them or adjust the search while the other providers recover.' : 'Try a broader keyword, fewer skills, or a wider location.'}
             </p>
           </div>
         )}

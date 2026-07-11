@@ -22,11 +22,14 @@ function SummaryForm() {
       </p>
 
       <div>
+        <label htmlFor="professional-summary" className="form-label">Professional summary</label>
         <textarea
+          id="professional-summary"
           value={personalInfo.summary}
           onChange={handleInputChange}
           className="form-input h-48 resize-none"
           placeholder="e.g. Dedicated and detail-oriented Software Engineer with 3 years of experience developing scalable web applications. Proficient in React, Node.js, and cloud technologies. Proven track record of improving application performance and collaborating with cross-functional teams."
+          maxLength="1200"
         />
       </div>
     </div>

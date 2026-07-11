@@ -13,6 +13,7 @@ function ProjectForm() {
   const { resumeData, addProject, updateProject, deleteProject } = useResume();
   const [editingIndex, setEditingIndex] = useState(null);
   const [draft, setDraft] = useState(emptyProject);
+  const [error, setError] = useState('');
 
   const updateLink = (index, field, value) => {
     setDraft((current) => ({
@@ -44,11 +45,12 @@ function ProjectForm() {
   const reset = () => {
     setEditingIndex(null);
     setDraft(emptyProject());
+    setError('');
   };
 
   const save = () => {
     if (!draft.name.trim()) {
-      alert('Please fill in project name');
+      setError('Project name is required.');
       return;
     }
 
@@ -110,7 +112,8 @@ function ProjectForm() {
       <div className="space-y-4">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Project name *
-          <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} className="form-input mt-1" placeholder="E-Commerce Dashboard" />
+          <input value={draft.name} onChange={(event) => { setDraft({ ...draft, name: event.target.value }); setError(''); }} className="form-input mt-1" placeholder="E-Commerce Dashboard" maxLength="120" aria-invalid={Boolean(error)} />
+          {error && <span className="mt-1 block text-sm text-red-600" role="alert">{error}</span>}
         </label>
 
         <div>

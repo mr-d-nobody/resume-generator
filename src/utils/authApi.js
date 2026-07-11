@@ -7,6 +7,27 @@ function getCookie(name) {
   return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : '';
 }
 
+export function getCsrfToken() {
+  return getCookie('csrftoken');
+}
+
+async function fetchWithTimeout(path, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const externalSignal = options.signal;
+  const abortFromCaller = () => controller.abort(externalSignal.reason);
+  externalSignal?.addEventListener('abort', abortFromCaller, { once: true });
+  const timer = setTimeout(() => controller.abort(new DOMException('Request timed out', 'TimeoutError')), timeoutMs);
+  try {
+    return await fetch(path, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (!externalSignal?.aborted && controller.signal.aborted) throw new Error('Request timed out. Please try again.');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    externalSignal?.removeEventListener('abort', abortFromCaller);
+  }
+}
+
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -26,12 +47,13 @@ async function parseResponse(response) {
 
 export async function ensureCsrfCookie() {
   try {
-    const response = await fetch('/api/auth/csrf', {
+    const response = await fetchWithTimeout('/api/auth/csrf', {
       credentials: 'include'
     });
     return parseResponse(response);
   } catch (error) {
     if (error.status) throw error;
+    if (error.message?.startsWith('Request timed out')) throw error;
     throw new Error('Cannot connect to the authentication service. Make sure the Django backend is running on port 8000.');
   }
 }
@@ -49,7 +71,7 @@ export async function authRequest(path, options = {}) {
   }
 
   try {
-    const response = await fetch(path, {
+    const response = await fetchWithTimeout(path, {
       ...options,
       method,
       headers,
@@ -58,6 +80,7 @@ export async function authRequest(path, options = {}) {
     return parseResponse(response);
   } catch (error) {
     if (error.status) throw error;
+    if (error.message?.startsWith('Request timed out')) throw error;
     throw new Error('Cannot connect to the authentication service. Make sure the Django backend is running on port 8000.');
   }
 }

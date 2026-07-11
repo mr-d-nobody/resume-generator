@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "npm run test:frontend",
+    "test:frontend": "node --test src/**/*.test.js api/*.test.js",
     "preview": "vite preview",
     "export": "node scripts/export.js"
   },

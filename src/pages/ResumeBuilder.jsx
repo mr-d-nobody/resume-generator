@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PersonalInfoForm from '../components/forms/PersonalInfoForm';
 import ExperienceForm from '../components/forms/ExperienceForm';
@@ -12,6 +12,7 @@ import SummaryForm from '../components/forms/SummaryForm';
 import SectionSettingsForm from '../components/forms/SectionSettingsForm';
 import ResumePreview from '../components/preview/ResumePreview';
 import { useResume } from '../contexts/ResumeContext';
+import { calculateValidatedResumeScore, validateResumeSection } from '../utils/resumeValidation';
 import {
   COLOR_THEMES,
   DEFAULT_LAYOUT,
@@ -20,6 +21,7 @@ import {
 } from '../utils/templateStyle';
 import {
   Award,
+  AlertCircle,
   Briefcase,
   Check,
   ChevronLeft,
@@ -72,12 +74,18 @@ function ResumeBuilder() {
   const [mobileView, setMobileView] = useState('edit');
   const [workspaceMode, setWorkspaceMode] = useState('edit');
   const [customizeTab, setCustomizeTab] = useState('template');
+  const [validationSection, setValidationSection] = useState('');
+  const tabRefs = useRef({});
 
   useEffect(() => {
     if (requestedTemplate && requestedTemplate !== selectedTemplate) {
       setTemplate(requestedTemplate);
     }
   }, [requestedTemplate, selectedTemplate, setTemplate]);
+
+  useEffect(() => {
+    tabRefs.current[activeTab]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [activeTab]);
 
   const layout = getLayoutSettings(customization.layout);
 
@@ -94,21 +102,10 @@ function ResumeBuilder() {
     { id: 'sections', label: 'Headings', icon: Settings2, component: SectionSettingsForm }
   ];
 
-  const score = useMemo(() => {
-    const checks = [
-      resumeData.personalInfo?.firstName,
-      resumeData.personalInfo?.lastName,
-      resumeData.personalInfo?.email,
-      resumeData.personalInfo?.phone,
-      resumeData.personalInfo?.title,
-      resumeData.personalInfo?.summary,
-      resumeData.education?.length,
-      resumeData.skills?.length,
-      resumeData.projects?.length,
-      resumeData.experience?.length || resumeData.certifications?.length
-    ];
-    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-  }, [resumeData]);
+  const score = useMemo(() => calculateValidatedResumeScore(resumeData), [resumeData]);
+  const activeValidation = validationSection === activeTab
+    ? validateResumeSection(resumeData, activeTab)
+    : { errors: [], byPath: {} };
 
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
   const currentStepIndex = tabs.findIndex((tab) => tab.id === activeTab);
@@ -120,8 +117,27 @@ function ResumeBuilder() {
   const goPrevious = () => {
     if (canGoPrevious) setActiveTab(tabs[currentStepIndex - 1].id);
   };
+  const openTab = (tabId) => {
+    const targetIndex = tabs.findIndex((tab) => tab.id === tabId);
+    if (targetIndex > currentStepIndex) {
+      const result = validateResumeSection(resumeData, activeTab);
+      if (!result.isValid) {
+        setValidationSection(activeTab);
+        return;
+      }
+    }
+    setValidationSection('');
+    setActiveTab(tabId);
+  };
   const goNext = () => {
-    if (canGoNext) setActiveTab(tabs[currentStepIndex + 1].id);
+    if (!canGoNext) return;
+    const result = validateResumeSection(resumeData, activeTab);
+    if (!result.isValid) {
+      setValidationSection(activeTab);
+      return;
+    }
+    setValidationSection('');
+    setActiveTab(tabs[currentStepIndex + 1].id);
   };
   const openMobileEditor = () => {
     setWorkspaceMode('edit');
@@ -341,15 +357,18 @@ function ResumeBuilder() {
           {!showCustomizePanel ? (
             <>
               <div className="hidden border-b border-gray-200 px-8 py-4 dark:border-gray-800 xl:block">
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <div className="horizontal-scroll-cue flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Resume sections">
                   {tabs.map((tab, index) => {
                     const Icon = tab.icon;
                     const active = tab.id === activeTab;
                     return (
                       <button
                         key={tab.id}
+                        ref={(element) => { tabRefs.current[tab.id] = element; }}
                         type="button"
-                        onClick={() => setActiveTab(tab.id)}
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => openTab(tab.id)}
                         className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                           active
                             ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -366,7 +385,20 @@ function ResumeBuilder() {
               </div>
 
               <div className="resume-studio-editor h-[calc(100svh-9rem)] overflow-y-auto px-5 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] custom-scrollbar sm:px-8 xl:h-[calc(100vh-18rem)] xl:pb-6">
-                {ActiveComponent && <ActiveComponent />}
+                {activeValidation.errors.length > 0 && (
+                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800" role="alert" aria-live="assertive">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="font-semibold">Correct this section before continuing</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                          {activeValidation.errors.map((error) => <li key={`${error.path}-${error.message}`}>{error.message}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {ActiveComponent && <ActiveComponent validationErrors={activeValidation.byPath} />}
               </div>
 
               <div className="hidden items-center justify-between border-t border-gray-200 bg-white px-8 py-4 dark:border-gray-800 dark:bg-gray-950 xl:flex">
@@ -383,7 +415,7 @@ function ResumeBuilder() {
                     <button
                       key={tab.id}
                       type="button"
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => openTab(tab.id)}
                       className={`h-2 rounded-full transition-all ${tab.id === activeTab ? 'w-6 bg-blue-600' : 'w-2 bg-gray-300'}`}
                       aria-label={tab.label}
                     />
