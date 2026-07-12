@@ -51,7 +51,7 @@ export default function Template12({ data, config }) {
       <div className="grid min-h-[297mm] grid-cols-[34%_66%] bg-white" style={densityStyle}>
         <aside className="px-8 py-10 text-white" style={{ backgroundColor: theme.primaryColor }}>
         <div className="mb-10 text-center">
-          <h1 className="text-[27px] font-black leading-tight tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+          <h1 className="text-[27px] font-black leading-tight tracking-tight" style={{ fontFamily: theme.fontFamily }}>
             {personal.name}
           </h1>
           <div className="mx-auto my-4 h-px w-12 bg-white/70" />

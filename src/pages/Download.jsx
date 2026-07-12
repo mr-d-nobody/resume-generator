@@ -130,8 +130,8 @@ function hexToRgb(hexValue, fallback) {
 }
 
 function getPdfFont(fontFamily) {
-  if (fontFamily === 'serif') return 'times';
-  if (fontFamily === 'mono') return 'courier';
+  if (['serif', 'merriweather'].includes(fontFamily)) return 'times';
+  if (['mono', 'fira-code'].includes(fontFamily)) return 'courier';
   return 'helvetica';
 }
 

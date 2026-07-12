@@ -35,6 +35,41 @@ export const COLOR_THEMES = [
     primaryColor: '#9a3412',
     secondaryColor: '#6b7280',
     textColor: '#1f2937'
+  },
+  {
+    id: 'teal',
+    label: 'Teal',
+    primaryColor: '#0f766e',
+    secondaryColor: '#475569',
+    textColor: '#17201f'
+  },
+  {
+    id: 'navy',
+    label: 'Navy',
+    primaryColor: '#1e3a8a',
+    secondaryColor: '#475569',
+    textColor: '#172554'
+  },
+  {
+    id: 'rose',
+    label: 'Rose',
+    primaryColor: '#be123c',
+    secondaryColor: '#64748b',
+    textColor: '#1f1720'
+  },
+  {
+    id: 'plum',
+    label: 'Plum',
+    primaryColor: '#7e22ce',
+    secondaryColor: '#64748b',
+    textColor: '#27133a'
+  },
+  {
+    id: 'gold',
+    label: 'Gold',
+    primaryColor: '#a16207',
+    secondaryColor: '#64748b',
+    textColor: '#29200b'
   }
 ];
 
@@ -42,7 +77,12 @@ export const FONT_OPTIONS = [
   { id: 'inter', label: 'Inter', fontFamily: 'Inter, Arial, sans-serif' },
   { id: 'system', label: 'System', fontFamily: 'Arial, Helvetica, sans-serif' },
   { id: 'serif', label: 'Serif', fontFamily: 'Georgia, Times New Roman, serif' },
-  { id: 'mono', label: 'Mono', fontFamily: 'Courier New, Courier, monospace' }
+  { id: 'mono', label: 'Mono', fontFamily: 'Courier New, Courier, monospace' },
+  { id: 'roboto', label: 'Roboto', fontFamily: 'Roboto, Arial, sans-serif' },
+  { id: 'lato', label: 'Lato', fontFamily: 'Lato, Arial, sans-serif' },
+  { id: 'source-sans', label: 'Source Sans', fontFamily: 'Source Sans 3, Arial, sans-serif' },
+  { id: 'merriweather', label: 'Merriweather', fontFamily: 'Merriweather, Georgia, serif' },
+  { id: 'fira-code', label: 'Fira Code', fontFamily: 'Fira Code, Courier New, monospace' }
 ];
 
 export const DEFAULT_LAYOUT = {
