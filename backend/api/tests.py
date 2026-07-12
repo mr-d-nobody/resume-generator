@@ -98,6 +98,25 @@ class NormalizeParsedResumeTests(SimpleTestCase):
             {"label": "GitHub", "url": "github.com/ada/portfolio"},
         ])
 
+    def test_keeps_project_description_and_highlights_separate(self):
+        result = normalize_parsed_resume({
+            "projects": [
+                {
+                    "name": "Independent fields",
+                    "description": "Built a production API.",
+                    "highlights": ["Django", "PostgreSQL", "JWT"],
+                },
+                {
+                    "name": "Legacy duplicate",
+                    "description": "React\nDjango",
+                    "highlights": ["React", "Django"],
+                },
+            ],
+        })
+
+        self.assertEqual(result["projects"][0]["highlights"], ["Django", "PostgreSQL", "JWT"])
+        self.assertEqual(result["projects"][1]["highlights"], [])
+
     def test_preserves_links_inside_custom_sections(self):
         result = normalize_parsed_resume({
             "customSections": [{
@@ -203,6 +222,13 @@ class ResumeValidationTests(SimpleTestCase):
         self.assertIn("certifications.0.expirationDate", errors)
         self.assertIn("certifications.0.url", errors)
         self.assertIn("customSections.0.entries.0.url", errors)
+
+    def test_validates_project_highlights_independently_from_description(self):
+        errors = validate_resume_data({
+            "personalInfo": {"firstName": "Ada", "lastName": "Lovelace", "email": "ada@example.com", "phone": "+44 20 7946 0958"},
+            "projects": [{"name": "Portfolio", "description": "A valid overview.", "highlights": ["x" * 3001]}],
+        })
+        self.assertIn("projects.0.highlights", errors)
 
     def test_uses_fallback_title_without_reclassifying_content(self):
         result = normalize_parsed_resume({

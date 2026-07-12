@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
 import { Edit2, Plus, Trash2 } from 'lucide-react';
-import { inferLinkLabel, normalizeProjectLinks } from '../../utils/resumeData';
+import { inferLinkLabel, normalizeProjectHighlights, normalizeProjectLinks } from '../../utils/resumeData';
+import { RESUME_LIMITS } from '../../utils/resumeValidation';
 
 const emptyProject = () => ({
   name: '',
   description: '',
+  highlights: '',
   links: []
 });
 
@@ -66,7 +68,8 @@ function ProjectForm() {
         ? `project-${Date.now()}`
         : resumeData.projects[editingIndex].id,
       links,
-      highlights: draft.description.split('\n').map((item) => item.trim()).filter(Boolean)
+      description: draft.description.trim(),
+      highlights: draft.highlights.split('\n').map((item) => item.trim()).filter(Boolean)
     };
 
     if (editingIndex === null) addProject(data);
@@ -79,7 +82,8 @@ function ProjectForm() {
     setEditingIndex(index);
     setDraft({
       name: project.name || '',
-      description: project.description || (project.highlights || []).join('\n'),
+      description: project.description || '',
+      highlights: normalizeProjectHighlights(project).join('\n'),
       links: normalizeProjectLinks(project)
     });
   };
@@ -137,7 +141,13 @@ function ProjectForm() {
 
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Description
-          <textarea rows="4" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} className="form-input mt-1" placeholder="Add each highlight on a new line" />
+          <textarea rows="4" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} className="form-input mt-1" placeholder="Write a short overview of the project" maxLength={RESUME_LIMITS.description} />
+        </label>
+
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Highlights / technologies
+          <textarea rows="4" value={draft.highlights} onChange={(event) => setDraft({ ...draft, highlights: event.target.value })} className="form-input mt-1" placeholder={'React\nDjango\nPostgreSQL\nJWT\nOpenAI API'} maxLength={RESUME_LIMITS.description} />
+          <span className="mt-1 block text-xs text-gray-500">Add each highlight or technology on a new line.</span>
         </label>
 
         <div className="flex flex-col gap-3 sm:flex-row">

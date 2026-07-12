@@ -96,6 +96,29 @@ export function normalizeProjectLinks(project = {}) {
   return links;
 }
 
+const comparableText = (value) => asString(value).replace(/\s+/g, ' ').toLowerCase();
+
+export function normalizeProjectHighlights(project = {}) {
+  const description = asString(project.description);
+  const descriptionKey = comparableText(description);
+  const highlights = asArray(project.highlights).map(asString).filter(Boolean);
+
+  // Older manual-builder saves generated highlights by splitting the project
+  // description. Suppress that legacy duplicate while preserving genuinely
+  // independent highlights from manual entry and Magic Upload.
+  if (descriptionKey && comparableText(highlights.join('\n')) === descriptionKey) {
+    return [];
+  }
+
+  const seen = new Set();
+  return highlights.filter((highlight) => {
+    const key = comparableText(highlight);
+    if (!key || key === descriptionKey || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function normalizeResumeLinks(personalInfo = {}) {
   const customLinks = normalizeCustomLinks(personalInfo.links);
 
@@ -148,6 +171,8 @@ export function normalizeResumeData(resumeData = {}) {
     skills: asArray(resumeData.skills),
     projects: asArray(resumeData.projects).map((project) => ({
       ...project,
+      description: asString(project?.description),
+      highlights: normalizeProjectHighlights(project),
       links: normalizeProjectLinks(project)
     })),
     certifications: asArray(resumeData.certifications)

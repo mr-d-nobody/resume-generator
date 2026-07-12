@@ -27,3 +27,28 @@ test('preserves the selected education score label and defaults legacy entries t
   assert.equal(rendered.education[1].gradeLabel, 'GPA');
   assert.equal(rendered.education[2].gradeLabel, 'Percentage');
 });
+
+test('keeps project descriptions and genuine highlights independent', () => {
+  const rendered = transformResumeData({
+    projects: [{
+      name: 'Sustainability Advisor',
+      description: 'Tracks sustainability metrics and API usage.',
+      highlights: ['React', 'Django', 'PostgreSQL', 'JWT', 'OpenAI API'],
+    }],
+  });
+
+  assert.equal(rendered.projects[0].description, 'Tracks sustainability metrics and API usage.');
+  assert.deepEqual(rendered.projects[0].highlights, ['React', 'Django', 'PostgreSQL', 'JWT', 'OpenAI API']);
+});
+
+test('removes highlights generated from the same legacy project description', () => {
+  const rendered = transformResumeData({
+    projects: [
+      { name: 'Single line', description: 'Built a visualizer.', highlights: ['Built a visualizer.'] },
+      { name: 'Multiple lines', description: 'React\nDjango', highlights: ['React', 'Django'] },
+    ],
+  });
+
+  assert.deepEqual(rendered.projects[0].highlights, []);
+  assert.deepEqual(rendered.projects[1].highlights, []);
+});

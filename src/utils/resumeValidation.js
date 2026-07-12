@@ -111,7 +111,10 @@ export function validateResumeData(resumeData, { requireCore = true } = {}) {
   (data.projects || []).forEach((item, index) => {
     const base = `projects.${index}`;
     addTextError(errors, item.name, `${base}.name`, `Project ${index + 1} name`, RESUME_LIMITS.short, { required: true, section: 'projects' });
-    addTextError(errors, item.description || (item.highlights || []).join('\n'), `${base}.description`, `Project ${index + 1} description`, RESUME_LIMITS.description, { section: 'projects' });
+    addTextError(errors, item.description, `${base}.description`, `Project ${index + 1} description`, RESUME_LIMITS.description, { section: 'projects' });
+    const highlights = Array.isArray(item.highlights) ? item.highlights : [];
+    if (highlights.length > RESUME_LIMITS.listItems) errors.push({ path: `${base}.highlights`, section: 'projects', message: `Project ${index + 1} is limited to ${RESUME_LIMITS.listItems} highlights.` });
+    addTextError(errors, highlights.join('\n'), `${base}.highlights`, `Project ${index + 1} highlights`, RESUME_LIMITS.description, { section: 'projects' });
     (item.links || []).forEach((link, linkIndex) => {
       addTextError(errors, link.label, `${base}.links.${linkIndex}.label`, `Project ${index + 1} link label`, RESUME_LIMITS.short, { section: 'projects' });
       addUrlError(errors, link.url, `${base}.links.${linkIndex}.url`, `Project ${index + 1} link ${linkIndex + 1}`, 'projects');

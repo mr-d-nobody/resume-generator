@@ -136,13 +136,18 @@ def validate_resume_data(data, require_core=True):
         check_text(name, f"skills.{index}.name", f"Skill {index + 1}", LIMITS["short"], True)
     for index, item in enumerate(resume.get("projects") if isinstance(resume.get("projects"), list) else []):
         item = item if isinstance(item, dict) else {}
-        check_text(item.get("name"), f"projects.{index}.name", f"Project {index + 1} name", LIMITS["short"], True)
-        check_text(item.get("description"), f"projects.{index}.description", f"Project {index + 1} description", LIMITS["description"])
+        base = f"projects.{index}"
+        check_text(item.get("name"), f"{base}.name", f"Project {index + 1} name", LIMITS["short"], True)
+        check_text(item.get("description"), f"{base}.description", f"Project {index + 1} description", LIMITS["description"])
+        highlights = item.get("highlights") if isinstance(item.get("highlights"), list) else []
+        if len(highlights) > LIMITS["list_items"]:
+            add(f"{base}.highlights", f"Project {index + 1} has too many highlights.")
+        check_text("\n".join(_text(value) for value in highlights), f"{base}.highlights", f"Project {index + 1} highlights", LIMITS["description"])
         for link_index, link in enumerate(item.get("links") if isinstance(item.get("links"), list) else []):
             if isinstance(link, dict):
-                check_text(link.get("label"), f"projects.{index}.links.{link_index}.label", f"Project {index + 1} link label", LIMITS["short"])
+                check_text(link.get("label"), f"{base}.links.{link_index}.label", f"Project {index + 1} link label", LIMITS["short"])
                 if not _valid_url(link.get("url")):
-                    add(f"projects.{index}.links.{link_index}.url", f"Project {index + 1} link is invalid.")
+                    add(f"{base}.links.{link_index}.url", f"Project {index + 1} link is invalid.")
     for index, item in enumerate(resume.get("certifications") if isinstance(resume.get("certifications"), list) else []):
         item = item if isinstance(item, dict) else {}
         base = f"certifications.{index}"

@@ -709,7 +709,7 @@ export function ResumeProvider({ children }) {
 
   const saveResumeNow = useCallback(async (payload) => {
     const nextPayload = {
-      resumeData: payload.resumeData || initialResumeData,
+      resumeData: normalizeResumeData(payload.resumeData || initialResumeData),
       selectedTemplate: payload.selectedTemplate || state.selectedTemplate,
       templateCategory: payload.templateCategory || state.templateCategory,
       customization: payload.customization || state.customization

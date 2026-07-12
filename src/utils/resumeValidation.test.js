@@ -58,3 +58,10 @@ test('rejects reversed certification dates and unsafe nested links', () => {
   assert.ok(result.byPath['certifications.0.url']);
   assert.ok(result.byPath['customSections.0.entries.0.url']);
 });
+
+test('validates project highlights independently from the description', () => {
+  const data = validResume();
+  data.projects = [{ name: 'Portfolio', description: 'A valid overview.', highlights: ['x'.repeat(3001)] }];
+  const result = validateResumeData(data);
+  assert.ok(result.byPath['projects.0.highlights']);
+});

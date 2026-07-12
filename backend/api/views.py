@@ -41,6 +41,28 @@ def is_transient_gemini_error(exc):
     return getattr(exc, "code", None) in TRANSIENT_GEMINI_STATUS_CODES
 
 
+def normalize_project_highlights(description, highlights):
+    if not isinstance(highlights, list):
+        return []
+
+    description_key = " ".join(description.lower().split())
+    cleaned = [clean_optional_text(item) for item in highlights]
+    cleaned = [item for item in cleaned if item]
+    joined_key = " ".join("\n".join(cleaned).lower().split())
+    if description_key and joined_key == description_key:
+        return []
+
+    result = []
+    seen = set()
+    for highlight in cleaned:
+        key = " ".join(highlight.lower().split())
+        if not key or key == description_key or key in seen:
+            continue
+        seen.add(key)
+        result.append(highlight)
+    return result
+
+
 def normalize_parsed_resume(parsed_data):
     """Keep the API contract small and make custom-section naming deterministic."""
     if not isinstance(parsed_data, dict):
@@ -103,6 +125,7 @@ def normalize_parsed_resume(parsed_data):
     for project in normalized["projects"]:
         if not isinstance(project, dict):
             continue
+        description = clean_optional_text(project.get("description", ""))
         links = project.get("links")
         if not isinstance(links, list):
             links = []
@@ -122,6 +145,9 @@ def normalize_parsed_resume(parsed_data):
             })
         normalized_projects.append({
             **project,
+            "name": clean_optional_text(project.get("name", "")),
+            "description": description,
+            "highlights": normalize_project_highlights(description, project.get("highlights")),
             "links": normalized_links,
         })
     normalized["projects"] = normalized_projects
@@ -266,7 +292,10 @@ def parse_resume(request):
         - The input may include an "Embedded hyperlinks" list extracted from
           clickable PDF annotations. Use those URLs even when the visible
           resume text only says "LeetCode", "GitHub", "Live Demo", or "Verify".
-        - For projects, preserve every URL in projects.links and preserve the
+        - For projects, keep description as a short overview and highlights as
+          separate bullet points or technologies. Never copy description into
+          highlights. If the source has no highlights, return an empty list.
+          Preserve every URL in projects.links and preserve the
           author's visible hyperlink label when identifiable. If only a URL is
           available, infer a useful label: "GitHub" for GitHub repositories,
           otherwise "Live Demo". Never use the generic label "Link".
