@@ -268,7 +268,7 @@ class AuthenticationApiTests(TestCase):
             "family_name": "Lovelace",
         }
 
-        response = self.post_json("/api/auth/google", {"credential": "google-id-token"})
+        response = self.post_json("/api/auth/login", {"credential": "google-id-token"})
 
         self.assertEqual(response.status_code, 200)
         user = get_user_model().objects.get(email="ada@example.com")

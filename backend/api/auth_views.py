@@ -121,6 +121,8 @@ def login_user(request):
     data = _read_json(request)
     if data is None:
         return _error("Invalid JSON request.")
+    if data.get("credential"):
+        return google_login(request)
 
     email = User.objects.normalize_email(str(data.get("email", "")).strip()).lower()
     password = str(data.get("password", ""))

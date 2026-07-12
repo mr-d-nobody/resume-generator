@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithGoogle = useCallback(async (credential) => {
-    const data = await authRequest('/api/auth/google', {
+    const data = await authRequest('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ credential })
     });
