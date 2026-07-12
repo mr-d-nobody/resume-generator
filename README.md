@@ -206,8 +206,6 @@ This project is deployed on [Vercel](https://vercel.com) with a hybrid architect
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `GEMINI_API_KEY` | `your_key` | Google Gemini API key |
-| `APIFY_API_TOKEN` | Apify API token | Enables optional LinkedIn job search results |
-| `APIFY_LINKEDIN_ACTOR_ID` | `curious_coder~linkedin-jobs-scraper` | Apify Actor used for LinkedIn jobs |
 | `DATABASE_URL` | Neon PostgreSQL URL | Persistent users and sessions |
 | `DJANGO_SECRET_KEY` | Long random value | Session and signing security |
 | `DJANGO_DEBUG` | `False` | Production security mode |

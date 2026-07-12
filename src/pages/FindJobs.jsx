@@ -260,26 +260,6 @@ function normalizeAdzunaJob(job) {
   };
 }
 
-function normalizeLinkedInJob(job) {
-  const company = typeof job.company === 'object' ? job.company?.name : job.company;
-  const location = job.location || job.locationName || job.jobLocation || 'Not specified';
-  const description = job.description || job.jobDescription || job.descriptionText || job.summary || '';
-  const applyUrl = job.jobUrl || job.url || job.applyUrl || job.link;
-
-  return {
-    id: `linkedin-${job.id || job.jobId || applyUrl || job.title}`,
-    source: 'LinkedIn',
-    title: job.title || job.jobTitle || job.position || 'Untitled role',
-    company: company || job.companyName || 'Unknown company',
-    location,
-    jobType: normalizeJobType(job.jobType || job.employmentType || description),
-    tags: [job.experienceLevel, job.workplaceType, job.salary].filter(Boolean).slice(0, 8),
-    description: shortText(description),
-    applyUrl,
-    remote: isRemoteJob(location, job.workplaceType, description)
-  };
-}
-
 async function fetchJson(url, { signal, timeoutMs = 12000 } = {}) {
   const controller = new AbortController();
   const abortFromParent = () => controller.abort(signal?.reason);
@@ -301,39 +281,6 @@ async function fetchJson(url, { signal, timeoutMs = 12000 } = {}) {
 
 function makeSettledSource(name, promise) {
   return promise.then((jobs) => ({ name, jobs }));
-}
-
-function waitForSignal(ms, signal) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    const abort = () => {
-      clearTimeout(timer);
-      reject(new DOMException('Search cancelled', 'AbortError'));
-    };
-    signal?.addEventListener('abort', abort, { once: true });
-  });
-}
-
-async function fetchLinkedInJobs(filters, signal) {
-  const params = new URLSearchParams({
-    source: 'linkedin',
-    keywords: filters.keyword.trim(),
-    location: filters.location.trim(),
-    count: '50'
-  });
-  let result = await fetchJson(`/api/jooble-jobs?${params}`, { signal, timeoutMs: 10000 });
-  const deadline = Date.now() + 90000;
-
-  while (result.status !== 'SUCCEEDED') {
-    if (!result.runId || Date.now() >= deadline) {
-      throw new Error('LinkedIn is taking too long to respond. Try again later.');
-    }
-    await waitForSignal(2500, signal);
-    const pollParams = new URLSearchParams({ source: 'linkedin', runId: result.runId });
-    result = await fetchJson(`/api/jooble-jobs?${pollParams}`, { signal, timeoutMs: 10000 });
-  }
-
-  return (result.items || []).map(normalizeLinkedInJob).filter((job) => job.applyUrl);
 }
 
 async function fetchLeverJobs(signal) {
@@ -396,7 +343,6 @@ async function fetchJobs(filters, signal) {
     makeSettledSource('Arbeitnow', fetchJson('https://www.arbeitnow.com/api/job-board-api', { signal }).then((data) => (data.data || []).map(normalizeArbeitnowJob))),
     makeSettledSource('Jooble', fetchJson(`/api/jooble-jobs?${credentialedParams}`, { signal }).then((data) => (data.jobs || []).map(normalizeJoobleJob))),
     makeSettledSource('Adzuna', fetchJson(`/api/adzuna-jobs?${credentialedParams}`, { signal }).then((data) => (data.results || []).map(normalizeAdzunaJob))),
-    ...(filters.includeLinkedIn ? [makeSettledSource('LinkedIn', fetchLinkedInJobs(filters, signal))] : []),
     makeSettledSource('Lever', fetchLeverJobs(signal)),
     makeSettledSource('Greenhouse', fetchGreenhouseJobs(signal))
   ];
@@ -407,7 +353,7 @@ async function fetchJobs(filters, signal) {
   const failedSources = [];
 
   results.forEach((result, index) => {
-    const sourceName = [...DIRECT_SOURCE_NAMES, ...(filters.includeLinkedIn ? ['LinkedIn'] : []), 'Lever', 'Greenhouse'][index];
+    const sourceName = [...DIRECT_SOURCE_NAMES, 'Lever', 'Greenhouse'][index];
     if (result.status === 'fulfilled') {
       jobs.push(...result.value.jobs);
     } else {
@@ -468,7 +414,6 @@ export default function FindJobs() {
     location: '',
     remoteOnly: true,
     jobType: '',
-    includeLinkedIn: false,
     skills: ''
   }), [resumeData?.personalInfo?.title]);
 
@@ -702,16 +647,6 @@ export default function FindJobs() {
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 Remote
-              </label>
-              <label className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200" title="Uses your Apify credits">
-                <input
-                  type="checkbox"
-                  name="includeLinkedIn"
-                  checked={filters.includeLinkedIn}
-                  onChange={updateFilter}
-                  className="h-4 w-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
-                />
-                LinkedIn <span className="text-xs font-normal opacity-75">(Apify)</span>
               </label>
               <button type="button" onClick={resetFilters} className="btn-secondary inline-flex items-center justify-center gap-2">
                 <RotateCcw className="h-4 w-4" />
