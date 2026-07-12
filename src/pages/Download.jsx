@@ -317,19 +317,6 @@ function isShareCancel(error) {
     || /cancel|abort|dismiss/i.test(error?.message || '');
 }
 
-async function copyShareCaption() {
-  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-    return false;
-  }
-
-  try {
-    await navigator.clipboard.writeText(SHARE_FULL_TEXT);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 async function shareResumePDF(pdfBlob, candidateName) {
   if (typeof navigator === 'undefined' || !navigator.share) {
     throw new Error('Native sharing is not supported on this browser. Please download the PDF and share it manually.');
@@ -341,11 +328,10 @@ async function shareResumePDF(pdfBlob, candidateName) {
     text: SHARE_FULL_TEXT,
     files: [resumePdfFile]
   };
-  const captionCopied = await copyShareCaption();
 
   if (navigator.canShare?.({ files: [resumePdfFile] })) {
     await navigator.share(fileSharePayload);
-    return { captionCopied };
+    return;
   }
 
   await navigator.share({
@@ -353,7 +339,6 @@ async function shareResumePDF(pdfBlob, candidateName) {
     text: SHARE_FALLBACK_TEXT,
     url: SHARE_SITE_LINK
   });
-  return { captionCopied: false };
 }
 
 async function generateServerPdf({ resumeData, customization, templateId }) {
@@ -1295,12 +1280,10 @@ function Download() {
     try {
       setIsSharing(true);
       if (pdfCache?.blob) {
-        const shareResult = await shareResumePDF(pdfCache.blob, candidateName);
+        await shareResumePDF(pdfCache.blob, candidateName);
         setShareNotice({
           type: 'success',
-          message: shareResult?.captionCopied
-            ? 'Your resume is ready to share. The caption was also copied in case the selected app only receives the PDF.'
-            : 'Your resume is ready to share.'
+          message: 'Your resume and promotional message are ready to share.'
         });
       } else {
         await preparePdfBlob();
