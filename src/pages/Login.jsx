@@ -3,6 +3,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthShell from '../components/auth/AuthShell';
 import PasswordInput from '../components/auth/PasswordInput';
+import GoogleAuthButton from '../components/auth/GoogleAuthButton';
 import { useAuth } from '../contexts/AuthContext';
 import { getSafeNextPath } from '../utils/authApi';
 
@@ -31,6 +32,9 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSuccess = () => navigate(nextPath, { replace: true });
+  const handleGoogleError = (googleError) => setError(googleError.message);
+
   return (
     <AuthShell
       eyebrow="Welcome back"
@@ -41,6 +45,8 @@ export default function Login() {
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
+        <GoogleAuthButton onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        <div className="relative flex items-center py-1"><div className="w-full border-t border-slate-200 dark:border-gray-700" /><span className="absolute left-1/2 -translate-x-1/2 bg-white px-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:bg-gray-800">or</span></div>
         <div>
           <label htmlFor="login-email" className="form-label">Email address</label>
           <input

@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 from .models import SavedResume
 from .rate_limits import client_ip, consume_rate_limit
@@ -31,6 +33,7 @@ def _user_payload(user):
         "email": user.email,
         "firstName": user.first_name,
         "lastName": user.last_name,
+        "hasPassword": user.has_usable_password(),
     }
 
 
@@ -149,6 +152,64 @@ def login_user(request):
 
 @require_POST
 @csrf_protect
+def google_login(request):
+    data = _read_json(request)
+    if data is None:
+        return _error("Invalid JSON request.")
+
+    credential = str(data.get("credential", "")).strip()
+    if not credential:
+        return _error("Google sign-in did not return a credential.")
+    if not settings.GOOGLE_CLIENT_ID:
+        return _error("Google sign-in is not configured yet.", status=503)
+
+    try:
+        token_info = id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except (ValueError, TypeError):
+        return _error("We could not verify your Google account.", status=401)
+
+    if not token_info.get("email_verified"):
+        return _error("Your Google email address must be verified.", status=401)
+
+    email = User.objects.normalize_email(str(token_info.get("email", "")).strip()).lower()
+    if not email or "@" not in email:
+        return _error("Google did not provide a valid email address.", status=401)
+
+    user = User.objects.filter(email__iexact=email).first()
+    if user is not None:
+        if not user.is_active:
+            return _error("This account is inactive.", status=403)
+        changed_fields = []
+        first_name = str(token_info.get("given_name", "")).strip()
+        last_name = str(token_info.get("family_name", "")).strip()
+        if not user.first_name and first_name:
+            user.first_name = first_name
+            changed_fields.append("first_name")
+        if not user.last_name and last_name:
+            user.last_name = last_name
+            changed_fields.append("last_name")
+        if changed_fields:
+            user.save(update_fields=changed_fields)
+    else:
+        user = User(
+            username=email,
+            email=email,
+            first_name=str(token_info.get("given_name", "")).strip(),
+            last_name=str(token_info.get("family_name", "")).strip(),
+        )
+        user.set_unusable_password()
+        user.save()
+
+    login(request, user)
+    return JsonResponse({"user": _user_payload(user)})
+
+
+@require_POST
+@csrf_protect
 def logout_user(request):
     logout(request)
     return JsonResponse({"detail": "Signed out successfully."})
@@ -169,7 +230,7 @@ def change_password(request):
     confirm_password = str(data.get("confirmPassword", ""))
     field_errors = {}
 
-    if not request.user.check_password(current_password):
+    if request.user.has_usable_password() and not request.user.check_password(current_password):
         field_errors["currentPassword"] = "Current password is incorrect."
     if new_password != confirm_password:
         field_errors["confirmPassword"] = "New passwords do not match."
@@ -215,7 +276,7 @@ def delete_account(request):
     if data is None:
         return _error("Invalid JSON request.")
     password = str(data.get("password", ""))
-    if not request.user.check_password(password):
+    if request.user.has_usable_password() and not request.user.check_password(password):
         return _error("Password is incorrect.", status=400, field_errors={"password": "Enter your current password to delete the account."})
     user = request.user
     logout(request)

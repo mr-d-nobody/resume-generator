@@ -93,6 +93,7 @@ export default function Account() {
   };
 
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` || user.email[0].toUpperCase();
+  const hasPassword = user.hasPassword !== false;
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 dark:bg-gray-900">
@@ -128,7 +129,7 @@ export default function Account() {
               </div>
               <div className="flex items-center gap-3 text-slate-600 dark:text-gray-300">
                 <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                Password protected
+                {hasPassword ? 'Password protected' : 'Google account connected'}
               </div>
             </div>
           </section>
@@ -140,7 +141,7 @@ export default function Account() {
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Change password</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-gray-400">Use a unique password you do not use elsewhere.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-gray-400">{hasPassword ? 'Use a unique password you do not use elsewhere.' : 'Set a password so you can also sign in with email.'}</p>
               </div>
             </div>
 
@@ -151,7 +152,7 @@ export default function Account() {
                 </div>
               )}
               {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-              <PasswordInput id="current-password" label="Current password" name="currentPassword" value={form.currentPassword} onChange={updateField} autoComplete="current-password" error={fieldErrors.currentPassword} />
+              {hasPassword && <PasswordInput id="current-password" label="Current password" name="currentPassword" value={form.currentPassword} onChange={updateField} autoComplete="current-password" error={fieldErrors.currentPassword} />}
               <PasswordInput id="new-password" label="New password" name="newPassword" value={form.newPassword} onChange={updateField} autoComplete="new-password" error={fieldErrors.newPassword} />
               <PasswordInput id="new-password-confirm" label="Confirm new password" name="confirmPassword" value={form.confirmPassword} onChange={updateField} autoComplete="new-password" error={fieldErrors.confirmPassword} />
               <button type="submit" disabled={isSubmitting} className="btn-primary inline-flex w-full items-center justify-center gap-2 py-3 sm:w-auto disabled:opacity-70">
@@ -170,7 +171,7 @@ export default function Account() {
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
             <div className="rounded-xl border border-slate-200 p-5 dark:border-gray-700"><h3 className="font-semibold text-slate-950 dark:text-white">Download my data</h3><p className="mt-2 text-sm text-slate-600 dark:text-gray-400">Download account details and the current saved resume as JSON.</p><button type="button" onClick={downloadData} disabled={isDataBusy} className="btn-secondary mt-4 inline-flex items-center gap-2"><Download className="h-4 w-4" /> Download JSON</button></div>
             <div className="rounded-xl border border-amber-200 p-5 dark:border-amber-800"><h3 className="font-semibold text-slate-950 dark:text-white">Delete saved resume</h3><p className="mt-2 text-sm text-slate-600 dark:text-gray-400">Your account remains active. Type DELETE to confirm.</p><label htmlFor="delete-resume-confirm" className="form-label mt-4">Confirmation</label><input id="delete-resume-confirm" value={resumeDeleteText} onChange={(event) => setResumeDeleteText(event.target.value)} className="form-input" placeholder="DELETE" autoComplete="off" /><button type="button" onClick={removeResume} disabled={resumeDeleteText !== 'DELETE' || isDataBusy} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-700 px-4 py-2 font-semibold text-white disabled:opacity-50"><Trash2 className="h-4 w-4" /> Delete resume</button></div>
-            <form onSubmit={removeAccount} className="rounded-xl border border-red-200 p-5 dark:border-red-900"><h3 className="font-semibold text-red-800 dark:text-red-300">Delete account</h3><p className="mt-2 text-sm text-slate-600 dark:text-gray-400">Permanently deletes the account and saved resume. This cannot be undone.</p><div className="mt-4"><PasswordInput id="delete-account-password" label="Current password" value={accountDeletePassword} onChange={(event) => setAccountDeletePassword(event.target.value)} autoComplete="current-password" required /></div><label htmlFor="delete-account-confirm" className="form-label mt-3">Type DELETE</label><input id="delete-account-confirm" value={accountDeleteText} onChange={(event) => setAccountDeleteText(event.target.value)} className="form-input" placeholder="DELETE" autoComplete="off" /><button type="submit" disabled={accountDeleteText !== 'DELETE' || !accountDeletePassword || isDataBusy} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 font-semibold text-white disabled:opacity-50"><Trash2 className="h-4 w-4" /> Delete account</button></form>
+            <form onSubmit={removeAccount} className="rounded-xl border border-red-200 p-5 dark:border-red-900"><h3 className="font-semibold text-red-800 dark:text-red-300">Delete account</h3><p className="mt-2 text-sm text-slate-600 dark:text-gray-400">Permanently deletes the account and saved resume. This cannot be undone.</p>{hasPassword && <div className="mt-4"><PasswordInput id="delete-account-password" label="Current password" value={accountDeletePassword} onChange={(event) => setAccountDeletePassword(event.target.value)} autoComplete="current-password" required /></div>}<label htmlFor="delete-account-confirm" className="form-label mt-3">Type DELETE</label><input id="delete-account-confirm" value={accountDeleteText} onChange={(event) => setAccountDeleteText(event.target.value)} className="form-input" placeholder="DELETE" autoComplete="off" /><button type="submit" disabled={accountDeleteText !== 'DELETE' || (hasPassword && !accountDeletePassword) || isDataBusy} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 font-semibold text-white disabled:opacity-50"><Trash2 className="h-4 w-4" /> Delete account</button></form>
           </div>
         </section>
       </div>
