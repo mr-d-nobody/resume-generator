@@ -11,6 +11,8 @@ import {
   Search
 } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
 const JOBS_PER_PAGE = 8;
@@ -392,6 +394,8 @@ function buildPageNumbers(currentPage, totalPages) {
 }
 
 export default function FindJobs() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { resumeData } = useResume();
   const defaultFilters = useMemo(() => ({
     keyword: extractPrimaryJobRole(resumeData?.personalInfo?.title),
@@ -463,6 +467,12 @@ export default function FindJobs() {
   const resetFilters = () => {
     setFilters(defaultFilters);
     setCurrentPage(1);
+  };
+
+  const handleApply = (event) => {
+    if (isAuthenticated) return;
+    event.preventDefault();
+    navigate(`/signup?next=${encodeURIComponent('/jobs')}`);
   };
 
   useEffect(() => {
@@ -689,6 +699,7 @@ export default function FindJobs() {
                     href={job.applyUrl}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={handleApply}
                     className="btn-primary mt-5 inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                   >
                     Apply Now

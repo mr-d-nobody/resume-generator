@@ -51,7 +51,8 @@ const steps = ['Upload or start blank', 'Edit guided sections', 'Pick a template
  */
 function Home() {
   const { isAuthenticated } = useAuth();
-  const destination = (path) => isAuthenticated
+  const publicPaths = new Set(['/templates', '/jobs']);
+  const destination = (path) => isAuthenticated || publicPaths.has(path)
     ? path
     : `/signup?next=${encodeURIComponent(path)}`;
 

@@ -42,9 +42,9 @@ function AppLayout() {
           <Route path="/" element={<Home />} />
           <Route path="/magic" element={<ProtectedRoute><MagicUpload /></ProtectedRoute>} />
           <Route path="/builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
-          <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+          <Route path="/templates" element={<Templates />} />
           <Route path="/download" element={<ProtectedRoute><Download /></ProtectedRoute>} />
-          <Route path="/jobs" element={<ProtectedRoute><FindJobs /></ProtectedRoute>} />
+          <Route path="/jobs" element={<FindJobs />} />
           <Route path="/profile" element={<Navigate to="/builder" replace />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />

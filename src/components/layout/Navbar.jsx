@@ -55,8 +55,9 @@ function Navbar() {
     setIsMenuOpen(false);
   };
 
+  const publicNavPaths = new Set(['/', '/templates', '/jobs']);
   const navPath = (path) => (
-    isAuthenticated || path === '/'
+    isAuthenticated || publicNavPaths.has(path)
       ? path
       : `/signup?next=${encodeURIComponent(path)}`
   );
