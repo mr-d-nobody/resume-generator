@@ -1,18 +1,30 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
+  Bookmark,
+  BookmarkCheck,
   BriefcaseBusiness,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
   Loader2,
   MapPin,
   RotateCcw,
-  Search
+  Search,
+  StickyNote,
+  X
 } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import {
+  createJobTrackerEntry,
+  getJobTrackerKey,
+  JOB_STATUSES,
+  readJobTracker,
+  writeJobTracker
+} from '../utils/jobTracker';
 
 const JOB_TYPES = ['', 'Full-time', 'Part-time', 'Internship', 'Contract'];
 const JOBS_PER_PAGE = 8;
@@ -411,6 +423,8 @@ export default function FindJobs() {
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [trackedJobs, setTrackedJobs] = useState(readJobTracker);
+  const [selectedTrackerKey, setSelectedTrackerKey] = useState(null);
   const requestControllerRef = useRef(null);
 
   const visibleJobs = useMemo(
@@ -430,6 +444,13 @@ export default function FindJobs() {
   );
   const visibleStart = visibleJobs.length === 0 ? 0 : pageStartIndex + 1;
   const visibleEnd = Math.min(pageStartIndex + JOBS_PER_PAGE, visibleJobs.length);
+  const savedJobEntries = useMemo(
+    () => Object.entries(trackedJobs)
+      .map(([key, entry]) => ({ key, ...entry }))
+      .sort((first, second) => new Date(second.updatedAt || second.savedAt) - new Date(first.updatedAt || first.savedAt)),
+    [trackedJobs]
+  );
+  const selectedTracker = selectedTrackerKey ? trackedJobs[selectedTrackerKey] : null;
 
   const updateFilter = (event) => {
     const { name, type, checked, value } = event.target;
@@ -469,8 +490,52 @@ export default function FindJobs() {
     setCurrentPage(1);
   };
 
-  const handleApply = (event) => {
-    if (isAuthenticated) return;
+  const updateTrackedJobs = (updater) => {
+    setTrackedJobs((current) => {
+      const next = updater(current);
+      writeJobTracker(next);
+      return next;
+    });
+  };
+
+  const toggleSavedJob = (job) => {
+    const key = getJobTrackerKey(job);
+    updateTrackedJobs((current) => {
+      if (current[key]) {
+        const next = { ...current };
+        delete next[key];
+        if (selectedTrackerKey === key) setSelectedTrackerKey(null);
+        return next;
+      }
+      return { ...current, [key]: createJobTrackerEntry(job) };
+    });
+  };
+
+  const updateTrackedJob = (key, updates) => {
+    updateTrackedJobs((current) => {
+      if (!current[key]) return current;
+      return {
+        ...current,
+        [key]: {
+          ...current[key],
+          ...updates,
+          updatedAt: new Date().toISOString()
+        }
+      };
+    });
+  };
+
+  const handleApply = (event, job) => {
+    if (isAuthenticated) {
+      const key = getJobTrackerKey(job);
+      updateTrackedJobs((current) => ({
+        ...current,
+        [key]: current[key]
+          ? { ...current[key], status: 'applied', updatedAt: new Date().toISOString() }
+          : createJobTrackerEntry(job, 'applied')
+      }));
+      return;
+    }
     event.preventDefault();
     navigate(`/signup?next=${encodeURIComponent('/jobs')}`);
   };
@@ -486,6 +551,10 @@ export default function FindJobs() {
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    if (selectedTrackerKey && !trackedJobs[selectedTrackerKey]) setSelectedTrackerKey(null);
+  }, [selectedTrackerKey, trackedJobs]);
 
   useEffect(() => {
     loadJobs();
@@ -581,6 +650,74 @@ export default function FindJobs() {
           </div>
         </form>
 
+        {savedJobEntries.length > 0 && (
+          <section className="card mb-8 p-5 sm:p-6" aria-labelledby="saved-jobs-heading">
+            <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Your shortlist</p>
+                <h2 id="saved-jobs-heading" className="mt-1 text-xl font-bold text-gray-950 dark:text-white">Saved jobs ({savedJobEntries.length})</h2>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Saved in this browser</p>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {savedJobEntries.map((entry) => (
+                <article key={entry.key} className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">{entry.job.source}</p>
+                      <h3 className="mt-1 truncate font-semibold text-gray-950 dark:text-white">{entry.job.title}</h3>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{entry.job.company}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleSavedJob(entry.job)}
+                      className="shrink-0 rounded-lg p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                      aria-label={`Remove ${entry.job.title} from saved jobs`}
+                      title="Remove from saved jobs"
+                    >
+                      <BookmarkCheck className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <select
+                      value={entry.status}
+                      onChange={(event) => updateTrackedJob(entry.key, { status: event.target.value })}
+                      className="form-select min-h-9 py-1.5 text-sm"
+                      aria-label={`Status for ${entry.job.title}`}
+                    >
+                      {JOB_STATUSES.map((jobStatus) => <option key={jobStatus.value} value={jobStatus.value}>{jobStatus.label}</option>)}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTrackerKey(entry.key)}
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-gray-200 px-3 text-sm font-semibold text-gray-700 hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300"
+                    >
+                      <StickyNote className="h-4 w-4" />
+                      Notes & deadline
+                    </button>
+                    <a
+                      href={entry.job.applyUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => handleApply(event, entry.job)}
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      Apply
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                  {(entry.deadline || entry.note) && (
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
+                      {entry.deadline && <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> Due {entry.deadline}</span>}
+                      {entry.note && <span className="inline-flex max-w-full items-center gap-1 truncate"><StickyNote className="h-3.5 w-3.5" /> {entry.note}</span>}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         {status === 'loading' && (
           <div className="card flex items-center justify-center gap-3 p-10 text-blue-600 dark:text-blue-400">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -666,13 +803,24 @@ export default function FindJobs() {
             <div className="grid gap-5 lg:grid-cols-2">
               {paginatedJobs.map((job) => (
                 <article key={job.id} className="card flex flex-col p-6">
-                  <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-                      {job.source}
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-                      {job.jobType}
-                    </span>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                        {job.source}
+                      </span>
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                        {job.jobType}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleSavedJob(job)}
+                      aria-pressed={Boolean(trackedJobs[getJobTrackerKey(job)])}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${trackedJobs[getJobTrackerKey(job)] ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' : 'border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300'}`}
+                    >
+                      {trackedJobs[getJobTrackerKey(job)] ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                      {trackedJobs[getJobTrackerKey(job)] ? 'Saved' : 'Save job'}
+                    </button>
                   </div>
 
                   <h2 className="text-xl font-semibold text-gray-950 dark:text-white">{job.title}</h2>
@@ -699,7 +847,7 @@ export default function FindJobs() {
                     href={job.applyUrl}
                     target="_blank"
                     rel="noreferrer"
-                    onClick={handleApply}
+                    onClick={(event) => handleApply(event, job)}
                     className="btn-primary mt-5 inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                   >
                     Apply Now
@@ -709,6 +857,45 @@ export default function FindJobs() {
               ))}
             </div>
           </>
+        )}
+
+        {selectedTracker && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="job-tracker-dialog-title">
+            <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Job tracker</p>
+                  <h2 id="job-tracker-dialog-title" className="mt-1 text-xl font-bold text-gray-950 dark:text-white">{selectedTracker.job.title}</h2>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{selectedTracker.job.company}</p>
+                </div>
+                <button type="button" onClick={() => setSelectedTrackerKey(null)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white" aria-label="Close job tracker">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-5">
+                <div>
+                  <label htmlFor="tracker-status" className="form-label">Application status</label>
+                  <select id="tracker-status" value={selectedTracker.status} onChange={(event) => updateTrackedJob(selectedTrackerKey, { status: event.target.value })} className="form-select">
+                    {JOB_STATUSES.map((jobStatus) => <option key={jobStatus.value} value={jobStatus.value}>{jobStatus.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="tracker-deadline" className="form-label">Follow-up deadline</label>
+                  <input id="tracker-deadline" type="date" value={selectedTracker.deadline} onChange={(event) => updateTrackedJob(selectedTrackerKey, { deadline: event.target.value })} className="form-input" />
+                </div>
+                <div>
+                  <label htmlFor="tracker-note" className="form-label">Notes</label>
+                  <textarea id="tracker-note" value={selectedTracker.note} onChange={(event) => updateTrackedJob(selectedTrackerKey, { note: event.target.value })} className="form-input min-h-28 resize-y" placeholder="Add interview details, contact names, or reminders..." />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between gap-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Changes save automatically in this browser.</p>
+                <button type="button" onClick={() => setSelectedTrackerKey(null)} className="btn-primary">Done</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
