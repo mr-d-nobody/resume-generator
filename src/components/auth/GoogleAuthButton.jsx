@@ -103,7 +103,8 @@ export default function GoogleAuthButton({ onSuccess, onError, text = 'continue_
   }
 
   return (
-    <div className="relative flex min-h-11 w-full items-center justify-center" ref={buttonRef}>
+    <div className="relative flex min-h-11 w-full items-center justify-center">
+      <div className="w-full" ref={buttonRef} />
       {isLoading && <Loader2 className="absolute h-5 w-5 animate-spin text-blue-600" />}
     </div>
   );
