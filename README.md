@@ -2,7 +2,7 @@
 
 # ✨ ResumeBuilder
 
-### AI-Powered Resume Generator with 15 Professional Templates
+### AI-Powered Resume Generator with 6 Professional Templates
 
 [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-resume--generator--8m6r.vercel.app-blue?style=for-the-badge)](https://resume-generator-8m6r.vercel.app)
 [![MIT License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
