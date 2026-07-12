@@ -407,7 +407,7 @@ function buildPageNumbers(currentPage, totalPages) {
 
 export default function FindJobs() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { resumeData } = useResume();
   const defaultFilters = useMemo(() => ({
     keyword: extractPrimaryJobRole(resumeData?.personalInfo?.title),
@@ -423,7 +423,7 @@ export default function FindJobs() {
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [trackedJobs, setTrackedJobs] = useState(readJobTracker);
+  const [trackedJobs, setTrackedJobs] = useState({});
   const [selectedTrackerKey, setSelectedTrackerKey] = useState(null);
   const requestControllerRef = useRef(null);
 
@@ -490,15 +490,25 @@ export default function FindJobs() {
     setCurrentPage(1);
   };
 
+  useEffect(() => {
+    setTrackedJobs(isAuthenticated && user?.id ? readJobTracker(user.id) : {});
+    setSelectedTrackerKey(null);
+  }, [isAuthenticated, user?.id]);
+
   const updateTrackedJobs = (updater) => {
+    if (!isAuthenticated || !user?.id) return;
     setTrackedJobs((current) => {
       const next = updater(current);
-      writeJobTracker(next);
+      writeJobTracker(next, user.id);
       return next;
     });
   };
 
   const toggleSavedJob = (job) => {
+    if (!isAuthenticated) {
+      navigate(`/signup?next=${encodeURIComponent('/jobs')}`);
+      return;
+    }
     const key = getJobTrackerKey(job);
     updateTrackedJobs((current) => {
       if (current[key]) {
@@ -650,7 +660,7 @@ export default function FindJobs() {
           </div>
         </form>
 
-        {savedJobEntries.length > 0 && (
+        {isAuthenticated && savedJobEntries.length > 0 && (
           <section className="card mb-8 p-5 sm:p-6" aria-labelledby="saved-jobs-heading">
             <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
               <div>
@@ -819,7 +829,7 @@ export default function FindJobs() {
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition ${trackedJobs[getJobTrackerKey(job)] ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' : 'border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-300'}`}
                     >
                       {trackedJobs[getJobTrackerKey(job)] ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                      {trackedJobs[getJobTrackerKey(job)] ? 'Saved' : 'Save job'}
+                      {trackedJobs[getJobTrackerKey(job)] ? 'Saved' : isAuthenticated ? 'Save job' : 'Sign in to save'}
                     </button>
                   </div>
 

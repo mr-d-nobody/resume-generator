@@ -1,5 +1,9 @@
 export const JOB_TRACKER_STORAGE_KEY = 'resumeBuilder:jobTracker:v1';
 
+export function getJobTrackerStorageKey(userId) {
+  return userId ? `${JOB_TRACKER_STORAGE_KEY}:user:${userId}` : null;
+}
+
 export const JOB_STATUSES = [
   { value: 'saved', label: 'Saved' },
   { value: 'applied', label: 'Applied' },
@@ -22,21 +26,23 @@ export function createJobTrackerEntry(job, status = 'saved') {
   };
 }
 
-export function readJobTracker() {
-  if (typeof localStorage === 'undefined') return {};
+export function readJobTracker(userId) {
+  const storageKey = getJobTrackerStorageKey(userId);
+  if (!storageKey || typeof localStorage === 'undefined') return {};
 
   try {
-    const parsed = JSON.parse(localStorage.getItem(JOB_TRACKER_STORAGE_KEY) || '{}');
+    const parsed = JSON.parse(localStorage.getItem(storageKey) || '{}');
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
   } catch {
     return {};
   }
 }
 
-export function writeJobTracker(tracker) {
-  if (typeof localStorage === 'undefined') return;
+export function writeJobTracker(tracker, userId) {
+  const storageKey = getJobTrackerStorageKey(userId);
+  if (!storageKey || typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(JOB_TRACKER_STORAGE_KEY, JSON.stringify(tracker));
+    localStorage.setItem(storageKey, JSON.stringify(tracker));
   } catch {
     // Private browsing or storage quotas can make localStorage unavailable.
   }
