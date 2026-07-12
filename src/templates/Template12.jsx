@@ -82,7 +82,7 @@ export default function Template12({ data, config }) {
                     <p className="mt-1 text-[9.5px] leading-tight text-white/85">{edu.institution}</p>
                     <p className="mt-1 text-[9px] text-white/75">
                       <DateRange startDate={edu.startDate} endDate={edu.endDate} />
-                      {edu.gpa ? ` | GPA: ${edu.gpa}` : ''}
+                      {edu.gpa ? ` | ${edu.gradeLabel || 'GPA'}: ${edu.gpa}` : ''}
                     </p>
                   </div>
                 ))}

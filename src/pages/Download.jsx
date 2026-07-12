@@ -623,7 +623,7 @@ function createSidebarRenderer(pdf, exportData, style, options = {}) {
             color: [219, 234, 254]
           });
           if (edu.gpa) {
-            wrapped(left, `GPA: ${edu.gpa}`, leftMargin, sidebarContentWidth, style.small, style.smallLine, {
+            wrapped(left, `${edu.gradeLabel || 'GPA'}: ${edu.gpa}`, leftMargin, sidebarContentWidth, style.small, style.smallLine, {
               color: [219, 234, 254],
               fontStyle: 'bold'
             });
@@ -945,7 +945,7 @@ function createRenderer(pdf, exportData, style, options = {}) {
         const date = [edu.startDate, edu.endDate].filter(Boolean).join(' - ');
         itemHeader(edu.degree || edu.institution, date);
         wrapped([edu.institution, edu.location].filter(Boolean).join(', '), style.marginX, contentWidth, style.body, style.bodyLine, { color: style.muted });
-        if (edu.gpa) wrapped(`GPA: ${edu.gpa}`, style.marginX, contentWidth, style.small, style.smallLine, { fontStyle: 'bold' });
+        if (edu.gpa) wrapped(`${edu.gradeLabel || 'GPA'}: ${edu.gpa}`, style.marginX, contentWidth, style.small, style.smallLine, { fontStyle: 'bold' });
         (edu.highlights || []).forEach((line) => bullet(line, style.marginX + 1.8, contentWidth - 1.8));
         y += style.itemGap;
       });

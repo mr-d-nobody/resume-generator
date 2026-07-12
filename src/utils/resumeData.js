@@ -5,6 +5,12 @@ const LEGACY_LINK_FIELDS = [
 ];
 
 const EMPTY_PLACEHOLDER = /^(?:none|null|undefined|n\/a|na|not available|not applicable|nil|-+)$/i;
+const EDUCATION_GRADE_LABELS = ['CGPA', 'GPA', 'Percentage'];
+
+function normalizeEducationGradeLabel(value) {
+  const label = asString(value);
+  return EDUCATION_GRADE_LABELS.find((option) => option.toLowerCase() === label.toLowerCase()) || 'GPA';
+}
 
 export const asString = (value) => {
   if (typeof value !== 'string') return '';
@@ -210,6 +216,7 @@ export function transformResumeData(resumeData = {}, customization = {}) {
       startDate: asDate(item?.startDate),
       endDate: asDate(item?.graduationDate || item?.endDate),
       gpa: asString(item?.cgpa || item?.gpa),
+      gradeLabel: normalizeEducationGradeLabel(item?.gradeLabel),
       highlights: asArray(item?.highlights).length
         ? asArray(item.highlights).map(asString).filter(Boolean)
         : asString(item?.description).split('\n').map(asString).filter(Boolean)

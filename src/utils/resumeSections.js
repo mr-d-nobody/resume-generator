@@ -114,7 +114,7 @@ export function customSectionFromStandard(type, data, sectionTitles) {
     );
   } else if (type === 'education') {
     items = (data.education || []).map(item =>
-      [item.degree, item.institution, [item.startDate, item.endDate].filter(Boolean).join(' – '), item.gpa]
+      [item.degree, item.institution, [item.startDate, item.endDate].filter(Boolean).join(' – '), item.gpa && `${item.gradeLabel || 'GPA'}: ${item.gpa}`]
         .filter(Boolean)
         .join(' — ')
     );

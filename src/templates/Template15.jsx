@@ -93,7 +93,7 @@ export default function Template15({ data, config }) {
                       <DateRange startDate={edu.startDate} endDate={edu.endDate} className="text-xs font-bold" />
                     </div>
                     <div className="text-xs text-gray-700">
-                      {edu.institution}, {edu.location} {edu.gpa && `| GPA: ${edu.gpa}`}
+                      {edu.institution}, {edu.location} {edu.gpa && `| ${edu.gradeLabel || 'GPA'}: ${edu.gpa}`}
                     </div>
                   </div>
                 ))}

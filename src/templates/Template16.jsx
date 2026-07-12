@@ -137,7 +137,7 @@ export default function Template16({ data, config = {} }) {
                   <div>
                     <h4 className="text-[9.5px] font-extrabold leading-tight" style={{ color: primaryColor }}>{edu.institution}</h4>
                     <p className="text-[9px] leading-tight" style={{ color: textMuted }}>{edu.degree}{edu.location ? `, ${edu.location}` : ''}</p>
-                    {edu.gpa && <p className="text-[8px] font-bold leading-tight" style={{ color: navyMid }}>GPA: {edu.gpa}</p>}
+                    {edu.gpa && <p className="text-[8px] font-bold leading-tight" style={{ color: navyMid }}>{edu.gradeLabel || 'GPA'}: {edu.gpa}</p>}
                     <BulletList items={edu.highlights} />
                   </div>
                   <div className="text-right text-[8px] italic" style={{ color: textMuted }}>

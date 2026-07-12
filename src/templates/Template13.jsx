@@ -58,7 +58,7 @@ export default function Template13({ data, config }) {
                 <div key={edu.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center">
                   <h4 className="font-bold text-lg text-gray-900">{edu.degree}</h4>
                   <p className="text-base text-gray-700 font-medium mb-1">{edu.institution}, {edu.location}</p>
-                  <p className="text-sm font-semibold" style={{ color: theme.primaryColor }}><DateRange startDate={edu.startDate} endDate={edu.endDate} />{edu.gpa && ` | GPA: ${edu.gpa}`}</p>
+                  <p className="text-sm font-semibold" style={{ color: theme.primaryColor }}><DateRange startDate={edu.startDate} endDate={edu.endDate} />{edu.gpa && ` | ${edu.gradeLabel || 'GPA'}: ${edu.gpa}`}</p>
                 </div>
               ))}
             </div>

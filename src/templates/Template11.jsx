@@ -56,7 +56,7 @@ export default function Template11({ data, config }) {
                   </div>
                   <div className="flex justify-between items-baseline mb-2">
                     <span className="text-sm font-medium text-gray-700">{edu.institution}, {edu.location}</span>
-                    {edu.gpa && <span className="text-sm font-bold bg-gray-100 px-2 py-0.5 rounded">GPA: {edu.gpa}</span>}
+                    {edu.gpa && <span className="text-sm font-bold bg-gray-100 px-2 py-0.5 rounded">{edu.gradeLabel || 'GPA'}: {edu.gpa}</span>}
                   </div>
                   {edu.highlights && edu.highlights.length > 0 && (
                     <ul className="list-disc list-outside ml-4 text-sm text-gray-600 space-y-1">
