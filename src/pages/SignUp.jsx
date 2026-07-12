@@ -3,6 +3,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthShell from '../components/auth/AuthShell';
 import PasswordInput from '../components/auth/PasswordInput';
+import GoogleAuthButton from '../components/auth/GoogleAuthButton';
 import { useAuth } from '../contexts/AuthContext';
 import { getSafeNextPath } from '../utils/authApi';
 
@@ -48,6 +49,9 @@ export default function SignUp() {
     }
   };
 
+  const handleGoogleSuccess = () => navigate(nextPath, { replace: true });
+  const handleGoogleError = (googleError) => setError(googleError.message);
+
   return (
     <AuthShell
       eyebrow="Create your account"
@@ -60,6 +64,8 @@ export default function SignUp() {
             {error}
           </div>
         )}
+        <GoogleAuthButton text="signup_with" onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+        <div className="relative flex items-center py-1"><div className="w-full border-t border-slate-200 dark:border-gray-700" /><span className="absolute left-1/2 -translate-x-1/2 bg-white px-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:bg-gray-800">or</span></div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

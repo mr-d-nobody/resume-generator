@@ -2,5 +2,6 @@ Django==4.2.30
 django-cors-headers==4.9.0
 djangorestframework==3.16.1
 google-genai>=1.0.0
+google-auth>=2.0.0
 python-dotenv==1.2.1
 psycopg[binary]>=3.2.10

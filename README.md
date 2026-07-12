@@ -211,6 +211,8 @@ This project is deployed on [Vercel](https://vercel.com) with a hybrid architect
 | `DJANGO_DEBUG` | `False` | Production security mode |
 | `CORS_ALLOWED_ORIGINS` | Deployment URL | Allowed browser origin |
 | `CSRF_TRUSTED_ORIGINS` | Deployment URL | Trusted form origin |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth web client ID | Enables the Google button in the frontend |
+| `GOOGLE_CLIENT_ID` | Same Google OAuth web client ID | Verifies Google ID tokens on the backend |
 
 ### Deploy Your Own
 

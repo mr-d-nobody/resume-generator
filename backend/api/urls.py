@@ -10,6 +10,7 @@ urlpatterns = [
     path('auth/me', auth_views.current_user, name='auth-me'),
     path('auth/signup', auth_views.signup, name='auth-signup'),
     path('auth/login', auth_views.login_user, name='auth-login'),
+    path('auth/google', auth_views.google_login, name='auth-google'),
     path('auth/logout', auth_views.logout_user, name='auth-logout'),
     path('auth/change-password', auth_views.change_password, name='auth-change-password'),
     path('auth/data-export', auth_views.export_account_data, name='auth-data-export'),

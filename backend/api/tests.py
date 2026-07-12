@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import Client, SimpleTestCase, TestCase
@@ -256,6 +257,25 @@ class AuthenticationApiTests(TestCase):
         self.assertNotEqual(user.password, "A-secure-passphrase-1843")
         self.assertTrue(user.check_password("A-secure-passphrase-1843"))
         self.assertTrue(self.client.get("/api/auth/me").json()["authenticated"])
+
+    @override_settings(GOOGLE_CLIENT_ID="google-client-id")
+    @patch("api.auth_views.id_token.verify_oauth2_token")
+    def test_google_login_verifies_token_and_creates_account(self, verify_token):
+        verify_token.return_value = {
+            "email": "ada@example.com",
+            "email_verified": True,
+            "given_name": "Ada",
+            "family_name": "Lovelace",
+        }
+
+        response = self.post_json("/api/auth/google", {"credential": "google-id-token"})
+
+        self.assertEqual(response.status_code, 200)
+        user = get_user_model().objects.get(email="ada@example.com")
+        self.assertEqual(user.first_name, "Ada")
+        self.assertFalse(user.has_usable_password())
+        self.assertTrue(self.client.get("/api/auth/me").json()["authenticated"])
+        verify_token.assert_called_once()
 
     def test_login_logout_and_change_password(self):
         user = get_user_model().objects.create_user(

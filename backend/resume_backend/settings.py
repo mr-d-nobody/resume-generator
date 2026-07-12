@@ -228,6 +228,7 @@ AI_IP_RATE_LIMIT = int(os.environ.get('AI_IP_RATE_LIMIT', '30'))
 AI_RATE_WINDOW_SECONDS = int(os.environ.get('AI_RATE_WINDOW_SECONDS', '86400'))
 AI_MAX_REQUEST_BYTES = int(os.environ.get('AI_MAX_REQUEST_BYTES', str(250 * 1024)))
 AI_MAX_TEXT_CHARS = int(os.environ.get('AI_MAX_TEXT_CHARS', '100000'))
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
 
 # Keep local development unrestricted. Vercel sets VERCEL=1 automatically;
 # other production hosts should set DEBUG=False. Production defaults to five
