@@ -34,7 +34,7 @@ const ACCENT_BLUE = [74, 143, 193];
 const PALE_BLUE = [234, 240, 248];
 const UNSUPPORTED_CANVAS_COLOR = /(oklch|oklab|color-mix|lab|lch)\(/i;
 const SHARE_SITE_LINK = 'https://resume-generator-8m6r.vercel.app/';
-const SHARE_PROMO_TEXT = 'Here is my polished resume, created with ResumeBuilder. ResumeBuilder helps job seekers turn their experience into a clean, professional resume with AI-powered writing, modern templates, smart sections, job search tools, and one-click PDF export. You can build your own resume in minutes here:';
+const SHARE_PROMO_TEXT = 'Here is my polished, professional resume, created with ResumeBuilder! 🚀\n\nResumeBuilder makes it easy to create a standout resume with AI-powered writing, modern professional templates, smart resume sections, customizable designs, job search tools, and quick PDF export. Whether you are starting your career, changing jobs, or looking for your next opportunity, you can build and share a job-ready resume in just a few minutes.\n\nCreate your own impressive resume today:';
 const SHARE_FULL_TEXT = `${SHARE_PROMO_TEXT}\n${SHARE_SITE_LINK}`;
 const SHARE_FALLBACK_TEXT = 'Build a polished, job-ready resume in minutes with ResumeBuilder. Use AI-powered writing, modern templates, smart sections, job search tools, and simple PDF export.';
 
@@ -339,7 +339,6 @@ async function shareResumePDF(pdfBlob, candidateName) {
   const fileSharePayload = {
     title: 'My Resume',
     text: SHARE_FULL_TEXT,
-    url: SHARE_SITE_LINK,
     files: [resumePdfFile]
   };
   const captionCopied = await copyShareCaption();
