@@ -37,7 +37,7 @@ ResumeBuilder is a full-stack web application that helps you create professional
 - Supports both **Fresher** and **Experienced** profiles
 - AI condenses content to fit single-page layouts for entry-level resumes
 
-### 🎨 15 Professional Templates
+### 🎨 6 Professional Templates
 - Modern, minimal, creative, and classic designs
 - All templates are **ATS-friendly** and recruiter-approved
 - Live preview with your actual data before downloading
