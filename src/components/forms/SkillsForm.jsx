@@ -10,7 +10,13 @@ function SkillsForm() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [error, setError] = useState('');
 
-  const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+  const skillLevels = [
+    { value: '', label: 'None' },
+    { value: 'Beginner', label: 'Beginner' },
+    { value: 'Intermediate', label: 'Intermediate' },
+    { value: 'Advanced', label: 'Advanced' },
+    { value: 'Expert', label: 'Expert' },
+  ];
   const skillCategories = [...new Set(['Technical', 'Soft Skills', 'Languages', 'Tools', 'Other', ...resumeData.skills.map((skill) => skill.category).filter(Boolean)])];
 
   const handleChange = (e) => {
@@ -113,7 +119,7 @@ function SkillsForm() {
                     className="flex max-w-full items-center rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800"
                   >
                     <span className="min-w-0 break-words text-sm text-gray-800 mr-1 dark:text-gray-200">{skill.name}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">({skill.level})</span>
+                    {skill.level && skill.level !== 'None' && <span className="text-xs text-gray-500 dark:text-gray-400">({skill.level})</span>}
                     <button type="button" onClick={() => moveSkill(category, skillIndex, -1)} disabled={skillIndex === 0} className="ml-1 text-gray-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Move ${skill.name} left`}><ArrowLeft className="h-3 w-3" /></button>
                     <button type="button" onClick={() => moveSkill(category, skillIndex, 1)} disabled={skillIndex === skills.length - 1} className="ml-1 text-gray-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Move ${skill.name} right`}><ArrowRight className="h-3 w-3" /></button>
                     <button type="button" onClick={() => handleEditSkill(resumeData.skills.indexOf(skill))} className="ml-1 text-gray-500 hover:text-blue-600" aria-label={`Edit ${skill.name}`}><Pencil className="h-3 w-3" /></button>
@@ -167,8 +173,8 @@ function SkillsForm() {
               onChange={handleChange}
               className="form-select"
             >
-              {skillLevels.map(level => (
-                <option key={level} value={level}>{level}</option>
+              {skillLevels.map((level) => (
+                <option key={level.value || 'none'} value={level.value}>{level.label}</option>
               ))}
             </select>
           </div>
