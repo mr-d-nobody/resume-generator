@@ -60,6 +60,31 @@ const initialState = {
 };
 
 const payloadHash = (payload) => JSON.stringify(payload);
+const MAX_UNDO_STEPS = 25;
+
+function readUndoHistory(storageKey) {
+  try {
+    const history = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    return Array.isArray(history) ? history.slice(-MAX_UNDO_STEPS) : [];
+  } catch {
+    localStorage.removeItem(storageKey);
+    return [];
+  }
+}
+
+function writeUndoHistory(storageKey, history) {
+  let retained = history.slice(-MAX_UNDO_STEPS);
+  while (retained.length) {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(retained));
+      return retained;
+    } catch {
+      retained = retained.slice(1);
+    }
+  }
+  localStorage.removeItem(storageKey);
+  return [];
+}
 
 function parseResumeCache(rawValue) {
   if (!rawValue) return null;
@@ -488,6 +513,8 @@ export function ResumeProvider({ children }) {
   const hydratedUserRef = useRef(null);
   const lastSavedHashRef = useRef('');
   const revisionRef = useRef(0);
+  const undoHistoryRef = useRef([]);
+  const [undoCount, setUndoCount] = useState(0);
 
   const cloudPayload = useMemo(() => ({
     resumeData: state.resumeData,
@@ -527,6 +554,9 @@ export function ResumeProvider({ children }) {
     let cancelled = false;
     const hydrate = async () => {
       const storageKey = user ? `savedResume:${user.id}` : 'savedResume:guest';
+      const undoStorageKey = user ? `resumeUndo:${user.id}` : 'resumeUndo:guest';
+      undoHistoryRef.current = readUndoHistory(undoStorageKey);
+      setUndoCount(undoHistoryRef.current.length);
       setCloudError('');
 
       if (!user) {
@@ -797,40 +827,61 @@ export function ResumeProvider({ children }) {
     setSyncEpoch((value) => value + 1);
   }, []);
 
+  const dispatchWithHistory = useCallback((action) => {
+    const undoStorageKey = user ? `resumeUndo:${user.id}` : 'resumeUndo:guest';
+    const snapshot = currentPayloadRef.current;
+    const history = undoHistoryRef.current;
+    if (!history.length || payloadHash(history[history.length - 1]) !== payloadHash(snapshot)) {
+      undoHistoryRef.current = writeUndoHistory(undoStorageKey, [...history, snapshot]);
+      setUndoCount(undoHistoryRef.current.length);
+    }
+    dispatch(action);
+  }, [user]);
+
+  const undo = useCallback(() => {
+    if (!undoHistoryRef.current.length) return;
+    const undoStorageKey = user ? `resumeUndo:${user.id}` : 'resumeUndo:guest';
+    const history = [...undoHistoryRef.current];
+    const previous = history.pop();
+    undoHistoryRef.current = writeUndoHistory(undoStorageKey, history);
+    setUndoCount(undoHistoryRef.current.length);
+    dispatch({ type: ACTIONS.LOAD_RESUME, payload: previous });
+  }, [user]);
+
   // Action creators
   const actions = {
-    updatePersonalInfo: (data) => dispatch({ type: ACTIONS.UPDATE_PERSONAL_INFO, payload: data }),
-    addExperience: (data) => dispatch({ type: ACTIONS.ADD_EXPERIENCE, payload: data }),
-    updateExperience: (index, data) => dispatch({ type: ACTIONS.UPDATE_EXPERIENCE, payload: { index, data } }),
-    deleteExperience: (index) => dispatch({ type: ACTIONS.DELETE_EXPERIENCE, payload: index }),
-    addEducation: (data) => dispatch({ type: ACTIONS.ADD_EDUCATION, payload: data }),
-    updateEducation: (index, data) => dispatch({ type: ACTIONS.UPDATE_EDUCATION, payload: { index, data } }),
-    deleteEducation: (index) => dispatch({ type: ACTIONS.DELETE_EDUCATION, payload: index }),
-    updateSkills: (skills) => dispatch({ type: ACTIONS.UPDATE_SKILLS, payload: skills }),
-    addProject: (data) => dispatch({ type: ACTIONS.ADD_PROJECT, payload: data }),
-    updateProject: (index, data) => dispatch({ type: ACTIONS.UPDATE_PROJECT, payload: { index, data } }),
-    deleteProject: (index) => dispatch({ type: ACTIONS.DELETE_PROJECT, payload: index }),
-    addCertification: (data) => dispatch({ type: ACTIONS.ADD_CERTIFICATION, payload: data }),
-    updateCertification: (index, data) => dispatch({ type: ACTIONS.UPDATE_CERTIFICATION, payload: { index, data } }),
-    deleteCertification: (index) => dispatch({ type: ACTIONS.DELETE_CERTIFICATION, payload: index }),
-    moveCertification: (index, direction) => dispatch({ type: ACTIONS.MOVE_CERTIFICATION, payload: { index, direction } }),
-    addAchievement: (data) => dispatch({ type: ACTIONS.ADD_ACHIEVEMENT, payload: data }),
-    updateAchievement: (index, data) => dispatch({ type: ACTIONS.UPDATE_ACHIEVEMENT, payload: { index, data } }),
-    deleteAchievement: (index) => dispatch({ type: ACTIONS.DELETE_ACHIEVEMENT, payload: index }),
-    addCustomSection: (data) => dispatch({ type: ACTIONS.ADD_CUSTOM_SECTION, payload: data }),
-    updateCustomSection: (index, data) => dispatch({ type: ACTIONS.UPDATE_CUSTOM_SECTION, payload: { index, data } }),
-    deleteCustomSection: (index) => dispatch({ type: ACTIONS.DELETE_CUSTOM_SECTION, payload: index }),
-    duplicateCustomSection: (index) => dispatch({ type: ACTIONS.DUPLICATE_CUSTOM_SECTION, payload: index }),
-    moveCustomSection: (index, direction) => dispatch({ type: ACTIONS.MOVE_CUSTOM_SECTION, payload: { index, direction } }),
-    renameSection: (type, title) => dispatch({ type: ACTIONS.RENAME_SECTION, payload: { type, title } }),
-    toggleSectionVisibility: (type) => dispatch({ type: ACTIONS.TOGGLE_SECTION_VISIBILITY, payload: type }),
-    setTemplate: (template) => dispatch({ type: ACTIONS.SET_TEMPLATE, payload: template }),
-    setTemplateCategory: (category) => dispatch({ type: ACTIONS.SET_TEMPLATE_CATEGORY, payload: category }),
-    updateCustomization: (customization) => dispatch({ type: ACTIONS.UPDATE_CUSTOMIZATION, payload: customization }),
-    reorderSections: (sections) => dispatch({ type: ACTIONS.REORDER_SECTIONS, payload: sections }),
+    updatePersonalInfo: (data) => dispatchWithHistory({ type: ACTIONS.UPDATE_PERSONAL_INFO, payload: data }),
+    addExperience: (data) => dispatchWithHistory({ type: ACTIONS.ADD_EXPERIENCE, payload: data }),
+    updateExperience: (index, data) => dispatchWithHistory({ type: ACTIONS.UPDATE_EXPERIENCE, payload: { index, data } }),
+    deleteExperience: (index) => dispatchWithHistory({ type: ACTIONS.DELETE_EXPERIENCE, payload: index }),
+    addEducation: (data) => dispatchWithHistory({ type: ACTIONS.ADD_EDUCATION, payload: data }),
+    updateEducation: (index, data) => dispatchWithHistory({ type: ACTIONS.UPDATE_EDUCATION, payload: { index, data } }),
+    deleteEducation: (index) => dispatchWithHistory({ type: ACTIONS.DELETE_EDUCATION, payload: index }),
+    updateSkills: (skills) => dispatchWithHistory({ type: ACTIONS.UPDATE_SKILLS, payload: skills }),
+    addProject: (data) => dispatchWithHistory({ type: ACTIONS.ADD_PROJECT, payload: data }),
+    updateProject: (index, data) => dispatchWithHistory({ type: ACTIONS.UPDATE_PROJECT, payload: { index, data } }),
+    deleteProject: (index) => dispatchWithHistory({ type: ACTIONS.DELETE_PROJECT, payload: index }),
+    addCertification: (data) => dispatchWithHistory({ type: ACTIONS.ADD_CERTIFICATION, payload: data }),
+    updateCertification: (index, data) => dispatchWithHistory({ type: ACTIONS.UPDATE_CERTIFICATION, payload: { index, data } }),
+    deleteCertification: (index) => dispatchWithHistory({ type: ACTIONS.DELETE_CERTIFICATION, payload: index }),
+    moveCertification: (index, direction) => dispatchWithHistory({ type: ACTIONS.MOVE_CERTIFICATION, payload: { index, direction } }),
+    addAchievement: (data) => dispatchWithHistory({ type: ACTIONS.ADD_ACHIEVEMENT, payload: data }),
+    updateAchievement: (index, data) => dispatchWithHistory({ type: ACTIONS.UPDATE_ACHIEVEMENT, payload: { index, data } }),
+    deleteAchievement: (index) => dispatchWithHistory({ type: ACTIONS.DELETE_ACHIEVEMENT, payload: index }),
+    addCustomSection: (data) => dispatchWithHistory({ type: ACTIONS.ADD_CUSTOM_SECTION, payload: data }),
+    updateCustomSection: (index, data) => dispatchWithHistory({ type: ACTIONS.UPDATE_CUSTOM_SECTION, payload: { index, data } }),
+    deleteCustomSection: (index) => dispatchWithHistory({ type: ACTIONS.DELETE_CUSTOM_SECTION, payload: index }),
+    duplicateCustomSection: (index) => dispatchWithHistory({ type: ACTIONS.DUPLICATE_CUSTOM_SECTION, payload: index }),
+    moveCustomSection: (index, direction) => dispatchWithHistory({ type: ACTIONS.MOVE_CUSTOM_SECTION, payload: { index, direction } }),
+    renameSection: (type, title) => dispatchWithHistory({ type: ACTIONS.RENAME_SECTION, payload: { type, title } }),
+    toggleSectionVisibility: (type) => dispatchWithHistory({ type: ACTIONS.TOGGLE_SECTION_VISIBILITY, payload: type }),
+    setTemplate: (template) => dispatchWithHistory({ type: ACTIONS.SET_TEMPLATE, payload: template }),
+    setTemplateCategory: (category) => dispatchWithHistory({ type: ACTIONS.SET_TEMPLATE_CATEGORY, payload: category }),
+    updateCustomization: (customization) => dispatchWithHistory({ type: ACTIONS.UPDATE_CUSTOMIZATION, payload: customization }),
+    reorderSections: (sections) => dispatchWithHistory({ type: ACTIONS.REORDER_SECTIONS, payload: sections }),
     toggleDarkMode: () => dispatch({ type: ACTIONS.TOGGLE_DARK_MODE }),
-    resetResume: () => dispatch({ type: ACTIONS.RESET_RESUME }),
-    loadResume: (data) => dispatch({ type: ACTIONS.LOAD_RESUME, payload: data })
+    resetResume: () => dispatchWithHistory({ type: ACTIONS.RESET_RESUME }),
+    loadResume: (data) => dispatchWithHistory({ type: ACTIONS.LOAD_RESUME, payload: data })
   };
 
   return (
@@ -844,6 +895,9 @@ export function ResumeProvider({ children }) {
       useCloudVersion,
       keepLocalVersion,
       retryCloudSave,
+      undo,
+      canUndo: undoCount > 0,
+      undoCount,
       sections: buildUnifiedSections(state.resumeData, state.customization),
       ...actions
     }}>

@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Pencil, Plus, Trash2, X } from 'lucide-react';
+
+const emptySkill = () => ({ name: '', level: 'Intermediate', category: 'Technical' });
 
 function SkillsForm() {
   const { resumeData, updateSkills } = useResume(); // better to have a separate updateSkills action
-  const [newSkill, setNewSkill] = useState({
-    name: '',
-    level: 'Intermediate',
-    category: 'Technical'
-  });
+  const [newSkill, setNewSkill] = useState(emptySkill);
+  const [editingIndex, setEditingIndex] = useState(null);
   const [error, setError] = useState('');
 
   const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
-  const skillCategories = ['Technical', 'Soft Skills', 'Languages', 'Tools', 'Other'];
+  const skillCategories = [...new Set(['Technical', 'Soft Skills', 'Languages', 'Tools', 'Other', ...resumeData.skills.map((skill) => skill.category).filter(Boolean)])];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,20 +22,40 @@ function SkillsForm() {
     if (name === 'name') setError('');
   };
 
-  const handleAddSkill = () => {
+  const handleSaveSkill = () => {
     if (!newSkill.name.trim()) {
       setError('Skill name is required.');
       return;
     }
 
-    const updatedSkills = [...resumeData.skills, { ...newSkill, id: Date.now() }];
-    updateSkills(updatedSkills); // call the context function
-    setNewSkill({ name: '', level: 'Intermediate', category: 'Technical' });
+    const updatedSkills = [...resumeData.skills];
+    if (editingIndex === null) {
+      updatedSkills.push({ ...newSkill, id: Date.now() });
+    } else {
+      updatedSkills[editingIndex] = { ...updatedSkills[editingIndex], ...newSkill };
+    }
+    updateSkills(updatedSkills);
+    setNewSkill(emptySkill());
+    setEditingIndex(null);
   };
 
-  const handleRemoveSkill = (id) => {
-    const updatedSkills = resumeData.skills.filter(skill => skill.id !== id);
-    updateSkills(updatedSkills);
+  const handleEditSkill = (index) => {
+    const skill = resumeData.skills[index];
+    setNewSkill({ ...emptySkill(), ...skill });
+    setEditingIndex(index);
+    setError('');
+  };
+
+  const cancelEdit = () => {
+    setNewSkill(emptySkill());
+    setEditingIndex(null);
+    setError('');
+  };
+
+  const handleRemoveSkill = (index) => {
+    updateSkills(resumeData.skills.filter((_, skillIndex) => skillIndex !== index));
+    if (editingIndex === index) cancelEdit();
+    else if (editingIndex !== null && editingIndex > index) setEditingIndex(editingIndex - 1);
   };
 
   const moveSkill = (category, skillIndex, direction) => {
@@ -51,6 +70,7 @@ function SkillsForm() {
     const to = categoryIndexes[targetIndex];
     [updatedSkills[from], updatedSkills[to]] = [updatedSkills[to], updatedSkills[from]];
     updateSkills(updatedSkills);
+    if (editingIndex !== null) cancelEdit();
   };
 
   const moveCategory = (categoryIndex, direction) => {
@@ -59,6 +79,7 @@ function SkillsForm() {
     if (targetIndex < 0 || targetIndex >= categories.length) return;
     [categories[categoryIndex], categories[targetIndex]] = [categories[targetIndex], categories[categoryIndex]];
     updateSkills(categories.flatMap((category) => groupedSkills[category]));
+    if (editingIndex !== null) cancelEdit();
   };
 
   // Group skills by category
@@ -88,16 +109,17 @@ function SkillsForm() {
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, skillIndex) => (
                   <div
-                    key={skill.id}
+                    key={skill.id || `${category}-${skillIndex}-${skill.name}`}
                     className="flex max-w-full items-center rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800"
                   >
                     <span className="min-w-0 break-words text-sm text-gray-800 mr-1 dark:text-gray-200">{skill.name}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">({skill.level})</span>
                     <button type="button" onClick={() => moveSkill(category, skillIndex, -1)} disabled={skillIndex === 0} className="ml-1 text-gray-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Move ${skill.name} left`}><ArrowLeft className="h-3 w-3" /></button>
                     <button type="button" onClick={() => moveSkill(category, skillIndex, 1)} disabled={skillIndex === skills.length - 1} className="ml-1 text-gray-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Move ${skill.name} right`}><ArrowRight className="h-3 w-3" /></button>
+                    <button type="button" onClick={() => handleEditSkill(resumeData.skills.indexOf(skill))} className="ml-1 text-gray-500 hover:text-blue-600" aria-label={`Edit ${skill.name}`}><Pencil className="h-3 w-3" /></button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveSkill(skill.id)}
+                      onClick={() => handleRemoveSkill(resumeData.skills.indexOf(skill))}
                       className="ml-2 text-gray-500 hover:text-red-400"
                       aria-label="Remove skill"
                     >
@@ -111,8 +133,9 @@ function SkillsForm() {
         </div>
       )}
 
-      {/* Add New Skill */}
+      {/* Add or edit skill */}
       <div className="space-y-4">
+        {editingIndex !== null && <div className="flex items-center justify-between rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 dark:bg-blue-950/40 dark:text-blue-200"><span>Editing {resumeData.skills[editingIndex]?.name}</span><button type="button" onClick={cancelEdit} className="rounded p-1 hover:bg-blue-100 dark:hover:bg-blue-900" aria-label="Cancel editing skill"><X className="h-4 w-4" /></button></div>}
         <div>
           <label htmlFor="skill-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Skill Name *
@@ -170,11 +193,11 @@ function SkillsForm() {
 
         <button
           type="button"
-          onClick={handleAddSkill}
+          onClick={handleSaveSkill}
           className="btn-primary w-full flex items-center justify-center"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Skill
+          {editingIndex === null ? <Plus className="h-4 w-4 mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
+          {editingIndex === null ? 'Add Skill' : 'Save Skill'}
         </button>
       </div>
     </div>

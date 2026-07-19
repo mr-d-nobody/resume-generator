@@ -39,6 +39,7 @@ import {
   SlidersHorizontal,
   Trophy,
   Type,
+  Undo2,
   User
 } from 'lucide-react';
 
@@ -65,7 +66,10 @@ function ResumeBuilder() {
     selectedTemplate,
     customization,
     setTemplate,
-    updateCustomization
+    updateCustomization,
+    undo,
+    canUndo,
+    undoCount
   } = useResume();
   const requestedTemplate = getQueryTemplate(location.search);
   const activeTemplate = TEMPLATE_IDS.includes(selectedTemplate) ? selectedTemplate : '12';
@@ -382,6 +386,9 @@ function ResumeBuilder() {
                 {score}%
               </span>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Resume score</span>
+              <button type="button" onClick={undo} disabled={!canUndo} className="ml-auto inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:border-blue-400 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200" title="Undo the last resume change stored on this device">
+                <Undo2 className="h-4 w-4" /> Undo{canUndo ? ` (${undoCount})` : ''}
+              </button>
             </div>
           </div>
 
@@ -499,6 +506,9 @@ function ResumeBuilder() {
       </div>
 
       <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-xl backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 xl:hidden">
+        <button type="button" onClick={undo} disabled={!canUndo} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-700 disabled:opacity-35 dark:border-gray-700 dark:text-gray-200" aria-label={`Undo last resume change${canUndo ? `; ${undoCount} available` : ''}`} title="Undo last change">
+          <Undo2 className="h-5 w-5" />
+        </button>
         {activeMobileMode === 'edit' && (
           <button
             type="button"
