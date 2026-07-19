@@ -54,7 +54,9 @@ export default function ContactLinks({
         : label === 'website'
           ? Globe
           : LinkIcon;
-    const displayLabel = formatGithub && label === 'github'
+    const displayLabel = link.displayMode === 'url'
+      ? link.url
+      : formatGithub && label === 'github'
       ? link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
       : link.label;
     links.push(

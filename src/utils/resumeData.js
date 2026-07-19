@@ -53,7 +53,8 @@ function normalizeCustomLinks(links) {
     .map((link, index) => ({
       id: link?.id || `link-${index}`,
       label: asString(link?.label) || 'Link',
-      url: normalizeUrl(link?.url)
+      url: normalizeUrl(link?.url),
+      displayMode: link?.displayMode === 'url' ? 'url' : 'label'
     }))
     .filter((link) => link.url);
 }
@@ -126,7 +127,8 @@ export function normalizeResumeLinks(personalInfo = {}) {
   const legacyLinks = LEGACY_LINK_FIELDS.map(([label, field]) => ({
     id: `legacy-${field}`,
     label,
-    url: normalizeUrl(personalInfo[field])
+    url: normalizeUrl(personalInfo[field]),
+    displayMode: personalInfo.linkDisplay?.[field] === 'url' ? 'url' : 'label'
   })).filter((link) => {
     if (!link.url || seenUrls.has(link.url.toLowerCase())) return false;
     seenUrls.add(link.url.toLowerCase());

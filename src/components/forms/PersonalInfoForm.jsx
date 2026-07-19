@@ -11,6 +11,10 @@ function PersonalInfoForm({ validationErrors = {} }) {
   const { resumeData, updatePersonalInfo } = useResume();
   const { personalInfo } = resumeData;
   const update = (field, value) => updatePersonalInfo({ [field]: value });
+  const updateLinkDisplay = (field, value) => update('linkDisplay', {
+    ...(personalInfo.linkDisplay || {}),
+    [field]: value,
+  });
 
   const errorProps = (path, id) => ({
     'aria-invalid': Boolean(validationErrors[path]),
@@ -58,16 +62,31 @@ function PersonalInfoForm({ validationErrors = {} }) {
         <div>
           <label htmlFor="resume-linkedin" className="form-label"><Linkedin className="mr-1 inline h-4 w-4" /> LinkedIn</label>
           <input id="resume-linkedin" type="url" value={personalInfo.linkedin} onChange={(event) => update('linkedin', event.target.value)} className="form-input" placeholder="https://linkedin.com/in/johndoe" maxLength={RESUME_LIMITS.url} {...errorProps('personalInfo.linkedin', 'resume-linkedin')} />
+          <label htmlFor="resume-linkedin-display" className="mt-2 block text-xs text-gray-500 dark:text-gray-400">Display as</label>
+          <select id="resume-linkedin-display" value={personalInfo.linkDisplay?.linkedin || 'label'} onChange={(event) => updateLinkDisplay('linkedin', event.target.value)} className="form-input mt-1 py-2 text-sm">
+            <option value="label">LinkedIn</option>
+            <option value="url">Full URL</option>
+          </select>
           <FieldError id="resume-linkedin-error" message={validationErrors['personalInfo.linkedin']} />
         </div>
         <div>
           <label htmlFor="resume-website" className="form-label"><Globe className="mr-1 inline h-4 w-4" /> Website</label>
           <input id="resume-website" type="url" value={personalInfo.website} onChange={(event) => update('website', event.target.value)} className="form-input" placeholder="https://johndoe.com" maxLength={RESUME_LIMITS.url} {...errorProps('personalInfo.website', 'resume-website')} />
+          <label htmlFor="resume-website-display" className="mt-2 block text-xs text-gray-500 dark:text-gray-400">Display as</label>
+          <select id="resume-website-display" value={personalInfo.linkDisplay?.website || 'label'} onChange={(event) => updateLinkDisplay('website', event.target.value)} className="form-input mt-1 py-2 text-sm">
+            <option value="label">Website</option>
+            <option value="url">Full URL</option>
+          </select>
           <FieldError id="resume-website-error" message={validationErrors['personalInfo.website']} />
         </div>
         <div>
           <label htmlFor="resume-github" className="form-label"><Globe className="mr-1 inline h-4 w-4" /> GitHub URL</label>
           <input id="resume-github" type="url" value={personalInfo.github || ''} onChange={(event) => update('github', event.target.value)} className="form-input" placeholder="https://github.com/johndoe" maxLength={RESUME_LIMITS.url} {...errorProps('personalInfo.github', 'resume-github')} />
+          <label htmlFor="resume-github-display" className="mt-2 block text-xs text-gray-500 dark:text-gray-400">Display as</label>
+          <select id="resume-github-display" value={personalInfo.linkDisplay?.github || 'label'} onChange={(event) => updateLinkDisplay('github', event.target.value)} className="form-input mt-1 py-2 text-sm">
+            <option value="label">GitHub</option>
+            <option value="url">Full URL</option>
+          </select>
           <FieldError id="resume-github-error" message={validationErrors['personalInfo.github']} />
         </div>
       </div>

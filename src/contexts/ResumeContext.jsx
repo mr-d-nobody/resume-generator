@@ -17,6 +17,7 @@ const initialResumeData = {
     linkedin: '',
     github: '',
     website: '',
+    linkDisplay: {},
     links: [],
     title: '',
     summary: ''

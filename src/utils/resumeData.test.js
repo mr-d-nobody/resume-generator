@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeResumeData, transformResumeData } from './resumeData.js';
+import { normalizeResumeData, normalizeResumeLinks, transformResumeData } from './resumeData.js';
 
 test('removes legacy profile photos from normalized and rendered resume data', () => {
   const legacyResume = {
@@ -12,6 +12,17 @@ test('removes legacy profile photos from normalized and rendered resume data', (
 
   assert.equal('photo' in normalizeResumeData(legacyResume).personalInfo, false);
   assert.equal('photo' in transformResumeData(legacyResume).personal, false);
+});
+
+test('preserves the selected display mode for resume contact links', () => {
+  const links = normalizeResumeLinks({
+    linkedin: 'linkedin.com/in/ada',
+    github: 'github.com/ada',
+    linkDisplay: { linkedin: 'url' },
+  });
+
+  assert.equal(links.find((link) => link.label === 'LinkedIn').displayMode, 'url');
+  assert.equal(links.find((link) => link.label === 'GitHub').displayMode, 'label');
 });
 
 test('preserves the selected education score label and defaults legacy entries to GPA', () => {
