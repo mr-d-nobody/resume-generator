@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Plus, Trash2 } from 'lucide-react';
 
 function SkillsForm() {
   const { resumeData, updateSkills } = useResume(); // better to have a separate updateSkills action
@@ -39,6 +39,28 @@ function SkillsForm() {
     updateSkills(updatedSkills);
   };
 
+  const moveSkill = (category, skillIndex, direction) => {
+    const categoryIndexes = resumeData.skills
+      .map((skill, index) => ({ skill, index }))
+      .filter(({ skill }) => (skill.category || 'Technical') === category)
+      .map(({ index }) => index);
+    const targetIndex = skillIndex + direction;
+    if (targetIndex < 0 || targetIndex >= categoryIndexes.length) return;
+    const updatedSkills = [...resumeData.skills];
+    const from = categoryIndexes[skillIndex];
+    const to = categoryIndexes[targetIndex];
+    [updatedSkills[from], updatedSkills[to]] = [updatedSkills[to], updatedSkills[from]];
+    updateSkills(updatedSkills);
+  };
+
+  const moveCategory = (categoryIndex, direction) => {
+    const categories = Object.keys(groupedSkills);
+    const targetIndex = categoryIndex + direction;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+    [categories[categoryIndex], categories[targetIndex]] = [categories[targetIndex], categories[categoryIndex]];
+    updateSkills(categories.flatMap((category) => groupedSkills[category]));
+  };
+
   // Group skills by category
   const groupedSkills = resumeData.skills.reduce((acc, skill) => {
     const category = skill.category || 'Technical';
@@ -56,20 +78,25 @@ function SkillsForm() {
       {/* Existing Skills */}
       {resumeData.skills.length > 0 && (
         <div className="mb-6">
-          {Object.entries(groupedSkills).map(([category, skills]) => (
+          {Object.entries(groupedSkills).map(([category, skills], categoryIndex, categories) => (
             <div key={category} className="mb-4">
-              <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-                {category}
-              </h4>
+              <div className="mb-2 flex items-center gap-1">
+                <h4 className="mr-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{category}</h4>
+                <button type="button" onClick={() => moveCategory(categoryIndex, -1)} disabled={categoryIndex === 0} className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700" aria-label={`Move ${category} category up`}><ArrowUp className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => moveCategory(categoryIndex, 1)} disabled={categoryIndex === categories.length - 1} className="rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-gray-700" aria-label={`Move ${category} category down`}><ArrowDown className="h-3.5 w-3.5" /></button>
+              </div>
               <div className="flex flex-wrap gap-2">
-                {skills.map(skill => (
+                {skills.map((skill, skillIndex) => (
                   <div
                     key={skill.id}
                     className="flex max-w-full items-center rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800"
                   >
                     <span className="min-w-0 break-words text-sm text-gray-800 mr-1 dark:text-gray-200">{skill.name}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">({skill.level})</span>
+                    <button type="button" onClick={() => moveSkill(category, skillIndex, -1)} disabled={skillIndex === 0} className="ml-1 text-gray-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Move ${skill.name} left`}><ArrowLeft className="h-3 w-3" /></button>
+                    <button type="button" onClick={() => moveSkill(category, skillIndex, 1)} disabled={skillIndex === skills.length - 1} className="ml-1 text-gray-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-30" aria-label={`Move ${skill.name} right`}><ArrowRight className="h-3 w-3" /></button>
                     <button
+                      type="button"
                       onClick={() => handleRemoveSkill(skill.id)}
                       className="ml-2 text-gray-500 hover:text-red-400"
                       aria-label="Remove skill"
