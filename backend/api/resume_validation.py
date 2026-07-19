@@ -86,7 +86,6 @@ def validate_resume_data(data, require_core=True):
     check_text(personal.get("lastName"), "personalInfo.lastName", "Last name", LIMITS["name"], require_core)
     check_text(personal.get("email"), "personalInfo.email", "Email", LIMITS["email"], require_core)
     check_text(personal.get("phone"), "personalInfo.phone", "Phone", LIMITS["phone"], require_core)
-    check_text(personal.get("title"), "personalInfo.title", "Professional headline", LIMITS["short"])
     check_text(personal.get("summary"), "personalInfo.summary", "Professional summary", LIMITS["summary"])
     check_text(personal.get("location"), "personalInfo.location", "Location", LIMITS["short"])
     email = _text(personal.get("email"))

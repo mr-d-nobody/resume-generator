@@ -77,7 +77,6 @@ export function validateResumeData(resumeData, { requireCore = true } = {}) {
 
   addTextError(errors, personal.firstName, 'personalInfo.firstName', 'First name', RESUME_LIMITS.name, { required: requireCore, section: 'personal' });
   addTextError(errors, personal.lastName, 'personalInfo.lastName', 'Last name', RESUME_LIMITS.name, { required: requireCore, section: 'personal' });
-  addTextError(errors, personal.title, 'personalInfo.title', 'Professional headline', RESUME_LIMITS.short, { section: 'personal' });
   addTextError(errors, personal.email, 'personalInfo.email', 'Email', RESUME_LIMITS.email, { required: requireCore, section: 'personal' });
   if (personal.email && !isValidEmail(personal.email)) errors.push({ path: 'personalInfo.email', section: 'personal', message: 'Enter a valid email address.' });
   addTextError(errors, personal.phone, 'personalInfo.phone', 'Phone', RESUME_LIMITS.phone, { required: requireCore, section: 'personal' });
@@ -163,7 +162,7 @@ export function calculateValidatedResumeScore(resumeData) {
     Boolean(String(personal.lastName || '').trim()) && String(personal.lastName).trim().length <= RESUME_LIMITS.name,
     isValidEmail(personal.email),
     isValidPhone(personal.phone),
-    Boolean(String(personal.title || '').trim()) && String(personal.title).trim().length <= RESUME_LIMITS.short,
+    Boolean(String(personal.title || '').trim()),
     Boolean(String(personal.summary || '').trim()) && String(personal.summary).trim().length <= RESUME_LIMITS.summary,
     (data.education || []).length > 0 && !validateResumeSection(data, 'education').errors.length,
     (data.skills || []).length > 0 && !validateResumeSection(data, 'skills').errors.length,

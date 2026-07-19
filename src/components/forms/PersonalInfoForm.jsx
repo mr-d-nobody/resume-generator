@@ -37,7 +37,7 @@ function PersonalInfoForm({ validationErrors = {} }) {
 
         <div className="md:col-span-2">
           <label htmlFor="resume-headline" className="form-label"><BriefcaseBusiness className="mr-1 inline h-4 w-4" /> Professional Headline</label>
-          <input id="resume-headline" type="text" value={personalInfo.title || ''} onChange={(event) => update('title', event.target.value)} className="form-input" placeholder="Full-Stack Developer • AI/ML • Backend Developer" maxLength={RESUME_LIMITS.short} />
+          <input id="resume-headline" type="text" value={personalInfo.title || ''} onChange={(event) => update('title', event.target.value)} className="form-input" placeholder="Full-Stack Developer • AI/ML • Backend Developer" />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Optional. Add one role or combine specialties using separators such as • or |.</p>
         </div>
 
