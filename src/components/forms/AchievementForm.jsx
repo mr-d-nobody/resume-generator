@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatMonthYear } from '../../utils/resumeData';
 import { useResume } from '../../contexts/ResumeContext';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -70,7 +71,7 @@ function AchievementForm() {
                 <div className="text-blue-600 dark:text-blue-400">{achievement.organization}</div>
               )}
               {achievement.date && (
-                <div className="text-sm text-gray-500 dark:text-gray-400">{achievement.date}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{formatMonthYear(achievement.date)}</div>
               )}
             </div>
           ))}

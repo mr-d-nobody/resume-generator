@@ -23,6 +23,17 @@ const asDate = (value) => {
   return /^(date|start date|end date|grad date)$/i.test(date) ? '' : date;
 };
 
+export function formatMonthYear(value) {
+  const cleanValue = asDate(value);
+  if (!cleanValue || /^(?:present|current)$/i.test(cleanValue)) return cleanValue;
+  const match = cleanValue.match(/^(\d{4})-(0[1-9]|1[0-2])(?:-\d{2})?$/);
+  if (!match) return cleanValue;
+  const [, year, month] = match;
+  const monthName = new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(2000, Number(month) - 1, 1)));
+  return `${monthName} ${year}`;
+}
+
 export function normalizeUrl(value) {
   const raw = asString(value);
   if (!raw) return '';
@@ -45,7 +56,7 @@ export function renderOptionalField(value, render = (cleanValue) => cleanValue) 
 }
 
 export function formatDateRange(startDate, endDate) {
-  return [asDate(startDate), asDate(endDate)].filter(Boolean).join(' – ');
+  return [formatMonthYear(startDate), formatMonthYear(endDate)].filter(Boolean).join(' – ');
 }
 
 function normalizeCustomLinks(links) {
@@ -224,8 +235,8 @@ export function transformResumeData(resumeData = {}, customization = {}) {
       company: asString(item?.company),
       position: asString(item?.position),
       location: asString(item?.location),
-      startDate: asDate(item?.startDate),
-      endDate: item?.current === true ? 'Present' : asDate(item?.endDate),
+      startDate: formatMonthYear(item?.startDate),
+      endDate: item?.current === true ? 'Present' : formatMonthYear(item?.endDate),
       highlights: asArray(item?.highlights).length
         ? asArray(item.highlights).map(asString).filter(Boolean)
         : asString(item?.description).split('\n').map(asString).filter(Boolean)
@@ -240,8 +251,8 @@ export function transformResumeData(resumeData = {}, customization = {}) {
       institution: asString(item?.institution),
       degree: asString(item?.degree),
       location: asString(item?.location),
-      startDate: asDate(item?.startDate),
-      endDate: asDate(item?.graduationDate || item?.endDate),
+      startDate: formatMonthYear(item?.startDate),
+      endDate: formatMonthYear(item?.graduationDate || item?.endDate),
       gpa: asString(item?.cgpa || item?.gpa),
       gradeLabel: normalizeEducationGradeLabel(item?.gradeLabel),
       highlights: asArray(item?.highlights).length
@@ -249,7 +260,11 @@ export function transformResumeData(resumeData = {}, customization = {}) {
         : asString(item?.description).split('\n').map(asString).filter(Boolean)
     })),
     skills: visibility.skills === false ? {} : groupedSkills,
-    certifications: visibility.certifications === false ? [] : certifications,
+    certifications: visibility.certifications === false ? [] : certifications.map((certificate) => ({
+      ...certificate,
+      date: formatMonthYear(certificate.date),
+      expirationDate: formatMonthYear(certificate.expirationDate)
+    })),
     achievements: visibility.achievements === false ? [] : achievements.filter((item) => [
       item?.title, item?.organization, item?.date, item?.description
     ].some((value) => asString(value))).map((item, index) => ({
@@ -257,7 +272,7 @@ export function transformResumeData(resumeData = {}, customization = {}) {
       id: item?.id || `achievement-${index}`,
       title: asString(item?.title),
       organization: asString(item?.organization),
-      date: asDate(item?.date),
+      date: formatMonthYear(item?.date),
       description: asString(item?.description)
     })),
     projects: visibility.projects === false ? [] : projects.filter((item) => [

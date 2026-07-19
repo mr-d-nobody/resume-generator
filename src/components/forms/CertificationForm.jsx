@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatMonthYear } from '../../utils/resumeData';
 import { useResume } from '../../contexts/ResumeContext';
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2, X } from 'lucide-react';
 
@@ -73,7 +74,7 @@ function CertificationForm() {
                   <div className="font-medium text-gray-900 dark:text-white">{certificate.name}</div>
                   {certificate.issuer && <div className="text-blue-600 dark:text-blue-400">{certificate.issuer}</div>}
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {[certificate.date, certificate.expirationDate].filter(Boolean).join(' – ')}
+                    {[formatMonthYear(certificate.date), formatMonthYear(certificate.expirationDate)].filter(Boolean).join(' – ')}
                   </div>
                 </div>
                 <div className="flex shrink-0">
