@@ -20,7 +20,9 @@ export default function EducationForm() {
     if (!draft.degree.trim()) nextErrors.degree = 'Degree is required.';
     if (!draft.institution.trim()) nextErrors.institution = 'Institution is required.';
     if (draft.graduationDate && !isValidMonth(draft.graduationDate)) nextErrors.graduationDate = 'Enter a valid graduation month.';
-    if (!isValidGrade(draft.cgpa)) nextErrors.cgpa = 'Use a CGPA such as 8.5/10, a percentage, or a letter grade.';
+    if (!isValidGrade(draft.cgpa, draft.gradeLabel)) nextErrors.cgpa = draft.gradeLabel === 'Percentage'
+      ? 'Enter a percentage from 0 to 100, with or without the % sign.'
+      : 'Enter a valid CGPA/GPA such as 8.5 or 8.5/10.';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     const payload = { ...draft, id: editingIndex === null ? `education-${Date.now()}` : resumeData.education[editingIndex].id };

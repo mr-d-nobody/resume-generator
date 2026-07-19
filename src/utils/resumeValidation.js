@@ -36,10 +36,14 @@ export function isValidMonth(value) {
   return !value || MONTH_PATTERN.test(String(value));
 }
 
-export function isValidGrade(value) {
+export function isValidGrade(value, gradeLabel = '') {
   const grade = String(value || '').trim();
   if (!grade) return true;
   if (grade.length > RESUME_LIMITS.grade) return false;
+  if (String(gradeLabel).toLowerCase() === 'percentage') {
+    const percentage = grade.match(/^(\d+(?:\.\d+)?)%?$/);
+    return Boolean(percentage) && Number(percentage[1]) <= 100;
+  }
   if (/^(?:[A-F][+-]?|first class|second class|distinction)$/i.test(grade)) return true;
   const percent = grade.match(/^(\d+(?:\.\d+)?)%$/);
   if (percent) return Number(percent[1]) <= 100;
@@ -103,7 +107,7 @@ export function validateResumeData(resumeData, { requireCore = true } = {}) {
     addTextError(errors, item.description, `${base}.description`, `Education ${index + 1} description`, RESUME_LIMITS.description, { section: 'education' });
     addTextError(errors, item.location, `${base}.location`, `Education ${index + 1} location`, RESUME_LIMITS.short, { section: 'education' });
     if (!isValidMonth(item.graduationDate)) errors.push({ path: `${base}.graduationDate`, section: 'education', message: `Education ${index + 1} has an invalid graduation date.` });
-    if (!isValidGrade(item.cgpa)) errors.push({ path: `${base}.cgpa`, section: 'education', message: `Education ${index + 1} grade must be a valid CGPA, percentage, or letter grade.` });
+    if (!isValidGrade(item.cgpa, item.gradeLabel)) errors.push({ path: `${base}.cgpa`, section: 'education', message: `Education ${index + 1} grade must match the selected score type.` });
   });
 
   (data.skills || []).forEach((item, index) => addTextError(errors, typeof item === 'string' ? item : item?.name, `skills.${index}.name`, `Skill ${index + 1}`, RESUME_LIMITS.short, { required: true, section: 'skills' }));

@@ -27,6 +27,15 @@ test('validates contact and grade formats', () => {
   assert.equal(isValidPhone('+1 (555) 123-4567'), true);
   assert.equal(isValidGrade('12/10'), false);
   assert.equal(isValidGrade('8.5/10'), true);
+  assert.equal(isValidGrade('83', 'Percentage'), true);
+  assert.equal(isValidGrade('101', 'Percentage'), false);
+  assert.equal(isValidGrade('83', 'CGPA'), false);
+});
+
+test('validates an education score using its selected display type', () => {
+  const data = validResume();
+  data.education = [{ degree: 'Class XII', institution: 'Example School', cgpa: '83', gradeLabel: 'Percentage' }];
+  assert.equal(validateResumeData(data).isValid, true);
 });
 
 test('rejects missing core fields, reversed dates, and bad URLs', () => {

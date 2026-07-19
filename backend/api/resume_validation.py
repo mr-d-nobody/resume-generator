@@ -50,12 +50,15 @@ def _valid_phone(value):
     )
 
 
-def _valid_grade(value):
+def _valid_grade(value, grade_label=""):
     raw = _text(value)
     if not raw:
         return True
     if len(raw) > LIMITS["grade"]:
         return False
+    if _text(grade_label).lower() == "percentage":
+        match = re.fullmatch(r"(\d+(?:\.\d+)?)%?", raw)
+        return bool(match) and float(match.group(1)) <= 100
     if re.fullmatch(r"(?:[A-F][+-]?|first class|second class|distinction)", raw, re.I):
         return True
     match = re.fullmatch(r"(\d+(?:\.\d+)?)%", raw)
@@ -127,7 +130,7 @@ def validate_resume_data(data, require_core=True):
         graduation = _text(item.get("graduationDate"))
         if graduation and not MONTH_PATTERN.fullmatch(graduation):
             add(f"{base}.graduationDate", f"Education {index + 1} has an invalid graduation date.")
-        if not _valid_grade(item.get("cgpa")):
+        if not _valid_grade(item.get("cgpa"), item.get("gradeLabel")):
             add(f"{base}.cgpa", f"Education {index + 1} grade is invalid.")
 
     for index, item in enumerate(resume.get("skills") if isinstance(resume.get("skills"), list) else []):

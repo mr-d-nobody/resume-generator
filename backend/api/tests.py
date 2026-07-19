@@ -213,6 +213,23 @@ class ResumeValidationTests(SimpleTestCase):
         self.assertIn("experience.0.endDate", errors)
         self.assertIn("education.0.cgpa", errors)
 
+    def test_accepts_plain_numeric_percentage_when_percentage_is_selected(self):
+        errors = validate_resume_data({
+            "personalInfo": {
+                "firstName": "Ada",
+                "lastName": "Lovelace",
+                "email": "ada@example.com",
+                "phone": "+44 20 7946 0958",
+            },
+            "education": [{
+                "degree": "Class XII",
+                "institution": "Example School",
+                "cgpa": "83",
+                "gradeLabel": "Percentage",
+            }],
+        })
+        self.assertNotIn("education.0.cgpa", errors)
+
     def test_rejects_nested_unsafe_links_and_certificate_dates(self):
         errors = validate_resume_data({
             "personalInfo": {"firstName": "Ada", "lastName": "Lovelace", "email": "ada@example.com", "phone": "+44 20 7946 0958"},
